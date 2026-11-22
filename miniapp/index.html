@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru" class="theme-base">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#000000" />
+    <title>Трекер жизни</title>
+    <script>
+      // Apply the cached theme before the first paint: no flash of the wrong theme.
+      (function () {
+        try {
+          var t = localStorage.getItem("lt:theme");
+          if (t === "glass" || t === "base") {
+            document.documentElement.className = "theme-" + t;
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js" async></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
