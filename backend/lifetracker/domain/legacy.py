@@ -90,6 +90,23 @@ def legacy_targets(raw: dict[str, Any]) -> dict[str, Any]:
     return {**LEGACY_DEFAULT_TARGETS, **(raw.get("targets") or {})}
 
 
+def _js_num(x: Any) -> str:
+    """JavaScript String(number): 2.0 -> "2", 2.5 -> "2.5"."""
+    if isinstance(x, float) and x.is_integer():
+        return str(int(x))
+    return str(x)
+
+
+def habit_name(name: str, targets: dict[str, Any]) -> str:
+    """`habitName`: fill legacy placeholders with the norms (first occurrence, like JS)."""
+    return (
+        name.replace("{bed}", str(targets["bed"]), 1)
+        .replace("{waterL}", _js_num(targets["waterL"]).replace(".", ","), 1)
+        .replace("{proteinG}", _js_num(targets["proteinG"]), 1)
+        .replace("{studyH}", _js_num(targets["studyH"]).replace(".", ","), 1)
+    )
+
+
 def study_need(targets: dict[str, Any]) -> int:
     return max(15, js_round((targets.get("studyH") or 2) * 60))
 
@@ -100,7 +117,7 @@ def convert_habit(h: dict[str, Any], targets: dict[str, Any], start: date) -> Ha
     habit = Habit(
         id=h["key"],
         type=HabitType.CHECK,
-        name=h.get("name", ""),
+        name=habit_name(h.get("name", ""), targets),
         sphere=h.get("sphere"),
         active=h.get("active") is not False,
         is_key=h["key"] in LEGACY_KEY_HABITS,
