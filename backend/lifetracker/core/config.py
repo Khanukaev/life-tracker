@@ -23,6 +23,25 @@ class Settings(BaseSettings):
     # Local browser development without Telegram: POST /auth/dev. Ignored unless APP_ENV=dev.
     dev_auth: bool = False
 
+    # Public domain behind Caddy. The Mini App lives at the root, the MCP server at /mcp.
+    domain: str = "localhost"
+    # Override when the Mini App is served elsewhere (e.g. an ngrok tunnel during development).
+    miniapp_url: str = ""
+    # Telegram allows ~30 messages per second per bot; stay below it for broadcasts.
+    bot_send_rate: float = 25.0
+
+    @property
+    def public_url(self) -> str:
+        return f"https://{self.domain}"
+
+    @property
+    def webapp_url(self) -> str:
+        return (self.miniapp_url or self.public_url).rstrip("/") + "/"
+
+    @property
+    def mcp_url(self) -> str:
+        return f"{self.public_url}/mcp"
+
     @field_validator("jwt_secret")
     @classmethod
     def _secret_is_strong(cls, v: SecretStr) -> SecretStr:
