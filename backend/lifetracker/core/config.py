@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     jwt_secret: SecretStr
     jwt_ttl_s: int = 3600
     initdata_max_age_s: int = 86400
+    # Local browser development without Telegram: POST /auth/dev. Ignored unless APP_ENV=dev.
+    dev_auth: bool = False
 
     @field_validator("jwt_secret")
     @classmethod

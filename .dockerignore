@@ -8,3 +8,5 @@
 .env
 reference
 docs
+miniapp/dist
+miniapp/node_modules

@@ -63,9 +63,35 @@ jobs:
       - name: Pytest (API, isolation, golden Python vs JS)
         run: uv run pytest -q
 
+  miniapp:
+    name: Mini App · types, tests, bundle budget, Lighthouse
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: miniapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.16.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: miniapp/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Client formulas vs golden expectations (vitest)
+        run: pnpm test
+      - name: Typecheck + build
+        run: pnpm build
+      - name: Bundle budget (< 100 KB gzip)
+        run: pnpm size
+      - name: Lighthouse (mobile)
+        run: npx -y @lhci/cli@0.15.1 autorun
+
   images:
     name: Docker images
-    needs: backend
+    needs: [backend, miniapp]
     runs-on: ubuntu-latest
     env:
       # Images are pushed only when Docker Hub credentials are configured in repo secrets.
@@ -97,3 +123,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - id: meta_miniapp
+        uses: docker/metadata-action@v5
+        with:
+          images: andreymaxim/lifetracker-miniapp
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+      - name: Build Mini App (push on main and tags)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: miniapp/Dockerfile
+          push: ${{ env.PUSH == 'true' }}
+          tags: ${{ steps.meta_miniapp.outputs.tags }}
+          labels: ${{ steps.meta_miniapp.outputs.labels }}
+          cache-from: type=gha,scope=miniapp
+          cache-to: type=gha,mode=max,scope=miniapp

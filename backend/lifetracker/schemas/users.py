@@ -27,6 +27,12 @@ class TelegramAuthIn(InputModel):
     timezone: TimeZone | None = None
 
 
+class DevAuthIn(InputModel):
+    telegram_id: int = Field(ge=1)
+    first_name: str = Field(default="Dev", min_length=1, max_length=64)
+    timezone: TimeZone | None = None
+
+
 class MeOut(ApiModel):
     id: uuid.UUID
     telegram_id: int

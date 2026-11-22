@@ -8,16 +8,20 @@ from fastapi import APIRouter, Query
 
 from lifetracker.api.deps import Now, SessionDep, UserId
 from lifetracker.domain.enums import EnergyZone
+from lifetracker.domain.templates import HABIT_TEMPLATES
 from lifetracker.schemas.views import (
     DayView,
     FeelIn,
     FeelOut,
     FeelResultOut,
+    GoalsView,
     NowView,
+    ProfileView,
     ReviewView,
     SlotView,
+    TasksView,
 )
-from lifetracker.services import feel, views
+from lifetracker.services import feel, screens, views
 
 router = APIRouter(tags=["views"])
 
@@ -77,3 +81,32 @@ async def record_feel(
         bias=res.bias,
         model_n=res.model_n,
     )
+
+
+@router.get("/views/profile", response_model=ProfileView)
+async def profile_view(session: SessionDep, user_id: UserId, now: Now) -> ProfileView:
+    """Goals preview, task counters, habits and spheres for the Profile tab."""
+    return await screens.profile_view(session, user_id, now)
+
+
+@router.get("/views/tasks", response_model=TasksView)
+async def tasks_view(
+    session: SessionDep,
+    user_id: UserId,
+    now: Now,
+    view: Literal["inbox", "today", "overdue", "upcoming", "done", "energy"] = "today",
+) -> TasksView:
+    """A task tab with counters for all tabs; `energy` adds tasks-vs-windows loads."""
+    return await screens.tasks_view(session, user_id, now, view)
+
+
+@router.get("/views/goals", response_model=GoalsView)
+async def goals_view(session: SessionDep, user_id: UserId, now: Now) -> GoalsView:
+    """Goal cards with progress, recent history across goals and the archive."""
+    return await screens.goals_view(session, user_id, now)
+
+
+@router.get("/habit-templates")
+async def habit_templates(_: UserId) -> list[dict[str, object]]:
+    """Optional starter habits for onboarding (neutral, editable after creation)."""
+    return HABIT_TEMPLATES

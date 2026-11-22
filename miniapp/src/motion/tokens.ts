@@ -1,0 +1,30 @@
+/**
+ * Motion system for Liquid Glass. One set of durations and easings for everything,
+ * mirrored in styles/motion.css as CSS variables.
+ *
+ * Rules (spec + animations.dev + GSAP performance skills):
+ * - only transform, opacity and SVG stroke-dashoffset;
+ * - 150–400 ms, ease-out for entrances, springs for sheets;
+ * - motion never delays data or input: content is rendered final and clickable at once;
+ * - no motion in the base theme, under prefers-reduced-motion or on weak devices.
+ */
+
+import { signal } from "@preact/signals";
+
+export const DUR = { fast: 0.16, base: 0.26, slow: 0.38 } as const; // seconds
+export const EASE_OUT = "power3.out"; // = cubic-bezier(0.215, 0.61, 0.355, 1) in CSS
+export const EASE_OUT_CSS = "cubic-bezier(0.215, 0.61, 0.355, 1)";
+export const STAGGER = 0.045; // seconds between cards
+export const SPRING = { stiffness: 420, damping: 38 } as const; // sheets
+
+/** True only in Glass on a capable device without reduced-motion. */
+export const motionOk = signal(false);
+
+export function reducedMotion(): boolean {
+  return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+export function setMotion(on: boolean): void {
+  motionOk.value = on;
+  document.documentElement.classList.toggle("motion-ok", on);
+}

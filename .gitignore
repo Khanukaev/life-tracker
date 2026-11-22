@@ -28,3 +28,6 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+.claude/
+docs/skills-review/
+skills-lock.json
