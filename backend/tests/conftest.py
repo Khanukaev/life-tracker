@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlencode
@@ -52,10 +53,12 @@ async def _ensure_database() -> None:
         await conn.close()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def migrated_db() -> None:
     """Create the test DB and build the schema through migrations (tests the migrations too)."""
-    asyncio.run(_ensure_database())
+    # May be requested from inside a running event loop: run in a separate thread.
+    with ThreadPoolExecutor(1) as pool:
+        pool.submit(asyncio.run, _ensure_database()).result()
     env = {**os.environ, "DATABASE_URL": TEST_DB_URL}
     for args in (["downgrade", "base"], ["upgrade", "head"]):
         subprocess.run(  # noqa: S603
@@ -68,7 +71,12 @@ def migrated_db() -> None:
 
 
 @pytest.fixture(autouse=True)
-async def clean_db() -> AsyncIterator[None]:
+async def clean_db(request: pytest.FixtureRequest) -> AsyncIterator[None]:
+    """Each DB test starts from empty tables. Modules marked `nodb` skip the database."""
+    if request.node.get_closest_marker("nodb"):
+        yield
+        return
+    request.getfixturevalue("migrated_db")
     yield
     async with get_engine().begin() as conn:
         # Every table hangs off users with ON DELETE CASCADE.
