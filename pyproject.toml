@@ -25,6 +25,8 @@ known-third-party = ["alembic"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101", "S105", "S106"]
+"golden/*.py" = ["E501", "S311"]  # test-data generator
+"backend/scripts/*.py" = ["E501", "S311", "S101"]  # dev benchmarks
 
 [tool.mypy]
 python_version = "3.12"
@@ -37,3 +39,4 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 testpaths = ["backend/tests"]
+markers = ["nodb: pure tests that do not need PostgreSQL"]

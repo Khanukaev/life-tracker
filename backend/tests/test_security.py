@@ -10,6 +10,8 @@ from lifetracker.core.errors import UnauthorizedError
 from lifetracker.core.security import create_access_token, decode_access_token, verify_init_data
 from tests.conftest import BOT_TOKEN, FROZEN_NOW, make_init_data
 
+pytestmark = pytest.mark.nodb
+
 SECRET = "x" * 40
 
 
