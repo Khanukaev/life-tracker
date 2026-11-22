@@ -61,7 +61,7 @@ function writeCache(key: string, data: unknown) {
   }
 }
 
-function entry<T>(key: string): Signal<Entry<T>> {
+export function entry<T>(key: string): Signal<Entry<T>> {
   let e = entries.get(key) as Signal<Entry<T>> | undefined;
   if (!e) {
     const cached = readCache<T>(key);

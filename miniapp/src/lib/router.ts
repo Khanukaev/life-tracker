@@ -99,3 +99,9 @@ export function syncBackButton(): void {
     else setBackButton(null);
   });
 }
+
+/** Links from the bot open a sheet right away, e.g. "Записать сон" → `?open=sleep`. */
+export function deepLinkSheet(): SheetKind | null {
+  const v = new URLSearchParams(location.search).get("open");
+  return v === "sleep" ? v : null;
+}
