@@ -1,0 +1,124 @@
+{
+ "now": "2026-11-22T14:35",
+ "settings": {
+  "startDate": null,
+  "targets": {
+   "bed": "23:30",
+   "waterL": 2.0,
+   "glassL": 0.25,
+   "proteinG": 120,
+   "sleepNeed": 8,
+   "studyH": 1
+  },
+  "usual": {
+   "bed": "23:30",
+   "wake": "07:30"
+  },
+  "spheres": [
+   "Сон",
+   "Работа",
+   "Учёба",
+   "Здоровье",
+   "Спорт"
+  ],
+  "habits": [
+   {
+    "key": "bedtime",
+    "name": "Отбой до {bed}",
+    "type": "sleep",
+    "sphere": "Сон",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "orders",
+    "name": "Дело дня",
+    "type": "check",
+    "sphere": "Работа",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "study",
+    "name": "Практика ≥ {studyH} ч",
+    "type": "check",
+    "sphere": "Учёба",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "vitamins",
+    "name": "Витамины",
+    "type": "check",
+    "sphere": "Здоровье",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "water",
+    "name": "Вода {waterL} л",
+    "type": "water",
+    "sphere": "Здоровье",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "kbju",
+    "name": "КБЖУ + белок {proteinG} г",
+    "type": "protein",
+    "sphere": "Здоровье",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "training",
+    "name": "Тренировка",
+    "type": "check",
+    "sphere": "Спорт",
+    "sched": {
+     "t": "cycle",
+     "p": "11010",
+     "a": null
+    }
+   },
+   {
+    "key": "stretch",
+    "name": "Растяжка",
+    "type": "check",
+    "sphere": "Спорт",
+    "sched": {
+     "t": "every",
+     "n": 2
+    }
+   },
+   {
+    "key": "lang",
+    "name": "Язык",
+    "type": "check",
+    "sphere": "Учёба",
+    "sched": {
+     "t": "every",
+     "n": 3
+    }
+   }
+  ],
+  "model": {
+   "bias": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "n": 0
+  }
+ },
+ "days": {},
+ "tasks": {},
+ "goals": {}
+}

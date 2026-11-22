@@ -1,0 +1,1313 @@
+{
+ "now": "2026-11-22T13:35",
+ "settings": {
+  "startDate": null,
+  "targets": {
+   "bed": "23:30",
+   "waterL": 2.0,
+   "glassL": 0.25,
+   "proteinG": 120,
+   "sleepNeed": 8,
+   "studyH": 1
+  },
+  "usual": {
+   "bed": "23:30",
+   "wake": "07:30"
+  },
+  "spheres": [
+   "Сон",
+   "Работа",
+   "Учёба",
+   "Здоровье",
+   "Спорт"
+  ],
+  "habits": [
+   {
+    "key": "bedtime",
+    "name": "Отбой до {bed}",
+    "type": "sleep",
+    "sphere": "Сон",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "orders",
+    "name": "Дело дня",
+    "type": "check",
+    "sphere": "Работа",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "study",
+    "name": "Практика ≥ {studyH} ч",
+    "type": "check",
+    "sphere": "Учёба",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "vitamins",
+    "name": "Витамины",
+    "type": "check",
+    "sphere": "Здоровье",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "water",
+    "name": "Вода {waterL} л",
+    "type": "water",
+    "sphere": "Здоровье",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "kbju",
+    "name": "КБЖУ + белок {proteinG} г",
+    "type": "protein",
+    "sphere": "Здоровье",
+    "sched": {
+     "t": "daily"
+    }
+   },
+   {
+    "key": "training",
+    "name": "Тренировка",
+    "type": "check",
+    "sphere": "Спорт",
+    "sched": {
+     "t": "cycle",
+     "p": "11010",
+     "a": null
+    }
+   },
+   {
+    "key": "stretch",
+    "name": "Растяжка",
+    "type": "check",
+    "sphere": "Спорт",
+    "sched": {
+     "t": "every",
+     "n": 2
+    }
+   },
+   {
+    "key": "lang",
+    "name": "Язык",
+    "type": "check",
+    "sphere": "Учёба",
+    "sched": {
+     "t": "every",
+     "n": 3
+    }
+   }
+  ],
+  "model": {
+   "bias": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "n": 0
+  }
+ },
+ "days": {
+  "2026-10-08": {
+   "h": {
+    "orders": true,
+    "studyMin": 45,
+    "study": false,
+    "vitamins": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:54",
+    "wake": "07:13",
+    "q": "ok"
+   },
+   "backfill": true
+  },
+  "2026-10-09": {
+   "h": {
+    "studyMin": 0,
+    "study": false,
+    "vitamins": true,
+    "water": 0,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:27",
+    "wake": "07:06",
+    "q": "bad"
+   }
+  },
+  "2026-10-10": {
+   "h": {
+    "orders": true,
+    "studyMin": 30,
+    "study": false,
+    "water": 6,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:12",
+    "wake": "07:12",
+    "q": "ok"
+   }
+  },
+  "2026-10-11": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "vitamins": true,
+    "water": 7,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:11",
+    "wake": "07:52",
+    "q": "good"
+   }
+  },
+  "2026-10-12": {
+   "h": {
+    "orders": true,
+    "studyMin": 0,
+    "study": false,
+    "vitamins": true,
+    "water": 8,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:44",
+    "wake": "08:17",
+    "q": "ok"
+   }
+  },
+  "2026-10-13": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:59",
+    "wake": "06:39",
+    "q": "ok"
+   }
+  },
+  "2026-10-14": {
+   "h": {
+    "orders": true,
+    "studyMin": 45,
+    "study": false,
+    "water": 7,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:32",
+    "wake": "07:32",
+    "q": "ok"
+   }
+  },
+  "2026-10-15": {
+   "h": {
+    "orders": true,
+    "studyMin": 15,
+    "study": false,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": false,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "22:57",
+    "wake": "06:47",
+    "q": "ok"
+   }
+  },
+  "2026-10-16": {
+   "h": {
+    "orders": true,
+    "studyMin": 30,
+    "study": false,
+    "vitamins": true,
+    "water": 1,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:26",
+    "wake": "07:15",
+    "q": "bad"
+   }
+  },
+  "2026-10-17": {
+   "h": {
+    "orders": true,
+    "studyMin": 30,
+    "study": false,
+    "vitamins": true,
+    "water": 6,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:18",
+    "wake": "06:58",
+    "q": "ok"
+   }
+  },
+  "2026-10-18": {
+   "h": {
+    "orders": true,
+    "studyMin": 15,
+    "study": false,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:47",
+    "wake": "07:44",
+    "q": "good"
+   }
+  },
+  "2026-10-19": {
+   "h": {
+    "orders": true,
+    "studyMin": 75,
+    "study": true,
+    "vitamins": true,
+    "water": 3,
+    "kbju": false,
+    "proteinOk": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:16",
+    "wake": "06:52",
+    "q": "ok"
+   }
+  },
+  "2026-10-20": {
+   "h": {
+    "orders": true,
+    "studyMin": 60,
+    "study": true,
+    "vitamins": true,
+    "water": 9,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:30",
+    "wake": "07:33",
+    "q": "bad"
+   }
+  },
+  "2026-10-21": {
+   "h": {
+    "orders": true,
+    "studyMin": 60,
+    "study": true,
+    "water": 4,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:59",
+    "wake": "08:26",
+    "q": "ok"
+   }
+  },
+  "2026-10-22": {
+   "h": {
+    "study": true,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:09",
+    "wake": "06:19",
+    "q": "ok"
+   }
+  },
+  "2026-10-23": {
+   "h": {
+    "orders": true,
+    "studyMin": 15,
+    "study": false,
+    "water": 9,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:52",
+    "wake": "06:19",
+    "q": "ok"
+   }
+  },
+  "2026-10-24": {
+   "h": {
+    "studyMin": 60,
+    "study": true,
+    "vitamins": true,
+    "water": 6,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:34",
+    "wake": "07:37",
+    "q": "ok"
+   }
+  },
+  "2026-10-25": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "vitamins": true,
+    "water": 1,
+    "kbju": true,
+    "proteinOk": false,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "00:10",
+    "wake": "08:52",
+    "q": "bad"
+   }
+  },
+  "2026-10-26": {
+   "h": {
+    "orders": true,
+    "studyMin": 45,
+    "study": false,
+    "water": 8,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:54",
+    "wake": "07:07",
+    "q": "ok"
+   }
+  },
+  "2026-10-27": {
+   "h": {
+    "orders": true,
+    "studyMin": 45,
+    "study": false,
+    "vitamins": true,
+    "water": 1,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "00:40",
+    "wake": "08:45",
+    "q": "ok"
+   }
+  },
+  "2026-10-28": {
+   "h": {
+    "orders": true,
+    "studyMin": 60,
+    "study": true,
+    "vitamins": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "00:08",
+    "wake": "07:30",
+    "q": "good"
+   }
+  },
+  "2026-10-29": {
+   "h": {
+    "orders": true,
+    "studyMin": 90,
+    "study": true,
+    "water": 4,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:53",
+    "wake": "07:43",
+    "q": "ok"
+   }
+  },
+  "2026-10-30": {
+   "h": {
+    "orders": true,
+    "studyMin": 0,
+    "study": false,
+    "vitamins": true,
+    "water": 5,
+    "kbju": true,
+    "proteinOk": false,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:14",
+    "wake": "07:27",
+    "q": "bad"
+   },
+   "backfill": true
+  },
+  "2026-10-31": {
+   "h": {
+    "studyMin": 0,
+    "study": false,
+    "vitamins": true,
+    "water": 9,
+    "kbju": true,
+    "proteinOk": false,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:50",
+    "wake": "08:35",
+    "q": "ok"
+   }
+  },
+  "2026-11-01": {
+   "h": {
+    "orders": true,
+    "studyMin": 15,
+    "study": false,
+    "vitamins": true,
+    "water": 10,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:48",
+    "wake": "06:47",
+    "q": "ok"
+   }
+  },
+  "2026-11-02": {
+   "h": {
+    "orders": true,
+    "studyMin": 90,
+    "study": true,
+    "vitamins": true,
+    "water": 6,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:27",
+    "wake": "07:26",
+    "q": "ok"
+   },
+   "backfill": true
+  },
+  "2026-11-03": {
+   "h": {
+    "orders": true,
+    "studyMin": 15,
+    "study": false,
+    "vitamins": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true
+   }
+  },
+  "2026-11-04": {
+   "h": {
+    "studyMin": 30,
+    "study": false,
+    "vitamins": true,
+    "water": 10,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:33",
+    "wake": "07:58",
+    "q": "good"
+   }
+  },
+  "2026-11-05": {
+   "h": {
+    "orders": true,
+    "studyMin": 60,
+    "study": true,
+    "vitamins": true,
+    "water": 7,
+    "kbju": true,
+    "proteinOk": false,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:35",
+    "wake": "06:34",
+    "q": "ok"
+   }
+  },
+  "2026-11-06": {
+   "h": {
+    "orders": true,
+    "studyMin": 75,
+    "study": true,
+    "vitamins": true,
+    "water": 8,
+    "kbju": false,
+    "proteinOk": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:36",
+    "wake": "08:14",
+    "q": "bad"
+   }
+  },
+  "2026-11-07": {
+   "h": {
+    "studyMin": 75,
+    "study": true,
+    "vitamins": true,
+    "water": 1,
+    "kbju": true,
+    "proteinOk": false,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:30",
+    "wake": "07:18",
+    "q": "ok"
+   }
+  },
+  "2026-11-08": {
+   "h": {
+    "studyMin": 60,
+    "study": true,
+    "vitamins": true,
+    "water": 1,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:25",
+    "wake": "07:38",
+    "q": "good"
+   }
+  },
+  "2026-11-09": {
+   "h": {
+    "studyMin": 30,
+    "study": false,
+    "vitamins": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "00:35",
+    "wake": "08:50",
+    "q": "ok"
+   }
+  },
+  "2026-11-10": {
+   "h": {
+    "orders": true,
+    "studyMin": 90,
+    "study": true,
+    "vitamins": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "backfill": true
+  },
+  "2026-11-11": {
+   "h": {
+    "orders": true,
+    "studyMin": 90,
+    "study": true,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:28",
+    "wake": "06:07",
+    "q": "ok"
+   }
+  },
+  "2026-11-12": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "vitamins": true,
+    "water": 4,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:09",
+    "wake": "07:50",
+    "q": "good"
+   }
+  },
+  "2026-11-13": {
+   "h": {
+    "orders": true,
+    "studyMin": 75,
+    "study": true,
+    "vitamins": true,
+    "water": 5,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:32",
+    "wake": "06:25",
+    "q": "ok"
+   }
+  },
+  "2026-11-14": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   }
+  },
+  "2026-11-15": {
+   "h": {
+    "studyMin": 30,
+    "study": false,
+    "water": 6,
+    "kbju": false,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:39",
+    "wake": "06:43",
+    "q": "bad"
+   }
+  },
+  "2026-11-16": {
+   "h": {
+    "orders": true,
+    "studyMin": 45,
+    "study": false,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "22:49",
+    "wake": "06:46",
+    "q": "good"
+   }
+  },
+  "2026-11-17": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "vitamins": true,
+    "water": 8,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:31",
+    "wake": "07:57",
+    "q": "bad"
+   }
+  },
+  "2026-11-18": {
+   "h": {
+    "orders": true,
+    "studyMin": 90,
+    "study": true,
+    "vitamins": true,
+    "water": 3,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "23:29",
+    "wake": "07:00",
+    "q": "good"
+   }
+  },
+  "2026-11-19": {
+   "h": {
+    "orders": true,
+    "studyMin": 75,
+    "study": true,
+    "vitamins": true,
+    "water": 9,
+    "kbju": true,
+    "proteinOk": false,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "00:22",
+    "wake": "07:52",
+    "q": "ok"
+   }
+  },
+  "2026-11-20": {
+   "h": {
+    "orders": true,
+    "studyMin": 0,
+    "study": false,
+    "vitamins": true,
+    "water": 10,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:55",
+    "wake": "08:31",
+    "q": "ok"
+   },
+   "feel": [
+    {
+     "t": "10:00",
+     "v": "high",
+     "pred": 60,
+     "err": -20
+    }
+   ]
+  },
+  "2026-11-21": {
+   "h": {
+    "orders": true,
+    "study": true,
+    "vitamins": true,
+    "water": 1,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "stretch": true
+   },
+   "sleep": {
+    "bed": "00:08",
+    "wake": "08:18",
+    "q": "good"
+   },
+   "feel": [
+    {
+     "t": "15:00",
+     "v": "ok",
+     "pred": 60,
+     "err": 15
+    }
+   ]
+  },
+  "2026-11-22": {
+   "h": {
+    "studyMin": 90,
+    "study": true,
+    "vitamins": true,
+    "water": 7,
+    "kbju": true,
+    "proteinOk": true,
+    "training": true,
+    "lang": true
+   },
+   "sleep": {
+    "bed": "23:14",
+    "wake": "07:49",
+    "q": "ok"
+   }
+  }
+ },
+ "tasks": {
+  "t00": {
+   "id": "t00",
+   "title": "Почта 0",
+   "date": "2026-12-12",
+   "start": "20:00",
+   "dur": 15,
+   "energy": "focus",
+   "sphere": "Учёба",
+   "done": true,
+   "by": "claude",
+   "doneAt": "2026-11-22T10:00:00.000Z"
+  },
+  "t01": {
+   "id": "t01",
+   "title": "Почта 1",
+   "date": "2026-11-22",
+   "start": "09:00",
+   "dur": 15,
+   "energy": "steady",
+   "sphere": "Спорт",
+   "done": false,
+   "by": "me"
+  },
+  "t02": {
+   "id": "t02",
+   "title": "Почта 2",
+   "date": "2026-11-23",
+   "start": "11:00",
+   "dur": 15,
+   "energy": "steady",
+   "sphere": null,
+   "done": false,
+   "by": "me"
+  },
+  "t03": {
+   "id": "t03",
+   "title": "Код-ревью 3",
+   "date": "2026-12-02",
+   "start": null,
+   "dur": 120,
+   "energy": "focus",
+   "sphere": "Спорт",
+   "done": false,
+   "by": "me"
+  },
+  "t04": {
+   "id": "t04",
+   "title": "Покупки 4",
+   "date": "2026-11-22",
+   "start": "20:00",
+   "dur": 30,
+   "energy": "focus",
+   "sphere": "Здоровье",
+   "done": false,
+   "by": "claude"
+  },
+  "t05": {
+   "id": "t05",
+   "title": "Отчёт 5",
+   "date": "2026-11-23",
+   "start": null,
+   "dur": 45,
+   "energy": "recharge",
+   "sphere": "Учёба",
+   "done": false,
+   "by": "claude"
+  },
+  "t06": {
+   "id": "t06",
+   "title": "Звонок 6",
+   "date": "2026-11-22",
+   "start": "10:00",
+   "dur": 120,
+   "energy": "steady",
+   "sphere": "Спорт",
+   "done": false,
+   "by": "me"
+  },
+  "t07": {
+   "id": "t07",
+   "title": "Отчёт 7",
+   "date": "2026-11-20",
+   "start": null,
+   "dur": 30,
+   "energy": "steady",
+   "sphere": null,
+   "done": true,
+   "by": "me",
+   "doneAt": "2026-11-22T17:00:00.000Z"
+  },
+  "t08": {
+   "id": "t08",
+   "title": "Встреча 8",
+   "date": "2026-11-23",
+   "start": "09:00",
+   "dur": 90,
+   "energy": "steady",
+   "sphere": null,
+   "done": false,
+   "by": "me"
+  },
+  "t09": {
+   "id": "t09",
+   "title": "Почта 9",
+   "date": "2026-11-22",
+   "start": "15:00",
+   "dur": 60,
+   "energy": "recharge",
+   "sphere": "Учёба",
+   "done": true,
+   "by": "claude",
+   "doneAt": "2026-11-22T19:00:00.000Z"
+  },
+  "t10": {
+   "id": "t10",
+   "title": "Статья 10",
+   "date": "2026-12-12",
+   "start": null,
+   "dur": 15,
+   "energy": "steady",
+   "sphere": null,
+   "done": false,
+   "by": "me"
+  },
+  "t11": {
+   "id": "t11",
+   "title": "Почта 11",
+   "date": "2026-11-22",
+   "start": "13:00",
+   "dur": 45,
+   "energy": "steady",
+   "sphere": null,
+   "done": false,
+   "by": "me"
+  },
+  "t12": {
+   "id": "t12",
+   "title": "Покупки 12",
+   "date": "2026-11-23",
+   "start": "11:00",
+   "dur": 45,
+   "energy": "steady",
+   "sphere": "Здоровье",
+   "done": false,
+   "by": "claude"
+  },
+  "t13": {
+   "id": "t13",
+   "title": "Встреча 13",
+   "date": "2026-11-25",
+   "start": null,
+   "dur": 90,
+   "energy": "recharge",
+   "sphere": "Спорт",
+   "done": false,
+   "by": "claude"
+  },
+  "t14": {
+   "id": "t14",
+   "title": "Отчёт 14",
+   "date": "2026-11-23",
+   "start": "10:00",
+   "dur": 45,
+   "energy": "recharge",
+   "sphere": "Сон",
+   "done": true,
+   "by": "me",
+   "doneAt": "2026-11-22T14:00:00.000Z"
+  },
+  "t15": {
+   "id": "t15",
+   "title": "Статья 15",
+   "date": "2026-11-22",
+   "start": "20:00",
+   "dur": 30,
+   "energy": "recharge",
+   "sphere": null,
+   "done": true,
+   "by": "claude",
+   "doneAt": "2026-11-22T15:00:00.000Z"
+  },
+  "t16": {
+   "id": "t16",
+   "title": "Статья 16",
+   "date": "2026-11-22",
+   "start": "00:30",
+   "dur": 45,
+   "energy": "steady",
+   "sphere": "Работа",
+   "done": false,
+   "by": "claude"
+  },
+  "t17": {
+   "id": "t17",
+   "title": "Почта 17",
+   "date": "2026-11-17",
+   "start": "15:00",
+   "dur": 45,
+   "energy": "recharge",
+   "sphere": "Работа",
+   "done": false,
+   "by": "claude"
+  },
+  "t18": {
+   "id": "t18",
+   "title": "Встреча 18",
+   "date": "2026-11-22",
+   "start": null,
+   "dur": 45,
+   "energy": "recharge",
+   "sphere": "Учёба",
+   "done": false,
+   "by": "me"
+  },
+  "t19": {
+   "id": "t19",
+   "title": "Отчёт 19",
+   "date": "2026-12-12",
+   "start": null,
+   "dur": 30,
+   "energy": "focus",
+   "sphere": "Здоровье",
+   "done": false,
+   "by": "me"
+  },
+  "t20": {
+   "id": "t20",
+   "title": "Статья 20",
+   "date": "2026-12-02",
+   "start": "17:00",
+   "dur": 45,
+   "energy": "recharge",
+   "sphere": "Работа",
+   "done": false,
+   "by": "me"
+  },
+  "t21": {
+   "id": "t21",
+   "title": "Почта 21",
+   "date": "2026-11-23",
+   "start": "10:00",
+   "dur": 15,
+   "energy": "focus",
+   "sphere": "Работа",
+   "done": false,
+   "by": "claude"
+  },
+  "t22": {
+   "id": "t22",
+   "title": "Уборка 22",
+   "date": "2026-11-20",
+   "start": null,
+   "dur": 120,
+   "energy": "recharge",
+   "sphere": null,
+   "done": false,
+   "by": "claude"
+  },
+  "t23": {
+   "id": "t23",
+   "title": "Звонок 23",
+   "date": "2026-12-02",
+   "start": null,
+   "dur": 30,
+   "energy": "steady",
+   "sphere": null,
+   "done": false,
+   "by": "claude"
+  }
+ },
+ "goals": {
+  "g1": {
+   "id": "g1",
+   "title": "Шаги",
+   "kind": "subtasks",
+   "stage": 1,
+   "order": 1,
+   "deadline": "2026-12-12",
+   "subtasks": [
+    {
+     "id": "s1",
+     "title": "Один",
+     "done": true
+    },
+    {
+     "id": "s2",
+     "title": "Два",
+     "done": false,
+     "deadline": "2026-11-20"
+    },
+    {
+     "id": "s3",
+     "title": "Три",
+     "done": false
+    }
+   ]
+  },
+  "g2": {
+   "id": "g2",
+   "title": "Серия",
+   "kind": "streak",
+   "habits": [
+    "vitamins"
+   ],
+   "target": 21,
+   "stage": 1,
+   "order": 2
+  },
+  "g3": {
+   "id": "g3",
+   "title": "Дни из N",
+   "kind": "count",
+   "habits": [
+    "training",
+    "stretch"
+   ],
+   "target": 4,
+   "window": 7,
+   "stage": 1,
+   "order": 3
+  },
+  "g4": {
+   "id": "g4",
+   "title": "Просрочена",
+   "kind": "subtasks",
+   "stage": 2,
+   "order": 4,
+   "deadline": "2026-11-19",
+   "subtasks": [
+    {
+     "id": "s4",
+     "title": "x",
+     "done": false
+    }
+   ]
+  },
+  "g5": {
+   "id": "g5",
+   "title": "Ручная",
+   "kind": "manual",
+   "value": 40,
+   "stage": 2,
+   "order": 5
+  },
+  "g6": {
+   "id": "g6",
+   "title": "Серия база",
+   "kind": "streak",
+   "habits": [
+    "bedtime",
+    "orders"
+   ],
+   "target": 7,
+   "stage": 1,
+   "order": 6
+  },
+  "g7": {
+   "id": "g7",
+   "title": "Пустая",
+   "kind": "subtasks",
+   "stage": 1,
+   "order": 7,
+   "archived": true
+  }
+ }
+}
