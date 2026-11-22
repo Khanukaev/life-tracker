@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Glass · Профиль</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:0}
+.card{background:rgba(255,255,255,0.055);border:1px solid rgba(255,255,255,0.10);border-radius:18px}
+.sec{font-size:13px;font-weight:500;color:#8e8e93;margin:0 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.sec a{color:#f5f5f7;text-decoration:none;font-size:14px}
+.row{display:flex;align-items:center;gap:12px;min-height:50px;padding:10px 16px;text-decoration:none;color:#f5f5f7}
+.list>.row+.row{border-top:1px solid rgba(255,255,255,0.10)}
+.t{font-size:16px;line-height:21px;color:#f5f5f7}
+.s{font-size:13px;line-height:17px;color:#8e8e93}
+.ib{appearance:none;border:0;background:transparent;color:#f5f5f7;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;cursor:pointer;padding:0}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chev{width:16px;height:16px;color:#48484a}
+.bar{height:4px;border-radius:2px;background:rgba(255,255,255,0.10);overflow:hidden}
+.bar>i{display:block;height:100%;background:#ff2d55;border-radius:2px}
+.tag{font-size:11px;line-height:18px;padding:0 7px;border-radius:6px;background:rgba(255,255,255,0.10);color:#aeaeb2;font-weight:500;white-space:nowrap}
+.tag.crit{background:rgba(255,45,85,.14);color:#ff4d6d}
+.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.cg span{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:10px}
+.chip{appearance:none;font:inherit;font-size:14px;font-weight:500;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.055);color:#f5f5f7;display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.add{color:#8e8e93}
+
+header,main{position:relative;z-index:1}
+.card,.tc,.grp,[style*="0.055)"]{backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.18),inset 0 -1px 0 rgba(255,255,255,0.04),inset 0 0 0 0.5px rgba(255,255,255,0.05),0 12px 32px rgba(0,0,0,0.35)}
+.card{border-radius:28px !important}
+.tc{border-radius:24px}
+.grp{border-radius:22px}
+.btn,.chip,.step,.seg,.blk{backdrop-filter:blur(20px) saturate(170%);-webkit-backdrop-filter:blur(20px) saturate(170%)}
+.btn,.step{box-shadow:inset 0 1px 0 rgba(255,255,255,0.16)}
+.seg button.on{box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),0 2px 8px rgba(0,0,0,0.3)}
+.chip.on{background:rgba(255,255,255,0.9) !important}
+.blk{border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.12)}
+.chk.on,.sw.on,.btn.acc,.save{box-shadow:inset 0 1px 0 rgba(255,255,255,0.35),0 4px 14px rgba(255,45,85,0.35)}
+</style>
+</helmet>
+<div style="width: 390px; height: 1480px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(380px 340px at 8% 4%, rgba(255,45,85,0.30), transparent 70%), radial-gradient(420px 420px at 100% 16%, rgba(47,86,176,0.40), transparent 70%), radial-gradient(360px 360px at 0% 38%, rgba(47,86,176,0.28), transparent 70%), radial-gradient(380px 380px at 100% 55%, rgba(255,45,85,0.20), transparent 70%), radial-gradient(420px 400px at 10% 74%, rgba(255,45,85,0.18), transparent 70%), radial-gradient(420px 420px at 95% 92%, rgba(47,86,176,0.32), transparent 70%)"></div>
+
+
+<header style="padding: 52px 12px 0 20px; display: flex; align-items: flex-end; justify-content: space-between">
+<h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.03em">Профиль</h1>
+<button class="ib" aria-label="Настройки"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg></button>
+</header>
+
+<main style="padding: 20px 16px 0; display: flex; flex-direction: column; gap: 32px">
+
+<section class="card" style="padding: 18px 16px; display: flex; align-items: center; gap: 14px">
+<span style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.10); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; flex: none">М</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 20px; font-weight: 600">Максим</span><span class="s">Хочу держать режим без срывов</span></span>
+<button class="ib" aria-label="Изменить профиль" style="color: #8e8e93"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="M13.5 6.5l4 4"></path></svg></button>
+</section>
+
+
+<section>
+<div class="sec"><span>Цели</span><a href="GoalsGlass.dc.html">Все</a></div>
+<div class="card list">
+<sc-for list="{{goals}}" as="g" hint-placeholder-count="3">
+<a href="GoalsGlass.dc.html" class="row" style="flex-direction: column; align-items: stretch; gap: 8px; padding-top: 14px; padding-bottom: 14px">
+<span style="display: flex; justify-content: space-between; gap: 12px"><span class="t">{{g.name}}</span><span class="mono" style="font-size: 15px">{{g.pct}}%</span></span>
+<span class="bar"><i style="width: {{g.pct}}%"></i></span>
+<span class="s">{{g.meta}}</span>
+</a>
+</sc-for>
+<button class="row add" style="appearance: none; border: 0; border-top: 1px solid rgba(255,255,255,0.10); background: transparent; font: inherit; width: 100%; cursor: pointer; color: #8e8e93"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M12 5v14M5 12h14"></path></svg><span style="font-size: 15px">Новая цель</span></button>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Задачи</span><a href="TasksGlass.dc.html">Все</a></div>
+<div class="card list">
+<a href="TasksGlass.dc.html" class="row"><span class="t" style="flex: 1">Сегодня</span><span class="s mono">5</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<a href="TasksGlass.dc.html" class="row"><span class="t" style="flex: 1">Входящие</span><span class="s mono">3</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<a href="TasksGlass.dc.html" class="row"><span class="t" style="flex: 1">Просрочено</span><span class="tag crit">1 критичная</span><span class="s mono">2</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<a href="TasksGlass.dc.html" class="row"><span class="t" style="flex: 1">Ближайшие 2 недели</span><span class="s mono">4</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<a href="TaskSheetGlass.dc.html" class="row add"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M12 5v14M5 12h14"></path></svg><span style="font-size: 15px">Новая задача</span></a>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Привычки</span><span>5 активных</span></div>
+<div class="card list">
+<sc-for list="{{habits}}" as="h" hint-placeholder-count="3">
+<a href="ProfileGlass.dc.html" class="row"><span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t">{{h.name}}</span><span class="s">{{h.meta}}</span></span><span class="tag">{{h.sphere}}</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+</sc-for>
+<a href="ProfileGlass.dc.html" class="row"><span class="t" style="flex: 1; color: #8e8e93">Ещё 2 и выключенные</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<button class="row add" style="appearance: none; border: 0; border-top: 1px solid rgba(255,255,255,0.10); background: transparent; font: inherit; width: 100%; cursor: pointer; color: #8e8e93"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M12 5v14M5 12h14"></path></svg><span style="font-size: 15px">Новая привычка</span></button>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Сферы</span></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{spheres}}" as="s" hint-placeholder-count="4"><button class="chip">{{s.name}}<span class="mono" style="font-size: 12px; color: #8e8e93">{{s.n}}</span></button></sc-for>
+<button class="chip" style="border-style: dashed; background: transparent; color: #8e8e93"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px"><path d="M12 5v14M5 12h14"></path></svg>Добавить сферу</button>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Настройки</span></div>
+<div class="card list">
+<a href="ProfileGlass.dc.html" class="row"><span class="t" style="flex: 1">Нормы и режим</span><span class="s">сон, отбой, вода</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<a href="ProfileGlass.dc.html" class="row"><span class="t" style="flex: 1">Отметить прошлый день</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<a href="ProfileGlass.dc.html" class="row"><span class="t" style="flex: 1">Экспорт данных</span><span class="s">JSON</span><svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></a>
+<button class="row" style="appearance: none; border: 0; border-top: 1px solid rgba(255,255,255,0.10); background: transparent; font: inherit; width: 100%; cursor: pointer; color: #ff2d55; font-size: 16px">Сбросить подстройку модели</button>
+</div>
+</section>
+
+</main>
+
+<div style="position: absolute; left: 16px; bottom: 24px; width: 358px; height: 68px">
+<dc-import name="TabBarGlass" active="profile" hint-size="358px,68px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1480}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const LV = ['rgba(255,255,255,0.10)', '#4a1420', '#8a1d36', '#c9244a', '#ff2d55'];
+    const lvl = (v) => v < 20 ? 0 : v < 40 ? 1 : v < 60 ? 2 : v < 80 ? 3 : 4;
+    const R = [72, 81, 64, 45, 30, 58, 66, 70, 85, 52, 38, 61, 77, 48, 55, 69, 74, 40, 88, 63, 56, 64];
+    const blank = { n: '', bg: 'transparent', fc: 'transparent', ring: 'none' };
+    const cells = [];
+    for (let i = 0; i < 6; i++) cells.push(blank);
+    for (let d = 1; d <= 30; d++) {
+      const v = R[d - 1];
+      if (v === undefined) cells.push({ n: d, bg: 'transparent', fc: '#636366', ring: 'inset 0 0 0 1px rgba(255,255,255,0.10)' });
+      else { const l = lvl(v); cells.push({ n: d, bg: LV[l], fc: l >= 2 ? '#fff' : '#aeaeb2', ring: d === 22 ? '0 0 0 2px rgba(255,255,255,0.055), 0 0 0 3.5px #f5f5f7' : 'none' }); }
+    }
+    while (cells.length % 7) cells.push(blank);
+    return {
+      cells, legend: LV, dow: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+      goals: [
+        { name: 'Сдать сессию без долгов', pct: 60, meta: 'Шаги 3 из 5 · до 20 дек · Учёба' },
+        { name: 'Тренировка 3 раза в неделю', pct: 75, meta: '9 из 12 за месяц · Здоровье' },
+        { name: 'Финансовая подушка', pct: 34, meta: 'Шаги 2 из 6 · до марта · Деньги' }
+      ],
+      habits: [
+        { name: 'Утренняя рутина', meta: 'Каждый день · серия 12', sphere: 'Личное' },
+        { name: 'Вода', meta: 'Счётчик · 8 стаканов', sphere: 'Здоровье' },
+        { name: 'Тренировка', meta: 'По графику 1101100', sphere: 'Здоровье' }
+      ],
+      spheres: [{ name: 'Учёба', n: 7 }, { name: 'Деньги', n: 5 }, { name: 'Здоровье', n: 6 }, { name: 'Личное', n: 3 }]
+    };
+  }
+}
+</script>
+</body>
+</html>

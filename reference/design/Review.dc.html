@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Итоги</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:0}
+.card{background:#0a0a0b;border:1px solid #1b1b1e;border-radius:18px}
+.sec{font-size:13px;font-weight:500;color:#8e8e93;margin:0 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.row{display:flex;align-items:center;gap:12px;min-height:50px;padding:10px 16px}
+.list>.row+.row{border-top:1px solid #1b1b1e}
+.t{font-size:16px;line-height:21px;color:#f5f5f7}
+.s{font-size:13px;line-height:17px;color:#8e8e93}
+.btn{appearance:none;border:0;font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;font-size:14px;font-weight:500;height:32px;padding:0 12px;background:#1b1b1e;color:#f5f5f7;white-space:nowrap}
+.btn.lg{height:50px;font-size:16px;width:100%;border-radius:14px}
+.ib{appearance:none;border:0;background:transparent;color:#f5f5f7;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;cursor:pointer;padding:0}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:#1b1b1e;border-radius:10px;padding:2px;gap:2px}
+.seg button{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;height:36px;border-radius:8px;background:transparent;color:#f5f5f7;cursor:pointer}
+.seg button.on{background:#3a3a3c}
+.cg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cg span{aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:11px}
+.plain{appearance:none;border:0;background:transparent;font:inherit;cursor:pointer;width:100%;text-align:left;color:#f5f5f7}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-weight:500;font-size:12px;color:#8e8e93;text-align:right;padding:12px 16px 8px 0}
+th:first-child,td:first-child{text-align:left;padding-left:16px}
+td{padding:12px 16px 12px 0;border-top:1px solid #1b1b1e;text-align:right;color:#f5f5f7}
+.ax{font:11px 'Geist Mono',monospace;fill:#8e8e93}
+</style>
+</helmet>
+<div style="width: 390px; height: 2120px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+
+<header style="padding: 52px 12px 0 20px; display: flex; align-items: flex-end; justify-content: space-between">
+<div><h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.03em">Итоги</h1><div style="font-size: 15px; color: #8e8e93; margin-top: 2px">{{period}}</div></div>
+<button class="ib" aria-label="Разбор от Claude"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"></path><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"></path></svg></button>
+</header>
+
+<main style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 32px">
+
+<div class="seg" role="group" aria-label="Период"><sc-for list="{{segs}}" as="g" hint-placeholder-count="2"><button class="{{g.cls}}" onClick="{{g.pick}}">{{g.label}}</button></sc-for></div>
+
+<section class="card" style="padding: 18px 16px 16px; margin-top: -16px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px"><span class="t" style="font-weight: 500">Выкладывание</span><span class="s">среднее <span class="mono" style="color: #f5f5f7">{{avg}}%</span></span></div>
+<sc-if value="{{isMonth}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 20px; align-items: flex-start">
+<div style="flex: none">
+<div style="display: grid; grid-template-columns: repeat(7, 20px); gap: 4px; margin-bottom: 4px"><sc-for list="{{dow}}" as="d" hint-placeholder-count="7"><span style="font-size: 9px; line-height: 12px; text-align: center; color: #8e8e93">{{d}}</span></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(7, 20px); gap: 4px" role="img" aria-label="Рейтинг выкладывания по дням ноября"><sc-for list="{{cells}}" as="c" hint-placeholder-count="35"><span title="{{c.tip}}" style="width: 20px; height: 20px; border-radius: 5px; background: {{c.bg}}; box-shadow: {{c.ring}}"></span></sc-for></div>
+<div style="display: flex; align-items: center; gap: 3px; margin-top: 10px; font-size: 10px; color: #8e8e93">меньше<sc-for list="{{legend}}" as="l" hint-placeholder-count="5"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{l}}"></span></sc-for>больше</div>
+</div>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 14px; padding-top: 14px">
+<div><div class="mono" style="font-size: 22px">9</div><div class="s">дней ≥ 70%</div></div>
+<div><div class="mono" style="font-size: 22px">14</div><div class="s">лучшая серия</div></div>
+<div><div class="mono" style="font-size: 22px">19 нояб</div><div class="s">лучший день · 88%</div></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isWeek}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: end; height: 150px">
+<sc-for list="{{wbars}}" as="b" hint-placeholder-count="7"><div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><span class="mono" style="font-size: 11px; color: {{b.c}}">{{b.v}}</span><span style="width: 100%; height: {{b.h}}px; border-radius: 8px; background: {{b.bg}}"></span><span style="font-size: 11px; color: #8e8e93">{{b.d}}</span></div></sc-for>
+</div>
+</sc-if>
+</section>
+
+<section>
+<div class="sec"><span>Где проседаешь</span></div>
+<div class="card list">
+<sc-for list="{{alerts}}" as="a" hint-placeholder-count="3">
+<div class="row" style="align-items: flex-start; padding-top: 13px; padding-bottom: 13px">
+<span style="width: 6px; height: 6px; border-radius: 50%; background: {{a.c}}; margin-top: 8px; flex: none"></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t">{{a.t}}</span><span class="s">{{a.s}}</span></span>
+</div>
+</sc-for>
+<button class="plain row" onClick="{{toggleAll}}" style="border-top: 1px solid #1b1b1e; color: #8e8e93; font-size: 15px">{{moreLabel}}</button>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Выполнение</span></div>
+<div class="card" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 16px">
+<div><div class="s">Привычки</div><div class="mono" style="font-size: 24px; margin-top: 2px">71%</div></div>
+<div style="border-left: 1px solid #1b1b1e; padding-left: 14px"><div class="s">Задачи</div><div class="mono" style="font-size: 24px; margin-top: 2px">64%</div></div>
+<div style="border-left: 1px solid #1b1b1e; padding-left: 14px"><div class="s">Закрыто</div><div class="mono" style="font-size: 24px; margin-top: 2px">23</div></div>
+</div>
+<div class="card list" style="margin-top: 8px">
+<sc-for list="{{habits}}" as="h" hint-placeholder-count="5">
+<div class="row" style="flex-wrap: wrap; row-gap: 10px; padding-top: 13px; padding-bottom: 13px">
+<span class="t" style="flex: 1">{{h.name}}</span>
+<span class="mono" style="font-size: 15px">{{h.pct}}%</span>
+<div style="width: 100%; display: flex; align-items: center; gap: 5px">
+<sc-for list="{{h.dots}}" as="d" hint-placeholder-count="7"><span style="width: 18px; height: 18px; border-radius: 6px; background: {{d}}"></span></sc-for>
+<span class="s mono" style="margin-left: auto; font-size: 12px">серия {{h.cur}} · лучшая {{h.best}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Серии по сферам</span><span>дней</span></div>
+<div class="card">
+<table>
+<thead><tr><th>Сфера</th><th>Сейчас</th><th>Лучшая</th><th>Выполнено</th></tr></thead>
+<tbody>
+<tr><td>Учёба</td><td class="mono">2</td><td class="mono" style="color: #8e8e93">9</td><td class="mono">52%</td></tr>
+<tr><td>Деньги</td><td class="mono">3</td><td class="mono" style="color: #8e8e93">11</td><td class="mono">64%</td></tr>
+<tr><td>Здоровье</td><td class="mono">6</td><td class="mono" style="color: #8e8e93">14</td><td class="mono">78%</td></tr>
+<tr><td>Личное</td><td class="mono">4</td><td class="mono" style="color: #8e8e93">7</td><td class="mono">70%</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Отбой · 14 ночей</span><span>норма 01:00</span></div>
+<div class="card" style="padding: 14px 14px 14px 10px">
+<div class="s" style="font-size: 12px; margin: 0 0 6px 4px">↑ раньше — вечер</div>
+<svg viewBox="0 0 330 180" role="img" aria-label="Время отбоя за 14 ночей, вовремя 5 из 14" style="width: 100%; height: 180px; display: block; overflow: visible">
+<rect x="44" y="{{okTop}}" width="286" height="{{okH}}" rx="6" style="fill: rgba(245,245,247,0.04)"></rect>
+<sc-for list="{{yTicks}}" as="y" hint-placeholder-count="6">
+<line x1="44" x2="330" y1="{{y.y}}" y2="{{y.y}}" style="stroke: #1b1b1e"></line>
+<text x="0" y="{{y.ty}}" class="ax" style="font-size: 12px; fill: #aeaeb2">{{y.l}}</text>
+</sc-for>
+<line x1="44" x2="330" y1="{{goalY}}" y2="{{goalY}}" style="stroke: #ff2d55; stroke-width: 1.25; stroke-dasharray: 4 4"></line>
+<path d="{{bedLine}}" style="fill: none; stroke: #636366; stroke-width: 1.75; stroke-linecap: round"></path>
+<sc-for list="{{nights}}" as="n" hint-placeholder-count="14"><circle cx="{{n.x}}" cy="{{n.y}}" r="5" style="fill: {{n.fill}}; stroke: {{n.stroke}}; stroke-width: 1.75"></circle></sc-for>
+</svg>
+<div class="s" style="font-size: 12px; margin: 4px 0 0 4px">↓ позже — глубокая ночь</div>
+<div style="display: flex; gap: 16px; margin: 12px 0 0 4px; font-size: 12px; color: #8e8e93">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 50%; background: #f5f5f7"></span>в норме</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 50%; border: 1.75px solid #8e8e93"></span>позже</span>
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; border-top: 1.5px dashed #ff2d55"></span>норма</span>
+</div>
+</div>
+</section>
+
+<button class="btn lg" style="background: #0a0a0b; border: 1px solid #1b1b1e"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"></path></svg>Разбор {{periodGen}} от Claude</button>
+
+</main>
+
+<div style="position: absolute; left: 16px; bottom: 24px; width: 358px; height: 68px">
+<dc-import name="TabBar" active="review" hint-size="358px,68px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2120}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { m: 0, all: false }; }
+  renderVals() {
+    const s = this.state, f = (n) => +n.toFixed(1);
+    const smooth = (P) => {
+      let d = 'M' + f(P[0][0]) + ' ' + f(P[0][1]);
+      for (let i = 0; i < P.length - 1; i++) {
+        const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+        d += ' C' + f(p1[0] + (p2[0] - p0[0]) / 6) + ' ' + f(p1[1] + (p2[1] - p0[1]) / 6) + ' ' + f(p2[0] - (p3[0] - p1[0]) / 6) + ' ' + f(p2[1] - (p3[1] - p1[1]) / 6) + ' ' + f(p2[0]) + ' ' + f(p2[1]);
+      }
+      return d;
+    };
+    const segs = ['Месяц', 'Неделя'].map((label, i) => ({ label, cls: s.m === i ? 'on' : '', pick: () => this.setState({ m: i }) }));
+    const LV = ['#1b1b1e', '#4a1420', '#8a1d36', '#c9244a', '#ff2d55'];
+    const lvl = (v) => v < 20 ? 0 : v < 40 ? 1 : v < 60 ? 2 : v < 80 ? 3 : 4;
+    const R = [72, 81, 64, 45, 30, 58, 66, 70, 85, 52, 38, 61, 77, 48, 55, 69, 74, 40, 88, 63, 56, 64];
+    const cells = [];
+    for (let i = 0; i < 6; i++) cells.push({ n: '', tip: '', bg: 'transparent', fc: 'transparent', ring: 'none' });
+    for (let d = 1; d <= 30; d++) {
+      const v = R[d - 1];
+      if (v === undefined) cells.push({ n: d, tip: d + ' нояб', bg: 'transparent', fc: '#636366', ring: 'inset 0 0 0 1px #1b1b1e' });
+      else { const l = lvl(v); cells.push({ n: d, tip: d + ' нояб · ' + v + '%', bg: LV[l], fc: '#fff', ring: d === 22 ? '0 0 0 1.5px #0a0a0b, 0 0 0 3px #f5f5f7' : 'none' }); }
+    }
+    while (cells.length % 7) cells.push({ n: '', tip: '', bg: 'transparent', fc: 'transparent', ring: 'none' });
+    const wv = [52, 61, 40, 70, 55, 56, 64], wd = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const wbars = wv.map((v, i) => ({ v, d: wd[i], h: Math.round(v * 1.1), bg: i === 6 ? '#ff2d55' : '#2c2c2e', c: i === 6 ? '#f5f5f7' : '#8e8e93' }));
+    const A = [
+      { t: 'Отбой 4 дня подряд позже нормы', s: 'Последний раз вовремя — во вторник', c: '#ff2d55' },
+      { t: '«Чтение» — 43%', s: 'Ниже 60% — привычка не держится', c: '#ff2d55' },
+      { t: '3 просроченные задачи', s: 'Из них 1 критичная', c: '#8e8e93' },
+      { t: 'Средний отбой 02:05', s: 'Норма 01:00 — минус час каждую ночь', c: '#8e8e93' },
+      { t: 'Долг сна 3 ч 40 м', s: 'За 7 ночей при норме 8 ч', c: '#8e8e93' },
+      { t: '«Низко» 3 раза за неделю', s: 'Все три — после позднего отбоя', c: '#8e8e93' }
+    ];
+    const H = (name, pct, p, cur, best) => ({ name, pct, cur, best, dots: p.split('').map((c) => c === '1' ? '#ff2d55' : '#1b1b1e') });
+    const habits = [H('Утренняя рутина', 100, '1111111', 12, 12), H('Вода 8 стаканов', 86, '1101111', 4, 14), H('Тренировка', 75, '1010100', 3, 9), H('Отбой вовремя', 29, '1100000', 0, 5), H('Чтение 30 мин', 43, '1010010', 0, 6)];
+    const bed = [150, 190, 120, 95, 200, 130, 170, 60, 110, 185, 140, 70, 155, 190];
+    const yOf = (min) => f(10 + min / 300 * 150);
+    const pts = bed.map((b, i) => [52 + i * 20.5, yOf(b)]);
+    const nights = bed.map((b, i) => ({ x: f(pts[i][0]), y: pts[i][1], fill: b <= 120 ? '#f5f5f7' : '#0a0a0b', stroke: b <= 120 ? '#f5f5f7' : '#8e8e93' }));
+    const yTicks = [['23:00', 0], ['00:00', 60], ['01:00', 120], ['02:00', 180], ['03:00', 240], ['04:00', 300]].map(([l, m]) => ({ l, y: yOf(m), ty: yOf(m) + 4 }));
+    return {
+      segs, cells, legend: LV, dow: wd, wbars, habits, nights, yTicks,
+      isMonth: s.m === 0, isWeek: s.m === 1,
+      avg: s.m === 0 ? 61 : 58,
+      alerts: s.all ? A : A.slice(0, 3),
+      moreLabel: s.all ? 'Свернуть' : 'Ещё 3',
+      toggleAll: () => this.setState({ all: !s.all }),
+      goalY: yOf(120), okTop: yOf(0), okH: f(yOf(120) - yOf(0)),
+      bedLine: smooth(pts),
+      period: s.m === 0 ? 'Ноябрь' : '16 — 22 ноября',
+      periodGen: s.m === 0 ? 'месяца' : 'недели'
+    };
+  }
+}
+</script>
+</body>
+</html>

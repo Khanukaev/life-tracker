@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Задачи</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:0}
+.card{background:#0a0a0b;border:1px solid #1b1b1e;border-radius:16px}
+.sec{font-size:13px;font-weight:500;color:#8e8e93;margin:0 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.t{font-size:15px;line-height:20px;color:#f5f5f7}
+.s{font-size:13px;line-height:17px;color:#8e8e93}
+.btn{appearance:none;border:0;font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;font-size:14px;font-weight:500;height:32px;padding:0 12px;background:#1b1b1e;color:#f5f5f7;text-decoration:none;white-space:nowrap}
+.btn.tint{background:rgba(255,45,85,.14);color:#ff2d55}
+.btn.lg{height:50px;font-size:16px;width:100%;border-radius:14px}
+.ib{appearance:none;border:0;background:transparent;color:#f5f5f7;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;cursor:pointer;padding:0;text-decoration:none}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chk{width:26px;height:26px;border-radius:999px;border:1.5px solid #636366;display:inline-flex;align-items:center;justify-content:center;flex:none;background:transparent;padding:0;cursor:pointer;color:#fff}
+.chk.on{background:#ff2d55;border-color:#ff2d55}
+.chk.crit{border-color:#ff2d55}
+.chk.imp{border-color:#d1d1d6}
+.chk.done{background:#3a3a3c;border-color:#3a3a3c}
+.tag{font-size:11px;line-height:18px;padding:0 7px;border-radius:6px;background:#1b1b1e;color:#aeaeb2;font-weight:500;white-space:nowrap}
+.tag.crit{background:rgba(255,45,85,.14);color:#ff4d6d}
+.chip{appearance:none;font:inherit;font-size:14px;font-weight:500;height:34px;padding:0 14px;border-radius:999px;border:1px solid #1b1b1e;background:#0a0a0b;color:#aeaeb2;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap;flex:none}
+.chip.on{background:#f5f5f7;color:#000;border-color:#f5f5f7}
+.chip .n{font-family:'Geist Mono',monospace;font-size:12px;opacity:.7}
+.tc{background:#0a0a0b;border:1px solid #1b1b1e;border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.tc.crit{border-color:rgba(255,45,85,.42)}
+.slot{margin-top:12px;padding:10px 10px 10px 12px;border-radius:12px;background:#141416;display:flex;align-items:center;gap:10px}
+.bar{height:6px;border-radius:3px;background:#1b1b1e;overflow:hidden;position:relative}
+</style>
+</helmet>
+<div style="width: 390px; height: 1500px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+
+<header style="padding: 44px 8px 0 4px">
+<div style="display: flex; justify-content: space-between">
+<a class="ib" href="Profile.dc.html" style="width: auto; padding: 0 8px; gap: 2px; font-size: 17px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>Профиль</a>
+<a class="ib" href="TaskSheet.dc.html" aria-label="Новая задача"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+</div>
+<h1 style="margin: 0 0 0 12px; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.03em">Задачи</h1>
+</header>
+
+<nav aria-label="Фильтр задач" style="display: flex; gap: 8px; overflow-x: auto; padding: 16px 16px 4px; scrollbar-width: none">
+<sc-for list="{{tabs}}" as="tb" hint-placeholder-count="6"><button class="chip {{tb.cls}}" onClick="{{tb.pick}}">{{tb.label}}<span class="n">{{tb.n}}</span></button></sc-for>
+</nav>
+
+<main style="padding: 16px 16px 0; display: flex; flex-direction: column; gap: 8px">
+
+<sc-if value="{{isOverdue}}" hint-placeholder-val="{{ false }}">
+<div class="card" style="padding: 14px 16px; margin-bottom: 8px">
+<button class="btn tint lg" style="height: 44px">Перенести всё просроченное на сегодня</button>
+<div class="s" style="display: flex; gap: 8px; align-items: flex-start; margin-top: 12px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; margin-top: 1px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><span>После переноса критичных на сегодня станет 3 — это предел. Когда всё важно — ничего не важно.</span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{isEnergy}}" hint-placeholder-val="{{ false }}">
+<div class="sec"><span>Задачи против окон на сегодня</span><span>часы</span></div>
+<div class="card" style="padding: 4px 16px">
+<sc-for list="{{zones}}" as="z" hint-placeholder-count="3">
+<div style="padding: 14px 0; border-bottom: {{z.bd}}">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span class="t" style="font-weight: 500">{{z.name}}</span><span class="mono" style="font-size: 14px">{{z.tasks}} ч <span style="color: #8e8e93">/ {{z.wins}} ч окон</span></span></div>
+<div class="bar" style="margin-top: 10px"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{z.winPct}}%; background: #2c2c2e; border-radius: 3px"></span><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{z.taskPct}}%; background: {{z.fill}}; border-radius: 3px"></span></div>
+<div class="s" style="margin-top: 8px">{{z.note}}</div>
+</div>
+</sc-for>
+</div>
+<div class="sec" style="margin-top: 20px"><span>Focus · сначала критичные</span></div>
+</sc-if>
+
+<sc-for list="{{list}}" as="t" hint-placeholder-count="6">
+<div class="tc {{t.cardCls}}">
+<button class="chk {{t.chk}}" aria-label="{{t.aria}}"><sc-if value="{{t.done}}" hint-placeholder-val="{{ false }}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 15px; height: 15px; stroke-width: 2.4"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if></button>
+<div style="flex: 1; min-width: 0">
+<a href="TaskSheet.dc.html" class="t" style="display: block; text-decoration: none; color: {{t.tc}}">{{t.title}}</a>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; align-items: center">
+<sc-if value="{{t.isCrit}}" hint-placeholder-val="{{ false }}"><span class="tag crit">Критичная</span></sc-if>
+<sc-if value="{{t.isImp}}" hint-placeholder-val="{{ false }}"><span class="tag">Важная</span></sc-if>
+<sc-if value="{{t.claude}}" hint-placeholder-val="{{ false }}"><span class="tag" style="display: inline-flex; align-items: center; gap: 4px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 11px; height: 11px"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"></path></svg>от Claude</span></sc-if>
+<span class="s mono" style="font-size: 12px">{{t.meta}}</span>
+</div>
+<sc-if value="{{t.warn}}" hint-placeholder-val="{{ false }}">
+<div class="s" style="display: flex; gap: 6px; align-items: center; margin-top: 8px; color: #d1d1d6"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>Низкая энергия для Focus в это время</div>
+</sc-if>
+<sc-if value="{{t.slot}}" hint-placeholder-val="{{ false }}">
+<div class="slot"><div style="flex: 1; min-width: 0"><div class="s" style="font-size: 12px">Лучший слот</div><div class="mono" style="font-size: 13px; color: #f5f5f7; margin-top: 2px">{{t.slot}}</div></div><button class="btn tint">Поставить</button></div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+
+</main>
+
+<div style="position: absolute; left: 16px; bottom: 24px; width: 358px; height: 68px">
+<dc-import name="TabBar" active="profile" hint-size="358px,68px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { tab: 'today' }; }
+  renderVals() {
+    const T = (title, meta, imp, where, o) => Object.assign({ title, meta, imp, where, done: false, claude: false, slot: '', warn: false, zone: 'Steady' }, o || {});
+    const all = [
+      T('Купить продукты', 'Без времени · 30 мин · Recharge · Личное', 'norm', 'today', { zone: 'Recharge' }),
+      T('Сдать курсовой проект', '16:00–17:00 · 1 ч · Focus · Учёба', 'crit', 'today', { zone: 'Focus' }),
+      T('Ответить на письма', 'Без времени · 30 мин · Steady', 'imp', 'today'),
+      T('Встреча с командой', '13:00–14:00 · Steady', 'norm', 'today', { done: true }),
+      T('Разобрать почту', '22:30–23:30 · 1 ч · Focus', 'norm', 'today', { zone: 'Focus', warn: true, slot: 'Завтра 11:00–12:00 · Focus · ~76' }),
+      T('Оплатить аренду', 'Без времени · 15 мин · Steady · Деньги', 'crit', 'today', { claude: true }),
+      T('Подготовить отчёт', 'Вчера · 1 ч · Focus · Деньги', 'crit', 'overdue', { zone: 'Focus' }),
+      T('Записаться к врачу', 'Пт, 20 нояб · 15 мин · Здоровье', 'norm', 'overdue'),
+      T('Прочитать главу 4', 'Входящие · 1 ч · Focus · Учёба', 'norm', 'inbox', { claude: true }),
+      T('Продлить подписку', 'Входящие · 15 мин · Деньги', 'norm', 'inbox'),
+      T('Спланировать поездку', 'Входящие · 1 ч · Личное', 'imp', 'inbox'),
+      T('Контрольная по физике', 'Чт, 26 нояб · 2 ч · Focus · Учёба', 'crit', 'two', { zone: 'Focus' }),
+      T('Сдать налоговую декларацию', 'Сб, 28 нояб · 1 ч · Деньги', 'imp', 'two'),
+      T('День рождения друга', 'Вт, 1 дек · Личное', 'norm', 'two'),
+      T('Купить подарок', 'Ср, 2 дек · 30 мин · Личное', 'norm', 'two'),
+      T('Лабораторная работа', 'Сб, 21 нояб · Focus', 'crit', 'done', { done: true }),
+      T('Пробежка 5 км', 'Пт, 20 нояб · Здоровье', 'imp', 'done', { done: true })
+    ];
+    const rank = { crit: 0, imp: 1, norm: 2 };
+    const sort = (xs) => xs.slice().sort((a, b) => (a.done - b.done) || (rank[a.imp] - rank[b.imp]));
+    const tab = this.state.tab;
+    let src;
+    if (tab === 'today') src = all.filter((t) => t.where === 'today');
+    else if (tab === 'energy') src = all.filter((t) => t.where === 'today' && t.zone === 'Focus' && !t.done);
+    else src = all.filter((t) => t.where === tab);
+    const list = sort(src).map((t) => Object.assign({}, t, {
+      isCrit: t.imp === 'crit' && !t.done, isImp: t.imp === 'imp' && !t.done,
+      chk: t.done ? 'done' : t.imp === 'crit' ? 'crit' : t.imp === 'imp' ? 'imp' : '',
+      cardCls: t.imp === 'crit' && !t.done ? 'crit' : '',
+      tc: t.done ? '#8e8e93' : t.imp === 'norm' ? '#d1d1d6' : '#f5f5f7',
+      aria: (t.done ? 'Выполнено: ' : 'Выполнить: ') + t.title
+    }));
+    const cnt = (w) => all.filter((t) => t.where === w).length;
+    const defs = [['inbox', 'Входящие', cnt('inbox')], ['today', 'Сегодня', cnt('today')], ['overdue', 'Просрочено', cnt('overdue')], ['two', '2 недели', cnt('two')], ['done', 'Выполнено', cnt('done')], ['energy', 'По энергии', '']];
+    const tabs = defs.map(([id, label, n]) => ({ label, n, cls: tab === id ? 'on' : '', pick: () => this.setState({ tab: id }) }));
+    const zones = [
+      { name: 'Focus', tasks: '4,5', wins: '3,5', taskPct: 100, winPct: 78, fill: '#ff2d55', note: 'Не влезает 1 ч. Перенеси «Разобрать почту» на завтра 11:00.', bd: '1px solid #1b1b1e' },
+      { name: 'Steady', tasks: '1,5', wins: '4,5', taskPct: 33, winPct: 100, fill: '#f5f5f7', note: 'Запас 3 ч — сюда рутина и ДЗ.', bd: '1px solid #1b1b1e' },
+      { name: 'Recharge', tasks: '0,3', wins: '3,5', taskPct: 8, winPct: 100, fill: '#8e8e93', note: 'Отдых — тоже план.', bd: '0' }
+    ];
+    return { tabs, list, zones, isOverdue: tab === 'overdue', isEnergy: tab === 'energy' };
+  }
+}
+</script>
+</body>
+</html>

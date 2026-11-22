@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Как спал</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:0}
+.sec{font-size:13px;font-weight:500;color:#8e8e93;margin:0 4px 8px}
+.s{font-size:13px;line-height:17px;color:#8e8e93}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#141416;border-radius:10px;padding:2px;gap:2px}
+.seg button{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;height:38px;border-radius:8px;background:transparent;color:#f5f5f7;cursor:pointer}
+.seg button.on{background:#3a3a3c}
+.col{background:#141416;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.steps button{appearance:none;border:0;font:inherit;font-family:'Geist Mono',monospace;font-size:12px;height:32px;border-radius:8px;background:#232326;color:#f5f5f7;cursor:pointer;padding:0}
+.save{appearance:none;border:0;font:inherit;font-size:17px;font-weight:600;height:52px;width:100%;border-radius:14px;background:#ff2d55;color:#fff;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 900px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; top: 30px; bottom: 0; background: #0a0a0b; border-radius: 14px 14px 0 0; border-top: 1px solid #1b1b1e">
+<div style="width: 36px; height: 5px; border-radius: 3px; background: #3a3a3c; margin: 6px auto 0"></div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 0">
+<a href="Main.dc.html" style="height: 44px; padding: 0 10px; display: inline-flex; align-items: center; font-size: 17px; color: #f5f5f7; text-decoration: none">Отмена</a>
+<div style="text-align: center"><h1 style="margin: 0; font-size: 17px; font-weight: 600">Как спал?</h1><div class="s" style="font-size: 12px">ночь на 22 ноября</div></div>
+<span style="width: 76px"></span>
+</div>
+
+<div style="padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="position: relative; width: 300px; height: 300px; margin: 0 auto">
+<svg viewBox="0 0 300 300" role="img" aria-label="Циферблат сна: лёг {{bedL}}, встал {{wakeL}}" style="width: 300px; height: 300px; display: block">
+<circle cx="150" cy="150" r="112" style="fill: none; stroke: #1b1b1e; stroke-width: 34"></circle>
+<sc-for list="{{ticks}}" as="k" hint-placeholder-count="48"><line x1="{{k.x1}}" y1="{{k.y1}}" x2="{{k.x2}}" y2="{{k.y2}}" style="stroke: {{k.c}}; stroke-width: {{k.w}}; stroke-linecap: round"></line></sc-for>
+<sc-for list="{{nums}}" as="n" hint-placeholder-count="4"><text x="{{n.x}}" y="{{n.y}}" text-anchor="middle" dominant-baseline="central" style="font: 500 12px 'Geist Mono', monospace; fill: #8e8e93">{{n.l}}</text></sc-for>
+<path d="{{arc}}" style="fill: none; stroke: #ff2d55; stroke-width: 34; stroke-linecap: round"></path>
+<circle cx="{{bx}}" cy="{{by}}" r="15" style="fill: #f5f5f7"></circle>
+<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" transform="translate({{bix}} {{biy}}) scale(0.6)" style="fill: none; stroke: #000; stroke-width: 2.6; stroke-linejoin: round"></path>
+<circle cx="{{wx}}" cy="{{wy}}" r="15" style="fill: #f5f5f7"></circle>
+<g transform="translate({{wix}} {{wiy}}) scale(0.6)" style="fill: none; stroke: #000; stroke-width: 2.6; stroke-linecap: round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></g>
+</svg>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none">
+<div class="mono" style="font-size: 34px; font-weight: 500; letter-spacing: -0.03em">{{durL}}</div>
+<div class="s mono" style="margin-top: 4px">{{bedL}} → {{wakeL}}</div>
+</div>
+</div>
+<div class="s" style="text-align: center; margin-top: -8px">Перетащи ручки или уточни шагами</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<div class="col">
+<div class="s" style="display: flex; align-items: center; gap: 6px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>Лёг</div>
+<div class="mono" style="font-size: 26px; font-weight: 500">{{bedL}}</div>
+<div class="steps"><sc-for list="{{bedSteps}}" as="b" hint-placeholder-count="4"><button onClick="{{b.go}}" aria-label="Лёг {{b.l}} минут">{{b.l}}</button></sc-for></div>
+</div>
+<div class="col">
+<div class="s" style="display: flex; align-items: center; gap: 6px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path></svg>Встал</div>
+<div class="mono" style="font-size: 26px; font-weight: 500">{{wakeL}}</div>
+<div class="steps"><sc-for list="{{wakeSteps}}" as="b" hint-placeholder-count="4"><button onClick="{{b.go}}" aria-label="Встал {{b.l}} минут">{{b.l}}</button></sc-for></div>
+</div>
+</div>
+
+<section>
+<div class="sec">Качество</div>
+<div class="seg" role="group" aria-label="Качество сна"><sc-for list="{{quals}}" as="q" hint-placeholder-count="3"><button class="{{q.cls}}" onClick="{{q.pick}}">{{q.label}}</button></sc-for></div>
+<div class="s" style="margin: 10px 4px 0">{{lateNote}}</div>
+</section>
+
+<button class="save">Сохранить</button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { bed: 130, wake: 630, q: 2 }; }
+  renderVals() {
+    const s = this.state, C = 150, R = 112;
+    const ang = (m) => (m / 1440) * Math.PI * 2 - Math.PI / 2;
+    const pt = (m, r) => [C + r * Math.cos(ang(m)), C + r * Math.sin(ang(m))];
+    const f = (n) => +n.toFixed(1);
+    const fmt = (m) => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+    const dur = ((s.wake - s.bed) % 1440 + 1440) % 1440;
+    const [sx, sy] = pt(s.bed, R), [ex, ey] = pt(s.wake, R);
+    const arc = 'M' + f(sx) + ' ' + f(sy) + ' A' + R + ' ' + R + ' 0 ' + (dur > 720 ? 1 : 0) + ' 1 ' + f(ex) + ' ' + f(ey);
+    const ticks = Array.from({ length: 48 }, (_, i) => {
+      const m = i * 30, major = i % 2 === 0;
+      const [x1, y1] = pt(m, 84), [x2, y2] = pt(m, major ? 78 : 81);
+      return { x1: f(x1), y1: f(y1), x2: f(x2), y2: f(y2), c: major ? '#636366' : '#3a3a3c', w: major ? 1.5 : 1 };
+    });
+    const nums = [['00', 0], ['06', 360], ['12', 720], ['18', 1080]].map(([l, m]) => { const [x, y] = pt(m, 64); return { l, x: f(x), y: f(y) }; });
+    const mk = (key) => [-15, -5, 5, 15].map((d) => ({ l: (d > 0 ? '+' : '−') + Math.abs(d), go: () => this.setState({ [key]: ((s[key] + d) % 1440 + 1440) % 1440 }) }));
+    const quals = ['Плохо', 'Нормально', 'Хорошо'].map((label, i) => ({ label, cls: s.q === i ? 'on' : '', pick: () => this.setState({ q: i }) }));
+    const late = ((s.bed - 60 + 1440) % 1440);
+    return {
+      arc, ticks, nums, quals,
+      bx: f(sx), by: f(sy), bix: f(sx - 7.2), biy: f(sy - 7.2),
+      wx: f(ex), wy: f(ey), wix: f(ex - 7.2), wiy: f(ey - 7.2),
+      bedL: fmt(s.bed), wakeL: fmt(s.wake),
+      durL: Math.floor(dur / 60) + ' ч ' + String(dur % 60).padStart(2, '0') + ' м',
+      bedSteps: mk('bed'), wakeSteps: mk('wake'),
+      lateNote: late > 0 && late < 600 ? 'Позже твоей нормы отбоя (01:00) на ' + Math.floor(late / 60) + ' ч ' + (late % 60) + ' м — это снизит энергию днём.' : 'В пределах твоей нормы отбоя — энергия днём будет выше.'
+    };
+  }
+}
+</script>
+</body>
+</html>

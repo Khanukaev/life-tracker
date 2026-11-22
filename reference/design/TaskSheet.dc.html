@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Новая задача</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:0}
+.grp{background:#141416;border-radius:14px}
+.grp>.row+.row{border-top:1px solid #232326}
+.sec{font-size:13px;font-weight:500;color:#8e8e93;margin:0 4px 8px}
+.row{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 16px}
+.t{font-size:15px;line-height:20px;color:#f5f5f7}
+.s{font-size:13px;line-height:17px;color:#8e8e93}
+.btn{appearance:none;border:0;font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;font-size:14px;font-weight:500;height:32px;padding:0 12px;background:#232326;color:#f5f5f7;white-space:nowrap}
+.btn.tint{background:rgba(255,45,85,.14);color:#ff2d55}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{appearance:none;font:inherit;font-size:14px;font-weight:500;height:36px;padding:0 14px;border-radius:999px;border:1px solid #232326;background:#141416;color:#aeaeb2;cursor:pointer;white-space:nowrap}
+.chip.on{background:#f5f5f7;color:#000;border-color:#f5f5f7}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#141416;border-radius:10px;padding:2px;gap:2px}
+.seg button{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;height:38px;border-radius:8px;background:transparent;color:#f5f5f7;cursor:pointer}
+.seg button.on{background:#3a3a3c}
+.imp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.imp button{appearance:none;font:inherit;cursor:pointer;text-align:left;border-radius:14px;border:1px solid #232326;background:#141416;color:#f5f5f7;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:84px}
+.imp button.on{background:#232326;border-color:#636366}
+.imp button.on.crit{background:rgba(255,45,85,.10);border-color:rgba(255,45,85,.6)}
+.imp .nm{font-size:15px;font-weight:600}
+.imp .ds{font-size:12px;line-height:15px;color:#8e8e93}
+.dot{width:14px;height:14px;border-radius:50%;border:1.5px solid #636366}
+input,textarea{font:inherit;color:#f5f5f7;background:transparent;border:0;outline:0;width:100%;padding:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 1240px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+<div style="position: absolute; left: 12px; right: 12px; top: 18px; height: 40px; border-radius: 14px 14px 0 0; background: #0a0a0b; opacity: 0.5"></div>
+<div style="position: absolute; left: 0; right: 0; top: 30px; bottom: 0; background: #0a0a0b; border-radius: 14px 14px 0 0; border-top: 1px solid #1b1b1e">
+<div style="width: 36px; height: 5px; border-radius: 3px; background: #3a3a3c; margin: 6px auto 0"></div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 0">
+<a href="Tasks.dc.html" style="height: 44px; padding: 0 10px; display: inline-flex; align-items: center; font-size: 17px; color: #f5f5f7; text-decoration: none">Отмена</a>
+<h1 style="margin: 0; font-size: 17px; font-weight: 600">Новая задача</h1>
+<a href="Tasks.dc.html" style="height: 44px; padding: 0 10px; display: inline-flex; align-items: center; font-size: 17px; font-weight: 600; color: #ff2d55; text-decoration: none">Готово</a>
+</div>
+
+<div style="padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 24px">
+
+<div class="grp">
+<label class="row"><span style="position: absolute; left: -9999px">Название</span><input type="text" value="Подготовить презентацию проекта" style="font-size: 17px; font-weight: 500"></label>
+<label class="row" style="align-items: flex-start"><span style="position: absolute; left: -9999px">Описание</span><textarea rows="2" style="font-size: 15px; color: #8e8e93; resize: none">10 слайдов, сдать до пятницы</textarea></label>
+</div>
+
+<section>
+<div class="sec">Важность</div>
+<div class="imp" role="radiogroup" aria-label="Важность">
+<sc-for list="{{imps}}" as="i" hint-placeholder-count="3">
+<button class="{{i.cls}}" role="radio" aria-checked="{{i.on}}" onClick="{{i.pick}}"><span class="dot" style="border-color: {{i.ring}}; background: {{i.fill}}"></span><span class="nm">{{i.label}}</span><span class="ds">{{i.desc}}</span></button>
+</sc-for>
+</div>
+<sc-if value="{{showWarn}}" hint-placeholder-val="{{ true }}">
+<div style="margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: #141416; display: flex; gap: 10px; align-items: flex-start">
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; color: #f5f5f7; margin-top: 1px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>
+<div style="flex: 1"><div class="t" style="font-weight: 500">Когда всё важно — ничего не важно</div><div class="s" style="margin-top: 3px">На сегодня уже 3 критичные. Эта станет четвёртой — точно не просто важная?</div>
+<button class="btn" style="margin-top: 10px" onClick="{{toImp}}">Сделать важной</button></div>
+</div>
+</sc-if>
+<div class="s" style="margin: 10px 4px 0">{{impNote}}</div>
+</section>
+
+<section>
+<div class="sec">Когда</div>
+<div class="chips" style="margin-bottom: 12px"><sc-for list="{{dates}}" as="d" hint-placeholder-count="4"><button class="chip {{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div>
+<div class="grp">
+<div class="row"><span class="t" style="flex: 1">Время</span><span class="mono" style="font-size: 15px; padding: 4px 10px; border-radius: 8px; background: #232326">22:30</span></div>
+</div>
+<div class="sec" style="margin-top: 16px">Длительность</div>
+<div class="chips"><sc-for list="{{durs}}" as="d" hint-placeholder-count="7"><button class="chip {{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div>
+</section>
+
+<section>
+<div class="sec">Тип энергии</div>
+<div class="seg" role="group" aria-label="Тип энергии"><sc-for list="{{energies}}" as="e" hint-placeholder-count="3"><button class="{{e.cls}}" onClick="{{e.pick}}">{{e.label}}</button></sc-for></div>
+<div style="margin-top: 10px; padding: 12px 12px 12px 14px; border-radius: 14px; background: #141416">
+<div class="s" style="display: flex; gap: 6px; align-items: center; color: #d1d1d6"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg>В 22:30 энергия ~36 — низко для Focus</div>
+<div style="display: flex; align-items: center; gap: 10px; margin-top: 10px">
+<div style="flex: 1"><div class="s" style="font-size: 12px">Лучший слот</div><div class="mono" style="font-size: 13px; margin-top: 2px">Завтра 11:00–12:00 · Focus · ~76</div></div>
+<button class="btn tint">Поставить</button>
+</div>
+</div>
+</section>
+
+<section>
+<div class="sec">Сфера</div>
+<div class="chips"><sc-for list="{{spheres}}" as="d" hint-placeholder-count="4"><button class="chip {{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for><button class="chip" style="border-style: dashed; background: transparent">+ Сфера</button></div>
+</section>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"importance":{"editor":"enum","options":["norm","imp","crit"],"default":"crit"},"$preview":{"width":390,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { imp: null, date: 'Сегодня', dur: '1 ч', en: 'Focus', sp: 'Учёба' }; }
+  renderVals() {
+    const s = this.state;
+    const imp = s.imp ?? this.props.importance ?? 'crit';
+    const defs = [
+      ['norm', 'Обычная', 'По умолчанию', '#636366'],
+      ['imp', 'Важная', 'Светлее в списках', '#d1d1d6'],
+      ['crit', 'Критичная', 'Наверх и в «Главное»', '#ff2d55']
+    ];
+    const imps = defs.map(([id, label, desc, ring]) => ({
+      label, desc, ring, on: imp === id,
+      fill: imp === id ? ring : 'transparent',
+      cls: (imp === id ? 'on' : '') + (id === 'crit' ? ' crit' : ''),
+      pick: () => this.setState({ imp: id })
+    }));
+    const notes = {
+      norm: 'Обычные задачи весят ×2 в рейтинге дня.',
+      imp: 'Важная — метка и светлее в списках. Вес ×2.',
+      crit: 'Критичные идут первыми везде и весят ×3: невыполненная бьёт по рейтингу сильнее.'
+    };
+    const pickList = (arr, key) => arr.map((label) => ({ label, cls: s[key] === label ? 'on' : '', pick: () => this.setState({ [key]: label }) }));
+    return {
+      imps, impNote: notes[imp], showWarn: imp === 'crit',
+      toImp: () => this.setState({ imp: 'imp' }),
+      dates: pickList(['Входящие', 'Сегодня', 'Завтра', 'Дата…'], 'date'),
+      durs: pickList(['15 мин', '30 мин', '45 мин', '1 ч', '1,5 ч', '2 ч', '3 ч'], 'dur'),
+      energies: ['Focus', 'Steady', 'Recharge'].map((label) => ({ label, cls: s.en === label ? 'on' : '', pick: () => this.setState({ en: label }) })),
+      spheres: pickList(['Учёба', 'Деньги', 'Здоровье', 'Личное'], 'sp')
+    };
+  }
+}
+</script>
+</body>
+</html>

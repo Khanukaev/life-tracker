@@ -1,0 +1,30 @@
+# Private source material (contains personal data) — see docs decision #8
+reference/artifact.html
+PROMPT.md
+# Local working notes (Russian, not part of the published docs)
+docs/stage-0-analysis.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

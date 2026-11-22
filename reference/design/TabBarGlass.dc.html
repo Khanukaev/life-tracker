@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Таб-бар · Glass</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<nav aria-label="Навигация" style="width: 358px; height: 68px; box-sizing: border-box; border-radius: 34px; background: rgba(255,255,255,0.08); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border: 1px solid rgba(255,255,255,0.14); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.05), 0 16px 40px rgba(0,0,0,0.45); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; padding: 0 6px; font-family: Geist, -apple-system, system-ui, sans-serif; color: #8e8e93">
+<sc-for list="{{left}}" as="it" hint-placeholder-count="2">
+<a href="{{it.href}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 56px; margin: 0 2px; border-radius: 28px; background: {{it.bg}}; box-shadow: {{it.sh}}; text-decoration: none; font-size: 10px; font-weight: 500; color: {{it.color}}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round"><path d="{{it.d}}"></path></svg><span>{{it.label}}</span></a>
+</sc-for>
+<a href="TaskSheetGlass.dc.html" aria-label="Добавить задачу" style="justify-self: center; width: 52px; height: 52px; border-radius: 26px; background: rgba(255,45,85,0.88); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 18px rgba(255,45,85,0.45); color: #fff; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round"><path d="M12 5v14M5 12h14"></path></svg></a>
+<sc-for list="{{right}}" as="it" hint-placeholder-count="2">
+<a href="{{it.href}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 56px; margin: 0 2px; border-radius: 28px; background: {{it.bg}}; box-shadow: {{it.sh}}; text-decoration: none; font-size: 10px; font-weight: 500; color: {{it.color}}"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round"><path d="{{it.d}}"></path></svg><span>{{it.label}}</span></a>
+</sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["day","now","review","profile","none"],"default":"day"},"$preview":{"width":358,"height":68}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.active ?? 'day';
+    const mk = (id, label, href, d) => ({ label, href, d, color: a === id ? '#f5f5f7' : '#a1a1a6', bg: a === id ? 'rgba(255,255,255,0.12)' : 'transparent', sh: a === id ? 'inset 0 1px 0 rgba(255,255,255,0.2)' : 'none' });
+    return {
+      left: [
+        mk('day', 'День', 'MainGlass.dc.html', 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4'),
+        mk('now', 'Сейчас', 'NowGlass.dc.html', 'M13 3L5 13.5h6L10 21l9-11h-6z')
+      ],
+      right: [
+        mk('review', 'Итоги', 'ReviewGlass.dc.html', 'M5 20v-6M12 20V5M19 20v-10'),
+        mk('profile', 'Профиль', 'ProfileGlass.dc.html', 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5c.8-3.5 3.8-5.5 7.5-5.5s6.7 2 7.5 5.5')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

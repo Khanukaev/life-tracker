@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>День</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.mono{font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;letter-spacing:0}
+.card{background:#0a0a0b;border:1px solid #1b1b1e;border-radius:18px}
+.sec{font-size:13px;font-weight:500;color:#8e8e93;margin:0 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.row{display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 16px}
+.list>.row+.row{border-top:1px solid #1b1b1e}
+.t{font-size:16px;line-height:21px;color:#f5f5f7}
+.s{font-size:13px;line-height:17px;color:#8e8e93}
+.btn{appearance:none;border:0;font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:999px;font-size:14px;font-weight:500;height:32px;padding:0 12px;background:#1b1b1e;color:#f5f5f7;text-decoration:none;white-space:nowrap}
+.ib{appearance:none;border:0;background:transparent;color:#f5f5f7;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;cursor:pointer;padding:0;text-decoration:none}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chk{width:26px;height:26px;border-radius:999px;border:1.5px solid #636366;display:inline-flex;align-items:center;justify-content:center;flex:none;background:transparent;padding:0;cursor:pointer;color:#fff}
+.chk.on{background:#ff2d55;border-color:#ff2d55}
+.chk.crit{border-color:#ff2d55}
+.chk.auto{border-style:dashed}
+.bar{height:4px;border-radius:2px;background:#1b1b1e;overflow:hidden}
+.bar>i{display:block;height:100%;background:#ff2d55;border-radius:2px}
+.step{appearance:none;border:0;font:inherit;font-size:15px;font-weight:500;height:32px;min-width:40px;padding:0 10px;border-radius:999px;background:#1b1b1e;color:#f5f5f7;cursor:pointer}
+.blk{position:absolute;border-radius:12px;padding:7px 12px;overflow:hidden;background:#141416;border:1px solid #26262a;text-decoration:none;display:block}
+.blk b{display:block;font-size:15px;font-weight:500;line-height:19px;color:#f5f5f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk span{display:flex;align-items:center;gap:5px;font-size:13px;line-height:17px;color:#a1a1a6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.blk.sleep{background:#0a0a0b;border-color:#1b1b1e}
+.blk.free{background:transparent;border:1.5px dashed #3a3a3c}
+.blk.crit{background:#1f0d13;border:1.5px solid #ff2d55}
+.blk.plan{background:transparent;border:1.5px dashed #2c2c2e}
+.blk.past{opacity:.55}
+.plain{appearance:none;border:0;background:transparent;font:inherit;color:#f5f5f7;cursor:pointer;width:100%;text-align:left}
+</style>
+</helmet>
+<div style="width: 390px; height: 2760px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+
+<header style="padding: 52px 12px 0 20px">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.03em">Сегодня</h1>
+<div style="display: flex; align-items: center; gap: 2px">
+<a href="Now.dc.html" style="display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; background: #0a0a0b; border: 1px solid #1b1b1e; color: #f5f5f7; text-decoration: none; font-size: 13px; font-weight: 500"><span style="width: 8px; height: 8px; border-radius: 50%; background: #ff2d55"></span><span class="mono">79</span><span style="color: #8e8e93">Focus</span></a>
+<button class="ib" aria-label="Разбор от Claude"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8z"></path><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"></path></svg></button>
+</div>
+</div>
+<div style="display: flex; align-items: center; margin: 0 0 0 -12px">
+<button class="ib" aria-label="Предыдущий день" style="color: #8e8e93"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M15 5l-7 7 7 7"></path></svg></button>
+<span style="font-size: 15px; color: #8e8e93">Воскресенье, 22 ноября</span>
+<button class="ib" aria-label="Следующий день" style="color: #48484a"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px"><path d="M9 5l7 7-7 7"></path></svg></button>
+</div>
+</header>
+
+<main style="padding: 12px 16px 0; display: flex; flex-direction: column; gap: 32px">
+
+<section class="card">
+<div style="padding: 20px 20px 18px">
+<div class="s">Рейтинг выкладывания</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; margin-top: 6px">
+<div>
+<div class="mono" style="font-size: 64px; line-height: 64px; font-weight: 500; letter-spacing: -0.05em">64<span style="font-size: 28px; color: #8e8e93; letter-spacing: 0">%</span></div>
+<div style="margin-top: 10px; font-size: 13px; color: #8e8e93"><span class="mono" style="color: #f5f5f7">+8</span> к вчера · среднее <span class="mono" style="color: #f5f5f7">58%</span></div>
+</div>
+<div style="display: flex; gap: 8px; align-items: flex-end; height: 92px" role="img" aria-label="Рейтинг за 7 дней">
+<sc-for list="{{week}}" as="w" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 6px"><div style="width: 12px; height: {{w.h}}px; border-radius: 6px; background: {{w.bg}}"></div><span style="font-size: 10px; color: {{w.c}}">{{w.d}}</span></div>
+</sc-for>
+</div>
+</div>
+<button class="plain" onClick="{{nextPhrase}}" style="margin-top: 18px; font-size: 15px; line-height: 21px; color: #d1d1d6">{{phrase}}</button>
+</div>
+<button class="plain row" onClick="{{toggleUp}}" aria-expanded="{{upOpen}}" style="border-top: 1px solid #1b1b1e; min-height: 50px"><span class="t" style="flex: 1; font-size: 15px">Как поднять рейтинг</span><span class="mono s" style="color: #f5f5f7">+20</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; color: #8e8e93; transform: {{upRot}}"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{upOpen}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; font-size: 15px">
+<div style="display: flex; justify-content: space-between"><span>Сдать курсовой проект</span><span class="mono">+9</span></div>
+<div style="display: flex; justify-content: space-between"><span>Чтение · ещё 20 мин</span><span class="mono">+8</span></div>
+<div style="display: flex; justify-content: space-between"><span>Вода · 3 стакана</span><span class="mono">+3</span></div>
+<div class="s" style="padding-top: 10px; border-top: 1px solid #1b1b1e">Ключевые привычки и критичные задачи весят ×3, остальные задачи ×2, прочее ×1. Отбой в норму даст <span class="mono" style="color: #f5f5f7">+9</span> к завтрашнему дню.</div>
+</div>
+</sc-if>
+</section>
+
+<a href="SleepSheet.dc.html" class="card row" style="text-decoration: none; min-height: 60px; margin-top: -16px">
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px; color: #8e8e93"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg>
+<span class="t" style="flex: 1">Сон</span>
+<span class="s"><span class="mono" style="color: #f5f5f7">8 ч 20 м</span> · Хорошо</span>
+<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; color: #48484a"><path d="M9 5l7 7-7 7"></path></svg>
+</a>
+
+<section>
+<div class="sec"><span>Главное сегодня</span><span class="mono">0 / 2</span></div>
+<div class="card list" style="border-color: rgba(255,45,85,0.32)">
+<div class="row">
+<button class="chk crit" aria-label="Выполнить: Сдать курсовой проект"></button>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t">Сдать курсовой проект</span><span class="s mono">16:00–17:00 · Focus</span></span>
+</div>
+<div class="row">
+<button class="chk crit" aria-label="Выполнить: Оплатить аренду"></button>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t">Оплатить аренду</span><span class="s">Без времени · до 20:00</span></span>
+</div>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Привычки</span><span class="mono" style="color: #f5f5f7">2 / 5</span></div>
+<div class="card list">
+<div class="row">
+<button class="chk on" aria-label="Утренняя рутина — выполнено"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 15px; height: 15px; stroke-width: 2.4"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button>
+<span style="flex: 1"><span class="t">Утренняя рутина</span></span>
+<span class="s mono">12 дн</span>
+</div>
+<div class="row">
+<span style="width: 26px; display: inline-flex; justify-content: center"><span class="mono" style="font-size: 13px; color: #f5f5f7">{{water}}</span></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 6px"><span class="t">Вода</span><span style="display: flex; gap: 5px"><sc-for list="{{glasses}}" as="g" hint-placeholder-count="8"><span style="width: 10px; height: 10px; border-radius: 50%; background: {{g}}"></span></sc-for></span></span>
+<button class="step" onClick="{{waterMinus}}" aria-label="Минус стакан">−</button>
+<button class="step" onClick="{{waterPlus}}" aria-label="Плюс стакан">+</button>
+</div>
+<div class="row">
+<span style="width: 26px; height: 26px; position: relative; flex: none"><svg viewBox="0 0 26 26" aria-hidden="true" style="width: 26px; height: 26px; transform: rotate(-90deg)"><circle cx="13" cy="13" r="11" style="fill: none; stroke: #1b1b1e; stroke-width: 3"></circle><circle cx="13" cy="13" r="11" style="fill: none; stroke: #ff2d55; stroke-width: 3; stroke-linecap: round; stroke-dasharray: {{readDash}} 69.1"></circle></svg></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t">Чтение</span><span class="s mono">{{read}} / 30 мин</span></span>
+<button class="step" onClick="{{readPlus}}">+10 мин</button>
+</div>
+<div class="row">
+<span class="chk auto" aria-hidden="true"></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t">Отбой вовремя</span><span class="s">Отметится сам из сна</span></span>
+</div>
+<div class="row">
+<span class="chk" aria-hidden="true" style="border-color: #2c2c2e"></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="t" style="color: #8e8e93">Тренировка</span><span class="s">Сегодня отдых по графику</span></span>
+<button class="btn" style="background: transparent; border: 1px solid #2c2c2e; color: #aeaeb2">Сделал</button>
+</div>
+<a href="Profile.dc.html" class="row" style="text-decoration: none; color: #8e8e93; min-height: 48px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px; margin: 0 4px"><path d="M12 5v14M5 12h14"></path></svg><span style="font-size: 15px">Добавить привычку</span></a>
+</div>
+</section>
+
+<section>
+<div class="sec"><span>Лента дня</span><span>05:00 — 05:00</span></div>
+<div class="card" style="padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 8px; border-color: rgba(255,45,85,0.45)">
+<span style="width: 12px; align-self: stretch; border-radius: 6px; background: #ff2d55"></span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="s">Сейчас · до 15:30</span><span style="font-size: 20px; font-weight: 600">Focus</span><span class="s" style="color: #d1d1d6">Самое сложное — сюда. Дальше Steady.</span></span>
+<span class="mono" style="font-size: 28px; font-weight: 500">79</span>
+</div>
+<a href="Tasks.dc.html" class="card row" style="text-decoration: none; margin-bottom: 20px; min-height: 50px"><span class="t" style="flex: 1; font-size: 15px">Без времени</span><span class="s">2 задачи</span><button class="btn" style="height: 28px; font-size: 13px">В слот</button></a>
+<div style="display: flex; gap: 16px; margin: 0 4px 14px; font-size: 13px; color: #d1d1d6">
+<span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #ff2d55"></span>Focus</span>
+<span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #1f3a7a"></span>Steady</span>
+<span style="display: inline-flex; align-items: center; gap: 7px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #48484a"></span>Recharge</span>
+</div>
+<div style="position: relative; height: 1152px">
+<sc-for list="{{hours}}" as="h" hint-placeholder-count="24">
+<div class="mono" style="position: absolute; left: 0; top: {{h.top}}px; width: 40px; font-size: 12px; line-height: 12px; margin-top: -6px; color: #8e8e93">{{h.label}}</div>
+<div style="position: absolute; left: 82px; right: 0; top: {{h.top}}px; border-top: 1px solid {{h.line}}"></div>
+</sc-for>
+<sc-for list="{{segs}}" as="z" hint-placeholder-count="8">
+<div style="position: absolute; left: 46px; width: 26px; top: {{z.top}}px; height: {{z.h}}px; border-radius: 9px; background: {{z.bg}}; opacity: {{z.op}}; box-shadow: {{z.ring}}"></div>
+</sc-for>
+<svg viewBox="0 0 26 1152" aria-hidden="true" style="position: absolute; left: 46px; top: 0; width: 26px; height: 1152px; overflow: visible"><path d="{{curve}}" style="fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round"></path></svg>
+<sc-for list="{{blocks}}" as="b" hint-placeholder-count="8">
+<a href="{{b.href}}" class="blk {{b.cls}}" style="top: {{b.top}}px; height: {{b.h}}px; left: {{b.l}}px; width: {{b.w}}px"><b>{{b.title}}</b><span><sc-if value="{{b.warn}}" hint-placeholder-val="{{ false }}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px; color: #f5f5f7"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></sc-if>{{b.meta}}</span></a>
+</sc-for>
+<div style="position: absolute; left: 42px; right: 0; top: {{nowY}}px; border-top: 2px solid #ff2d55; z-index: 2"></div>
+<div class="mono" style="position: absolute; left: 0; top: {{nowLY}}px; font-size: 12px; line-height: 18px; padding: 0 5px; border-radius: 5px; background: #ff2d55; color: #fff; z-index: 3">13:35</div>
+</div>
+</section>
+
+</main>
+
+<div style="position: absolute; left: 16px; bottom: 24px; width: 358px; height: 68px">
+<dc-import name="TabBar" active="day" hint-size="358px,68px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":2760}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { pi: 0, water: 5, read: 10, upOpen: false }; }
+  renderVals() {
+    const s = this.state;
+    const f = (n) => +n.toFixed(1);
+    const smooth = (P) => {
+      let d = 'M' + f(P[0][0]) + ' ' + f(P[0][1]);
+      for (let i = 0; i < P.length - 1; i++) {
+        const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+        d += ' C' + f(p1[0] + (p2[0] - p0[0]) / 6) + ' ' + f(p1[1] + (p2[1] - p0[1]) / 6) + ' ' + f(p2[0] - (p3[0] - p1[0]) / 6) + ' ' + f(p2[1] - (p3[1] - p1[1]) / 6) + ' ' + f(p2[0]) + ' ' + f(p2[1]);
+      }
+      return d;
+    };
+    const phrases = [
+      'Главное ещё не начато. Пока это день на троечку — закрой проект, и он станет нормальным.',
+      'Вчера лёг позже нормы. Сегодня в кровать вовремя, иначе завтра опять с минуса.',
+      'Две критичные задачи — ни одной закрытой. Начни с той, что страшнее.'
+    ];
+    const vals = [52, 61, 40, 70, 55, 56, 64];
+    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    const week = vals.map((v, i) => ({ d: days[i], h: Math.round(v * 0.95), bg: i === 6 ? '#ff2d55' : '#2c2c2e', c: i === 6 ? '#f5f5f7' : '#8e8e93' }));
+    const glasses = Array.from({ length: 8 }, (_, i) => i < s.water ? '#ff2d55' : '#2c2c2e');
+    const E = [5, 5, 5, 5, 10, 30, 60, 75, 80, 79, 68, 55, 62, 72, 70, 58, 48, 36, 30, 24, 18, 10, 5, 5];
+    const HH = 48;
+    const ZC = { F: '#ff2d55', S: '#1f3a7a', R: '#48484a' };
+    const zk = (v) => v >= 65 ? 'F' : v >= 40 ? 'S' : 'R';
+    const hours = E.map((v, i) => ({ top: i * HH, label: i % 2 === 0 ? String((5 + i) % 24).padStart(2, '0') + ':00' : '', line: i % 2 === 0 ? '#1b1b1e' : '#0f0f11' }));
+    const ni = 8 + 35 / 60;
+    const segs = [];
+    E.forEach((v, i) => { const k = zk(v); const last = segs[segs.length - 1]; if (last && last.k === k) last.n++; else segs.push({ k, s: i, n: 1 }); });
+    const segOut = segs.map((g) => {
+      const cur = ni >= g.s && ni < g.s + g.n, past = g.s + g.n <= ni;
+      return { top: g.s * HH + 2, h: g.n * HH - 4, bg: ZC[g.k], op: cur ? 1 : past ? 0.35 : 0.75, ring: cur ? '0 0 0 2px #000, 0 0 0 4px rgba(255,45,85,0.5)' : 'none' };
+    });
+    const curve = smooth(E.map((v, i) => [3 + v / 100 * 20, i * HH + HH / 2]));
+    const y = (h) => (h - 5) * HH;
+    const B = (cls, a, b, title, meta, o) => Object.assign({ cls, top: y(a) + 2, h: (b - a) * HH - 4, title, meta, l: 82, w: 276, href: 'TaskSheet.dc.html', warn: false }, o || {});
+    const blocks = [
+      B('sleep past', 5, 10.5, 'Сон', '02:10 → 10:30 · 8 ч 20 м', { href: 'SleepSheet.dc.html' }),
+      B('past', 11, 12.5, 'Лекция', '11:00–12:30 · Steady'),
+      B('', 13, 14, 'Встреча с командой', '13:00–14:00 · идёт сейчас'),
+      B('free', 14, 16, 'Свободно · 2 ч · Focus', 'Нажми, чтобы поставить задачу'),
+      B('crit', 16, 17, 'Сдать курсовой проект', '16:00–17:00 · Критичная'),
+      B('', 19, 20.5, 'Тренировка', '19:00–20:30 · Steady'),
+      B('', 22.5, 23.5, 'Разобрать почту', 'Мало энергии для Focus', { warn: true }),
+      B('plan', 25, 29, 'Отбой · норма 01:00', 'Даст +9 к завтрашнему дню', { href: 'SleepSheet.dc.html' })
+    ];
+    const nowY = Math.round(ni * HH);
+    return {
+      week, glasses, hours, curve, blocks, segs: segOut, nowY, nowLY: nowY - 9,
+      phrase: phrases[s.pi % phrases.length],
+      nextPhrase: () => this.setState({ pi: s.pi + 1 }),
+      water: s.water,
+      waterMinus: () => this.setState({ water: Math.max(0, s.water - 1) }),
+      waterPlus: () => this.setState({ water: Math.min(8, s.water + 1) }),
+      read: s.read,
+      readDash: f(Math.min(1, s.read / 30) * 69.1),
+      readPlus: () => this.setState({ read: Math.min(30, s.read + 10) }),
+      upOpen: s.upOpen, upRot: s.upOpen ? 'rotate(180deg)' : 'none',
+      toggleUp: () => this.setState({ upOpen: !s.upOpen })
+    };
+  }
+}
+</script>
+</body>
+</html>
