@@ -66,7 +66,7 @@ async def get_day(session: AsyncSession, user_id: uuid.UUID, d: date) -> DayOut:
     return found[0] if found else _day_out(d, None, {})
 
 
-async def _touch_day(
+async def touch_day(
     session: AsyncSession, user_id: uuid.UUID, d: date, now: datetime, **values: Any
 ) -> None:
     """Upsert the day row; writes to past days are flagged as backfill (never unflagged)."""
@@ -94,7 +94,7 @@ async def set_sleep(
     session: AsyncSession, user_id: uuid.UUID, d: date, data: SleepIn, now: datetime
 ) -> DayOut:
     """Sleep of the night that ended on the morning of ``d``."""
-    await _touch_day(
+    await touch_day(
         session,
         user_id,
         d,
@@ -108,7 +108,7 @@ async def set_sleep(
 
 
 async def clear_sleep(session: AsyncSession, user_id: uuid.UUID, d: date, now: datetime) -> DayOut:
-    await _touch_day(session, user_id, d, now, sleep_bed=None, sleep_wake=None, sleep_quality=None)
+    await touch_day(session, user_id, d, now, sleep_bed=None, sleep_wake=None, sleep_quality=None)
     await session.commit()
     return await get_day(session, user_id, d)
 
@@ -147,7 +147,7 @@ async def set_habit_value(
 ) -> DayOut:
     habit = await get_owned(session, Habit, habit_id, user_id, what="Habit")
     clean = validate_value(habit, value)
-    await _touch_day(session, user_id, d, now)
+    await touch_day(session, user_id, d, now)
     stmt = insert(HabitLog).values(habit_id=habit_id, date=d, user_id=user_id, value=clean)
     await session.execute(
         stmt.on_conflict_do_update(
@@ -163,7 +163,7 @@ async def clear_habit_value(
     session: AsyncSession, user_id: uuid.UUID, d: date, habit_id: uuid.UUID, now: datetime
 ) -> DayOut:
     await get_owned(session, Habit, habit_id, user_id, what="Habit")
-    await _touch_day(session, user_id, d, now)
+    await touch_day(session, user_id, d, now)
     await session.execute(
         delete(HabitLog).where(
             HabitLog.user_id == user_id, HabitLog.habit_id == habit_id, HabitLog.date == d
