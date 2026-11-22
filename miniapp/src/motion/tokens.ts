@@ -27,5 +27,4 @@ export function reducedMotion(): boolean {
 export function setMotion(on: boolean): void {
   motionOk.value = on;
   document.documentElement.classList.toggle("motion-ok", on);
-  document.documentElement.classList.toggle("no-vt", on && !("startViewTransition" in document));
 }

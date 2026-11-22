@@ -55,6 +55,7 @@ export function animateScreen(): void {
     { rootMargin: "0px 0px -8% 0px" },
   );
   let next = prepare(blocks(root), 0);
+  settleSoon();
   const main = root.querySelector(".main");
   if (main) {
     mo = new MutationObserver(() => {
@@ -72,28 +73,22 @@ function cleanup() {
   io = mo = null;
 }
 
-/** View Transitions API for tab/screen changes where supported; plain update otherwise. */
+/** Screen changes update the DOM immediately. (View Transitions were tried and dropped:
+ * they hold a snapshot of the old screen until the animation ends, which delays the new
+ * screen whenever frames are slow — the spec says motion must never delay content.) */
 export function withTransition(update: () => void): void {
-  type VT = { ready: Promise<void>; finished: Promise<void>; updateCallbackDone: Promise<void> };
-  const doc = document as Document & { startViewTransition?: (cb: () => Promise<void> | void) => VT };
-  if (!motionOk.value || !doc.startViewTransition || document.visibilityState !== "visible") {
-    update();
-    return;
-  }
-  const vt = doc.startViewTransition(
-    () =>
-      new Promise<void>((resolve) => {
-        update();
-        // Preact re-renders in a microtask; resolve after it has painted the new screen.
-        requestAnimationFrame(() => resolve());
-      }),
-  );
-  // A transition can be skipped by the browser (e.g. the app goes to background);
-  // the DOM update still happens, so these rejections are expected and harmless.
-  const ignore = () => {};
-  vt.ready.catch(ignore);
-  vt.finished.catch(ignore);
-  vt.updateCallbackDone.catch(ignore);
+  update();
+}
+
+/** Safety net: finish every finite animation still running shortly after a screen opens,
+ * so slow or throttled frames can never leave content half-faded or half-drawn. */
+export function settleSoon(ms = 600): void {
+  setTimeout(() => {
+    for (const a of document.getAnimations()) {
+      const t = a.effect?.getTiming();
+      if (t && t.iterations !== Infinity && a.playState === "running") a.finish();
+    }
+  }, ms);
 }
 
 /** Spring-like press feedback on a card, synced with the success vibration (WAAPI). */

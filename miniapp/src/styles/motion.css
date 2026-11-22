@@ -11,10 +11,17 @@
   --stagger: 45ms;
 }
 
+/* Entrances start half-visible, never from 0: content is readable from the first frame
+   even if the device renders few frames (busy phone, throttled webview). */
 @keyframes lt-enter {
   from {
-    opacity: 0;
+    opacity: 0.5;
     transform: translate3d(0, 10px, 0) scale(0.985);
+  }
+}
+@keyframes lt-page-in {
+  from {
+    opacity: 0.6;
   }
 }
 @keyframes lt-fade {
@@ -65,7 +72,7 @@
   animation-delay: calc(var(--i, 0) * var(--stagger));
 }
 .motion-ok [data-motion="reveal"] {
-  opacity: 0;
+  opacity: 0.5;
   transform: translate3d(0, 14px, 0);
   transition:
     opacity var(--dur-slow) var(--ease-out),
@@ -158,17 +165,12 @@
   animation: lt-breathe-b 17s ease-in-out infinite alternate;
 }
 
-/* ---- tab and screen changes: View Transitions crossfade; plain fade fallback ---- */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: var(--dur-base);
-  animation-timing-function: var(--ease-out);
-}
-.tabbar-wrap {
-  view-transition-name: tabbar;
-}
-.motion-ok.no-vt .page {
-  animation: lt-fade var(--dur-base) var(--ease-out);
+/* ---- tab and screen changes: a light crossfade of the new page only ----
+   (View Transitions were dropped: they keep a snapshot of the old screen on top and
+   block input until the animation has played, which on slow frames hid the new screen
+   for seconds. This fade never hides content.) */
+.motion-ok .page {
+  animation: lt-page-in var(--dur-fast) var(--ease-out);
 }
 
 /* Safety net: whatever the class says, the OS preference wins. */

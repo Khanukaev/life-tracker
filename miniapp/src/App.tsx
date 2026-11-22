@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "preact/compat";
-import { useEffect } from "preact/hooks";
+import { useLayoutEffect } from "preact/hooks";
 import { animateScreen } from "./motion/screen";
 import { TabBar } from "./components/TabBar";
 import { Toast } from "./components/ui";
@@ -23,9 +23,10 @@ export function App() {
   const me = resource<Me>("/me").value.data;
   const scr = current.value;
   const screenKey = `${tab.value}|${scr?.name ?? ""}|${scr?.params?.view ?? ""}|${dayDate.value ?? ""}|${me?.onboarded}`;
-  useEffect(() => {
-    // After the new screen has rendered: stagger visible cards, reveal the rest on scroll.
-    requestAnimationFrame(animateScreen);
+  // Before the new screen is painted (layout effect, not rAF): mark which cards stagger in
+  // and which reveal on scroll. Nothing here waits for a frame.
+  useLayoutEffect(() => {
+    animateScreen();
   }, [screenKey]);
 
   if (me && !me.onboarded) {
