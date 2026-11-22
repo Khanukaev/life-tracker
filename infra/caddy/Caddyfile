@@ -17,8 +17,10 @@
 		reverse_proxy backend:8000
 	}
 
-	# Mini App static files are added in stage 3, MCP in stage 5.
+	# MCP server is added in stage 5.
+
+	# Mini App: static files with long-lived caching (hashed names), served precompressed.
 	handle {
-		respond "Life Tracker API is running" 200
+		reverse_proxy miniapp:8080
 	}
 }

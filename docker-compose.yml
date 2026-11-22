@@ -36,6 +36,13 @@ services:
       timeout: 3s
       retries: 5
 
+  miniapp:
+    build:
+      context: .
+      dockerfile: miniapp/Dockerfile
+    image: andreymaxim/lifetracker-miniapp:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+
   caddy:
     image: caddy:2.10-alpine
     restart: unless-stopped
@@ -50,6 +57,7 @@ services:
       - caddy_config:/config
     depends_on:
       - backend
+      - miniapp
 
 volumes:
   pgdata:

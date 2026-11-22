@@ -28,8 +28,12 @@ dev: db ## Run the API locally with auto-reload
 	cd backend && uv run alembic upgrade head
 	uv run uvicorn lifetracker.api.app:app --reload --port 8000
 
-test: db ## Run all tests
+web: ## Run the Mini App dev server (API on :8000 with DEV_AUTH=true for browser login)
+	cd miniapp && pnpm install && pnpm dev
+
+test: db ## Run all tests (backend + Mini App)
 	uv run pytest -q
+	cd miniapp && pnpm test
 
 golden: ## Regenerate golden expectations by running the original JS in Node
 	python3 golden/make_fixtures.py
@@ -47,4 +51,4 @@ fmt: ## Auto-format code
 	uv run ruff check --fix .
 	uv run ruff format .
 
-.PHONY: help up down logs migrate seed db dev test golden bench lint fmt
+.PHONY: help up down logs migrate seed db dev web test golden bench lint fmt
