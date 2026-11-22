@@ -1,0 +1,19 @@
+[project]
+name = "lifetracker-bot"
+version = "0.1.0"
+description = "Life Tracker Telegram bot: /start, /connect, evening and morning reminders"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "aiogram>=3.34.0",
+    "lifetracker",
+]
+
+[tool.uv.sources]
+lifetracker = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.9,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""

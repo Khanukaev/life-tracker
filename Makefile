@@ -28,6 +28,9 @@ dev: db ## Run the API locally with auto-reload
 	cd backend && uv run alembic upgrade head
 	uv run uvicorn lifetracker.api.app:app --reload --port 8000
 
+bot: ## Run the Telegram bot locally (needs BOT_TOKEN and MINIAPP_URL/DOMAIN in .env)
+	uv run --env-file .env python -m lifetracker_bot
+
 web: ## Run the Mini App dev server (API on :8000 with DEV_AUTH=true for browser login)
 	cd miniapp && pnpm install && pnpm dev
 
@@ -45,10 +48,10 @@ bench: db ## Latency of the screens on a user with a year of data
 lint: ## Ruff + mypy
 	uv run ruff check .
 	uv run ruff format --check .
-	uv run mypy backend/lifetracker
+	uv run mypy backend/lifetracker bot/lifetracker_bot
 
 fmt: ## Auto-format code
 	uv run ruff check --fix .
 	uv run ruff format .
 
-.PHONY: help up down logs migrate seed db dev web test golden bench lint fmt
+.PHONY: help up down logs migrate seed db dev bot web test golden bench lint fmt
