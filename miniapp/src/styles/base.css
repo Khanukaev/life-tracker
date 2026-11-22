@@ -893,10 +893,6 @@ input[type="time"] {
   font-weight: 500;
   cursor: pointer;
 }
-.theme-glass .energy-pill {
-  backdrop-filter: blur(20px) saturate(170%);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-}
 
 .sr {
   position: absolute;
