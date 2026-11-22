@@ -1,0 +1,24 @@
+# Reverse proxy with automatic HTTPS (Telegram Mini Apps and remote MCP require HTTPS).
+{$DOMAIN:localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /health* {
+		reverse_proxy backend:8000
+	}
+
+	# Mini App static files are added in stage 3, MCP in stage 5.
+	handle {
+		respond "Life Tracker API is running" 200
+	}
+}
