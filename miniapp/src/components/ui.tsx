@@ -3,7 +3,9 @@
 import type { ComponentChildren, CSSProperties } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { haptic } from "../lib/haptic";
-import { closeSheet, pop } from "../lib/router";
+import { closeSheet, closeSheetNow, pop, registerSheetClose } from "../lib/router";
+import { springY, type SpringHandle } from "../motion/spring";
+import { motionOk } from "../motion/tokens";
 import { toastText } from "../lib/toast";
 
 const PATHS: Record<string, string> = {
@@ -30,7 +32,7 @@ const PATHS: Record<string, string> = {
 export function Icon({ name, size, style }: { name: string; size?: number; style?: CSSProperties }) {
   return (
     <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style={{ ...(size ? { width: size, height: size } : {}), ...style }}>
-      <path d={PATHS[name] ?? ""} />
+      <path d={PATHS[name] ?? ""} pathLength={1} />
     </svg>
   );
 }
@@ -150,9 +152,11 @@ export function StackHead({ back, title, action }: { back: string; title: string
   );
 }
 
-/** Bottom sheet. Closes on scrim tap or a swipe down from the top area. */
+/** Bottom sheet. Closes on scrim tap or a swipe down from the top area.
+ * In Liquid Glass it opens and closes on a spring and follows the finger. */
 export function Sheet({ children, label }: { children: ComponentChildren; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const scrim = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -164,32 +168,66 @@ export function Sheet({ children, label }: { children: ComponentChildren; label:
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let spring: SpringHandle | null = null;
+    const height = () => el.getBoundingClientRect().height || window.innerHeight;
+    const animated = motionOk.value;
+
+    const close = (velocity = 0) => {
+      spring?.stop();
+      if (!motionOk.value) return closeSheetNow();
+      scrim.current?.classList.add("closing");
+      const cur = currentY(el);
+      spring = springY(el, cur, height(), { velocity, onDone: closeSheetNow, damping: 32 });
+    };
+    if (animated) {
+      el.style.transform = `translate3d(0, ${height()}px, 0)`;
+      spring = springY(el, height(), 0);
+      registerSheetClose(() => close());
+    }
+
     let startY = 0;
+    let lastY = 0;
+    let lastT = 0;
+    let velocity = 0;
     let dy = 0;
     let tracking = false;
     const down = (e: TouchEvent) => {
       tracking = el.scrollTop <= 0;
-      startY = e.touches[0]!.clientY;
+      startY = lastY = e.touches[0]!.clientY;
+      lastT = performance.now();
       dy = 0;
+      velocity = 0;
+      spring?.stop();
     };
     const move = (e: TouchEvent) => {
       if (!tracking) return;
-      dy = e.touches[0]!.clientY - startY;
+      const y = e.touches[0]!.clientY;
+      const now = performance.now();
+      velocity = ((y - lastY) / Math.max(1, now - lastT)) * 1000; // px/s
+      lastY = y;
+      lastT = now;
+      dy = y - startY;
       if (dy > 0) {
-        el.style.transform = `translateY(${dy}px)`;
+        el.style.transform = `translate3d(0, ${dy}px, 0)`;
         e.preventDefault();
       }
     };
     const up = () => {
       if (!tracking) return;
-      el.style.transform = "";
-      if (dy > 110) closeSheet();
       tracking = false;
+      if (dy > 110 || velocity > 900) {
+        haptic.light();
+        return close(Math.max(0, velocity));
+      }
+      if (motionOk.value) spring = springY(el, Math.max(0, dy), 0, { velocity });
+      else el.style.transform = "";
     };
     el.addEventListener("touchstart", down, { passive: true });
     el.addEventListener("touchmove", move, { passive: false });
     el.addEventListener("touchend", up);
     return () => {
+      spring?.stop();
+      registerSheetClose(null);
       el.removeEventListener("touchstart", down);
       el.removeEventListener("touchmove", move);
       el.removeEventListener("touchend", up);
@@ -197,13 +235,18 @@ export function Sheet({ children, label }: { children: ComponentChildren; label:
   }, []);
 
   return (
-    <div class="scrim" onClick={(e) => e.target === e.currentTarget && closeSheet()}>
+    <div class="scrim" ref={scrim} onClick={(e) => e.target === e.currentTarget && closeSheet()}>
       <div class="sheet" ref={ref} role="dialog" aria-modal="true" aria-label={label}>
         <div class="grabber" />
         {children}
       </div>
     </div>
   );
+}
+
+function currentY(el: HTMLElement): number {
+  const m = /translate3d\(0, ([-\d.]+)px/.exec(el.style.transform);
+  return m ? Number(m[1]) : 0;
 }
 
 export function SheetHead({

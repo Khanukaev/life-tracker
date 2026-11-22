@@ -108,7 +108,7 @@ export function TasksScreen({ initial }: { initial?: string }) {
           <Empty text={EMPTY[view]} action="Создать задачу" onAction={() => openSheet("task", { inbox: view === "inbox" })} />
         ) : (
           items.map((t) => (
-            <div key={t.id} class={`tc${t.importance === "critical" && !t.done ? " crit" : ""}`}>
+            <div key={t.id} data-task={t.id} class={`tc${t.importance === "critical" && !t.done ? " crit" : ""}`}>
               <Check
                 on={t.done}
                 variant={t.done ? "done" : t.importance === "critical" ? "crit" : t.importance === "important" ? "imp" : ""}

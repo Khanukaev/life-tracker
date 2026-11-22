@@ -1,7 +1,9 @@
 import { lazy, Suspense } from "preact/compat";
+import { useEffect } from "preact/hooks";
+import { animateScreen } from "./motion/screen";
 import { TabBar } from "./components/TabBar";
 import { Toast } from "./components/ui";
-import { current, sheet, tab } from "./lib/router";
+import { current, dayDate, sheet, tab } from "./lib/router";
 import { resource } from "./lib/store";
 import type { Me } from "./lib/types";
 import { DayScreen } from "./screens/Day";
@@ -20,6 +22,11 @@ const Sheets = lazy(() => import("./sheets"));
 export function App() {
   const me = resource<Me>("/me").value.data;
   const scr = current.value;
+  const screenKey = `${tab.value}|${scr?.name ?? ""}|${scr?.params?.view ?? ""}|${dayDate.value ?? ""}|${me?.onboarded}`;
+  useEffect(() => {
+    // After the new screen has rendered: stagger visible cards, reveal the rest on scroll.
+    requestAnimationFrame(animateScreen);
+  }, [screenKey]);
 
   if (me && !me.onboarded) {
     return (

@@ -16,6 +16,9 @@
           var t = localStorage.getItem("lt:theme");
           if (t === "glass" || t === "base") {
             document.documentElement.className = "theme-" + t;
+            if (t === "glass" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+              document.documentElement.classList.add("motion-ok");
+            }
           }
         } catch (e) {}
       })();

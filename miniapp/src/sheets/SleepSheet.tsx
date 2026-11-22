@@ -127,7 +127,7 @@ export function SleepSheet({ date }: { date: string }) {
                 </text>
               );
             })}
-            <path d={arc} style={{ fill: "none", stroke: "var(--accent)", strokeWidth: 34, strokeLinecap: "round" }} />
+            <path class="draw" pathLength={1} d={arc} style={{ fill: "none", stroke: "var(--accent)", strokeWidth: 34, strokeLinecap: "round" }} />
             <circle cx={f1(sx)} cy={f1(sy)} r="15" style={{ fill: "#f5f5f7" }} />
             <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" transform={`translate(${f1(sx - 7.2)} ${f1(sy - 7.2)}) scale(0.6)`} style={{ fill: "none", stroke: "#000", strokeWidth: 2.6, strokeLinejoin: "round" }} />
             <circle cx={f1(ex)} cy={f1(ey)} r="15" style={{ fill: "#f5f5f7" }} />

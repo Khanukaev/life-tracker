@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { Num } from "../components/Num";
 import { Icon, Sec, Seg } from "../components/ui";
 import { smooth } from "../lib/chart";
 import { hhmm, parseDate, shortDate, weekdayShort } from "../lib/format";
@@ -106,11 +107,11 @@ export function ReviewScreen() {
               <div class="card" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", padding: "16px" }}>
                 <div>
                   <div class="s">Привычки</div>
-                  <div class="mono" style={{ fontSize: "24px", marginTop: "2px" }}>{d.habits_pct != null ? `${d.habits_pct}%` : "—"}</div>
+                  <div class="mono" style={{ fontSize: "24px", marginTop: "2px" }}>{d.habits_pct != null ? <><Num value={d.habits_pct} />%</> : "—"}</div>
                 </div>
                 <div style={{ borderLeft: "1px solid var(--line)", paddingLeft: "14px" }}>
                   <div class="s">Задачи</div>
-                  <div class="mono" style={{ fontSize: "24px", marginTop: "2px" }}>{d.tasks_pct != null ? `${d.tasks_pct}%` : "—"}</div>
+                  <div class="mono" style={{ fontSize: "24px", marginTop: "2px" }}>{d.tasks_pct != null ? <><Num value={d.tasks_pct} />%</> : "—"}</div>
                 </div>
                 <div style={{ borderLeft: "1px solid var(--line)", paddingLeft: "14px" }}>
                   <div class="s">Закрыто</div>
@@ -199,7 +200,7 @@ function ScoreBlock({ d }: { d: ReviewView }) {
             return (
               <div key={b.date} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
                 <span class="mono" style={{ fontSize: "11px", color: last ? "var(--text)" : "var(--muted)" }}>{b.pct ?? ""}</span>
-                <span style={{ width: "100%", height: `${b.pct == null ? 2 : Math.max(3, Math.round(b.pct * 1.1))}px`, borderRadius: "8px", background: b.pct == null ? "var(--fill)" : last ? "var(--accent)" : "var(--fill-2)" }} />
+                <span class="grow-y" style={{ "--i": i, width: "100%", height: `${b.pct == null ? 2 : Math.max(3, Math.round(b.pct * 1.1))}px`, borderRadius: "8px", background: b.pct == null ? "var(--fill)" : last ? "var(--accent)" : "var(--fill-2)" }} />
                 <span style={{ fontSize: "11px", color: "var(--muted)" }}>{weekdayShort(b.date)}</span>
               </div>
             );
@@ -224,11 +225,13 @@ function ScoreBlock({ d }: { d: ReviewView }) {
             {Array.from({ length: lead }, (_, i) => (
               <span key={`b${i}`} />
             ))}
-            {d.scores.map((b) => (
+            {d.scores.map((b, i) => (
               <span
                 key={b.date}
+                class="pop-in"
                 title={`${shortDate(b.date)}${b.pct != null ? ` · ${b.pct}%` : ""}`}
                 style={{
+                  "--i": i,
                   width: "20px",
                   height: "20px",
                   borderRadius: "5px",
@@ -272,7 +275,7 @@ function Head({ avg }: { avg: number | null }) {
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "14px" }}>
       <span class="t" style={{ fontWeight: 500 }}>Выкладывание</span>
       <span class="s">
-        среднее <span class="mono" style={{ color: "var(--text)" }}>{avg != null ? `${avg}%` : "—"}</span>
+        среднее <span class="mono" style={{ color: "var(--text)" }}>{avg != null ? <><Num value={avg} />%</> : "—"}</span>
       </span>
     </div>
   );
@@ -306,10 +309,10 @@ function Bedtimes({ d }: { d: ReviewView }) {
             </g>
           ))}
           <line x1="44" x2="330" y1={yOf(goal)} y2={yOf(goal)} style={{ stroke: "var(--accent)", strokeWidth: 1.25, strokeDasharray: "4 4" }} />
-          {line.length > 1 && <path d={smooth(line)} style={{ fill: "none", stroke: "var(--faint)", strokeWidth: 1.75, strokeLinecap: "round" }} />}
+          {line.length > 1 && <path class="draw" pathLength={1} d={smooth(line)} style={{ fill: "none", stroke: "var(--faint)", strokeWidth: 1.75, strokeLinecap: "round" }} />}
           {d.nights.map((n, i) =>
             n.bed == null ? null : (
-              <circle key={n.date} cx={52 + i * 20.5} cy={yOf(n.bed)} r="5" style={{ fill: n.on_time ? "var(--text)" : "var(--card)", stroke: n.on_time ? "var(--text)" : "var(--muted)", strokeWidth: 1.75 }} />
+              <circle key={n.date} class="pop-in" cx={52 + i * 20.5} cy={yOf(n.bed)} r="5" style={{ "--i": i, fill: n.on_time ? "var(--text)" : "var(--card)", stroke: n.on_time ? "var(--text)" : "var(--muted)", strokeWidth: 1.75 }} />
             ),
           )}
         </svg>

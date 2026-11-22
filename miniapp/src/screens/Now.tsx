@@ -1,3 +1,4 @@
+import { Num } from "../components/Num";
 import { Icon, Sec, Seg } from "../components/ui";
 import { post } from "../lib/api";
 import { runs, smooth } from "../lib/chart";
@@ -46,7 +47,7 @@ export function NowScreen() {
         <section class="card" style={{ padding: "22px 20px 20px" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
             <span class="mono" style={{ fontSize: "88px", lineHeight: "84px", fontWeight: 500, letterSpacing: "-0.05em" }}>
-              {d.idx ?? "—"}
+              <Num value={d.idx} />
             </span>
             <span class="mono" style={{ fontSize: "20px", color: "var(--muted)" }}>
               /100
@@ -193,15 +194,15 @@ function EnergyChart({ d }: { d: NowView }) {
             const path = smooth(pts);
             return (
               <g key={i}>
-                <path d={`${path} L${pts[pts.length - 1]![0].toFixed(1)} ${T + H} L${pts[0]![0].toFixed(1)} ${T + H} Z`} style={{ fill: "rgba(245,245,247,0.07)" }} />
-                <path d={path} style={{ fill: "none", stroke: "var(--text)", strokeWidth: 2.25, strokeLinecap: "round" }} />
+                <path class="fade-in" d={`${path} L${pts[pts.length - 1]![0].toFixed(1)} ${T + H} L${pts[0]![0].toFixed(1)} ${T + H} Z`} style={{ fill: "rgba(245,245,247,0.07)" }} />
+                <path class="draw" pathLength={1} d={path} style={{ fill: "none", stroke: "var(--text)", strokeWidth: 2.25, strokeLinecap: "round" }} />
               </g>
             );
           })}
           {nowV != null && (
             <>
               <line x1={nowX} x2={nowX} y1={yv(nowV)} y2={160} style={{ stroke: "var(--accent)", strokeWidth: 1.25, strokeDasharray: "2 3" }} />
-              <circle cx={nowX} cy={yv(nowV)} r="5" style={{ fill: "var(--accent)", stroke: "var(--card)", strokeWidth: 2.5 }} />
+              <circle class="pop-in" cx={nowX} cy={yv(nowV)} r="5" style={{ "--i": 12, fill: "var(--accent)", stroke: "var(--card)", strokeWidth: 2.5 }} />
               <rect x={nowX - 20} y={yv(nowV) - 32} width="40" height="20" rx="10" style={{ fill: "var(--accent)" }} />
               <text x={nowX} y={yv(nowV) - 18} text-anchor="middle" style={{ font: "500 11px var(--mono)", fill: "#fff" }}>{nowV}</text>
             </>
@@ -213,7 +214,7 @@ function EnergyChart({ d }: { d: NowView }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--line)" }}>
           <div>
             <div class="s">Среднее</div>
-            <div class="mono" style={{ fontSize: "20px", marginTop: "2px" }}>{d.avg ?? "—"}</div>
+            <Num class="mono" style={{ fontSize: "20px", marginTop: "2px", display: "block" }} value={d.avg} />
           </div>
           <div>
             <div class="s">Максимум</div>
@@ -303,8 +304,8 @@ function Hormones({ d }: { d: NowView }) {
           <line x1="0" x2="330" y1="92" y2="92" style={{ stroke: "var(--line-faint)" }} />
           <line x1="0" x2="330" y1="38" y2="38" style={{ stroke: "var(--line-faint)" }} />
           <line x1={hX} x2={hX} y1="0" y2="146" style={{ stroke: "var(--accent)", strokeWidth: 1.25, strokeDasharray: "2 3" }} />
-          {LOOK.map(([, c, w, dash, k]) => (
-            <path key={k} d={smooth((h[k] as number[]).map((v, i) => [x(i), yh(v)]))} style={{ fill: "none", stroke: c, strokeWidth: w, strokeDasharray: dash, strokeLinecap: "round" }} />
+          {LOOK.map(([, c, w, dash, k], li) => (
+            <path key={k} class={dash === "none" ? "draw" : "fade-in"} pathLength={dash === "none" ? 1 : undefined} d={smooth((h[k] as number[]).map((v, i) => [x(i), yh(v)]))} style={{ "--i": li, fill: "none", stroke: c, strokeWidth: w, strokeDasharray: dash === "none" ? undefined : dash, strokeLinecap: "round" }} />
           ))}
           {h.now &&
             LOOK.map(([, c, , , k]) => (

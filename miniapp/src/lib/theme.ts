@@ -2,6 +2,8 @@
  * (null = auto) and is cached locally, so the next launch paints the right theme at once. */
 
 import { signal } from "@preact/signals";
+import { loadGsap } from "../motion/gsap";
+import { setMotion } from "../motion/tokens";
 
 export type ThemeName = "base" | "glass";
 export type ThemePref = ThemeName | null;
@@ -45,6 +47,10 @@ export const theme = signal<ThemeName>(initial());
 export function applyTheme(name: ThemeName): void {
   theme.value = name;
   document.documentElement.className = `theme-${name}`;
+  // Motion only in Glass (canGlass already excludes weak devices and reduced motion).
+  const motion = name === "glass" && canGlass();
+  setMotion(motion);
+  if (motion) void loadGsap(); // separate lazy chunk, not part of the first screen
   try {
     localStorage.setItem(KEY, name);
   } catch {

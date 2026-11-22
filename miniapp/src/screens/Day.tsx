@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
+import { Num } from "../components/Num";
 import { Check, Empty, Icon, Sec, useLongPress } from "../components/ui";
 import { dayKey, setHabitValue, toggleTask } from "../lib/actions";
 import { runs, smooth } from "../lib/chart";
@@ -96,7 +97,7 @@ function ScoreCard({ d }: { d: DayView }) {
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: "6px" }}>
           <div>
             <div class="mono" style={{ fontSize: "64px", lineHeight: "64px", fontWeight: 500, letterSpacing: "-0.05em" }}>
-              {s.pct}
+              <Num value={s.pct} />
               <span style={{ fontSize: "28px", color: "var(--muted)", letterSpacing: 0 }}>%</span>
             </div>
             <div style={{ marginTop: "10px", fontSize: "13px", color: "var(--muted)" }}>
@@ -125,7 +126,9 @@ function ScoreCard({ d }: { d: DayView }) {
               return (
                 <div key={w.date} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
                   <div
+                    class="grow-y"
                     style={{
+                      "--i": i,
                       width: "12px",
                       height: `${w.pct == null ? 2 : Math.max(3, Math.round(w.pct * 0.95))}px`,
                       borderRadius: "6px",
@@ -250,7 +253,7 @@ function Critical({ d, k }: { d: DayView; k: string }) {
       <Sec title="Главное сегодня" end={<span class="mono">{`${done} / ${d.critical.length}`}</span>} />
       <div class="card list" style={{ borderColor: "rgba(255,45,85,0.32)" }}>
         {d.critical.map((t) => (
-          <div class="row" key={t.id}>
+          <div class="row" key={t.id} data-task={t.id}>
             <Check on={t.done} variant="crit" label={`Выполнить: ${t.title}`} onClick={() => toggleTask(t, [k])} />
             <button class="plain col-text" onClick={() => openSheet("task", { id: t.id })}>
               <span class="t" style={t.done ? { color: "var(--muted)", textDecoration: "line-through" } : undefined}>
@@ -313,7 +316,7 @@ function HabitLine({ h, d, date }: { h: HabitRow; d: DayView; date: string | nul
 
   if (h.type === "bedtime") {
     return (
-      <div class="row">
+      <div class="row" data-habit={h.id}>
         <Check on={h.status === "done"} variant="auto" label={`${h.name}: ${h.status}`} />
         <span class="col-text">
           {name}
@@ -326,7 +329,7 @@ function HabitLine({ h, d, date }: { h: HabitRow; d: DayView; date: string | nul
 
   if (h.status === "rest" && h.type === "check") {
     return (
-      <div class="row">
+      <div class="row" data-habit={h.id}>
         <Check on={false} variant="rest" label={`${h.name}: отдых по графику`} />
         <span class="col-text">
           {name}
@@ -343,7 +346,7 @@ function HabitLine({ h, d, date }: { h: HabitRow; d: DayView; date: string | nul
     const need = glassesNeed(h.config);
     const g = h.value ?? 0;
     return (
-      <div class="row">
+      <div class="row" data-habit={h.id}>
         <span style={{ width: "26px", display: "inline-flex", justifyContent: "center" }}>
           <span class="mono" style={{ fontSize: "13px", color: "var(--text)" }}>
             {g}
@@ -353,7 +356,7 @@ function HabitLine({ h, d, date }: { h: HabitRow; d: DayView; date: string | nul
           {name}
           <span style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
             {Array.from({ length: need }, (_, i) => (
-              <span key={i} style={{ width: "10px", height: "10px", borderRadius: "50%", background: i < g ? "var(--accent)" : "var(--fill-2)" }} />
+              <span key={i} class={`gdot${i < g ? " on" : ""}`} style={{ width: "10px", height: "10px", borderRadius: "50%", background: i < g ? "var(--accent)" : "var(--fill-2)" }} />
             ))}
           </span>
         </span>
@@ -380,7 +383,7 @@ function HabitLine({ h, d, date }: { h: HabitRow; d: DayView; date: string | nul
       set(next.a || next.b ? next : null);
     };
     return (
-      <div class="row">
+      <div class="row" data-habit={h.id}>
         <Check on={h.status === "done"} label={`${h.name}: ${h.status}`} />
         <span class="col-text">
           {name}
@@ -398,7 +401,7 @@ function HabitLine({ h, d, date }: { h: HabitRow; d: DayView; date: string | nul
 
   const on = h.status === "done";
   return (
-    <button class="row plain" onClick={() => { if (!on) haptic.light(); set(on ? null : true); }}>
+    <button class="row plain" data-habit={h.id} onClick={() => { if (!on) haptic.light(); set(on ? null : true); }}>
       <Check on={on} label={`${h.name}: ${on ? "выполнено" : "не выполнено"}`} />
       <span class="col-text">
         {name}
@@ -421,7 +424,7 @@ function MinutesLine({ h, name, set }: { h: HabitRow; name: preact.JSX.Element; 
   const dash = Math.min(1, m / target) * 69.1;
   const ring = m > 0;
   return (
-    <div class="row">
+    <div class="row" data-habit={h.id}>
       <span style={{ width: "26px", height: "26px", position: "relative", flex: "none" }}>
         <svg viewBox="0 0 26 26" aria-hidden="true" style={{ width: "26px", height: "26px", transform: "rotate(-90deg)" }}>
           <circle cx="13" cy="13" r="11" style={{ fill: "none", stroke: "var(--fill)", strokeWidth: 3 }} />
@@ -601,13 +604,15 @@ function Timeline({ d }: { d: DayView }) {
             <div style={{ position: "absolute", left: "82px", right: 0, top: `${i * HH}px`, borderTop: `1px solid ${i % 2 === 0 ? "var(--line)" : "var(--line-faint)"}` }} />
           </div>
         ))}
-        {tl.zones.map((z) => {
+        {tl.zones.map((z, zi) => {
           const cur = isToday && now >= z.start && now < z.end;
           const past = d.relation === "past" || (isToday && z.end <= now);
           return (
             <div
               key={z.start}
+              class="grow-y from-top"
               style={{
+                "--i": zi,
                 position: "absolute", left: "46px", width: "26px", top: `${y(z.start) + 1}px`, height: `${Math.max(2, y(z.end) - y(z.start) - 2)}px`,
                 borderRadius: "9px", background: ZONE_COLOR[z.zone], opacity: cur ? 1 : past ? 0.35 : 0.75,
                 boxShadow: cur ? "0 0 0 2px #000, 0 0 0 4px rgba(255,45,85,0.5)" : "none",
@@ -617,7 +622,7 @@ function Timeline({ d }: { d: DayView }) {
         })}
         <svg viewBox={`0 0 26 ${24 * HH}`} aria-hidden="true" style={{ position: "absolute", left: "46px", top: 0, width: "26px", height: `${24 * HH}px`, overflow: "visible" }}>
           {curve.map((pts, i) => (
-            <path key={i} d={smooth(pts)} style={{ fill: "none", stroke: "#fff", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }} />
+            <path key={i} class="draw" pathLength={1} d={smooth(pts)} style={{ fill: "none", stroke: "#fff", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }} />
           ))}
         </svg>
         {blocks.map((b) => (

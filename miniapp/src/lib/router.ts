@@ -4,6 +4,7 @@
 import { computed, effect, signal } from "@preact/signals";
 import { haptic } from "./haptic";
 import { setBackButton } from "./telegram";
+import { withTransition } from "../motion/screen";
 
 export type Tab = "day" | "now" | "review" | "profile";
 export type ScreenName =
@@ -41,34 +42,53 @@ export const dayDate = signal<string | null>(null); // null = today
 export const current = computed<Screen | null>(() => stack.value[stack.value.length - 1] ?? null);
 
 export function goTab(t: Tab): void {
-  if (tab.value !== t) haptic.light();
-  tab.value = t;
-  stack.value = [];
-  window.scrollTo(0, 0);
+  if (tab.value === t && !stack.value.length) return;
+  haptic.light();
+  withTransition(() => {
+    tab.value = t;
+    stack.value = [];
+    window.scrollTo(0, 0);
+  });
 }
 
 export function push(name: ScreenName, params?: Record<string, string>): void {
-  if (tab.value !== "profile" && name !== "past") tab.value = "profile";
-  stack.value = [...stack.value, { name, params }];
-  window.scrollTo(0, 0);
+  withTransition(() => {
+    if (tab.value !== "profile" && name !== "past") tab.value = "profile";
+    stack.value = [...stack.value, { name, params }];
+    window.scrollTo(0, 0);
+  });
 }
 
 export function pop(): void {
-  stack.value = stack.value.slice(0, -1);
+  withTransition(() => {
+    stack.value = stack.value.slice(0, -1);
+  });
 }
 
 export function openSheet(kind: SheetKind, props: Record<string, any> = {}): void {
   sheet.value = { kind, props };
 }
 
+/** A mounted sheet may register an animated close (spring down); otherwise close at once. */
+let animatedClose: (() => void) | null = null;
+export function registerSheetClose(fn: (() => void) | null): void {
+  animatedClose = fn;
+}
 export function closeSheet(): void {
+  if (animatedClose) animatedClose();
+  else sheet.value = null;
+}
+export function closeSheetNow(): void {
+  animatedClose = null;
   sheet.value = null;
 }
 
 export function openDay(date: string | null): void {
-  dayDate.value = date;
-  tab.value = "day";
-  stack.value = [];
+  withTransition(() => {
+    dayDate.value = date;
+    tab.value = "day";
+    stack.value = [];
+  });
 }
 
 /** Keep the native Back button in sync with what can be closed. */

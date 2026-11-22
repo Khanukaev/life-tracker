@@ -3,6 +3,7 @@
 import { patchScore, statusAfter, streakAfter } from "../domain/score";
 import { del, patch, post, put, uuid7 } from "./api";
 import { haptic } from "./haptic";
+import { pop } from "../motion/screen";
 import { invalidateSoon, mutate, setData } from "./store";
 import type { DayView, HabitRow, Task, TasksView } from "./types";
 
@@ -13,7 +14,7 @@ export function setHabitValue(date: string | null, iso: string, row: HabitRow, v
   let becameDone = false;
   let dayClosed = false;
   const key = dayKey(date);
-  return mutate({
+  const pending = mutate({
     apply: () =>
       setData<DayView>(key, (d) => {
         const isToday = d.relation === "today";
@@ -32,16 +33,22 @@ export function setHabitValue(date: string | null, iso: string, row: HabitRow, v
         ? del(`/days/${iso}/habits/${row.id}`)
         : put(`/days/${iso}/habits/${row.id}`, { value }),
     refresh: [key, "/views/review", "/views/profile", "/views/goals"],
-  }).finally(() => {
-    if (becameDone || dayClosed) haptic.success();
   });
+  // `apply` ran synchronously above: feedback is instant, not after the network.
+  if (becameDone || dayClosed) {
+    haptic.success();
+    pop(`[data-habit="${row.id}"]`); // springy card, in sync with the vibration
+  }
+  return pending;
 }
 
 /** Toggle a task everywhere it is visible (day screen and task lists). */
 export function toggleTask(task: Pick<Task, "id" | "done">, dayKeys: string[] = []): void {
   const done = !task.done;
-  if (done) haptic.success();
-  else haptic.light();
+  if (done) {
+    haptic.success();
+    pop(`[data-task="${task.id}"]`);
+  } else haptic.light();
   void mutate({
     apply: () => [
       ...dayKeys.map((k) =>
