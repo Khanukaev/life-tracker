@@ -21,6 +21,9 @@ NAMING_CONVENTION = {
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
+    # Fetch server-generated values (created_at/updated_at) via RETURNING on INSERT/UPDATE,
+    # so they never trigger lazy loads (forbidden in async code).
+    __mapper_args__ = {"eager_defaults": True}  # noqa: RUF012
 
 
 def new_id() -> uuid.UUID:

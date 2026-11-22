@@ -24,3 +24,11 @@ def logical_now(now: datetime, tz: str) -> LogicalNow:
     if minute < DAY_START_MIN:
         minute += 1440
     return LogicalNow(day=day, minute=minute)
+
+
+MONTHS_SHORT = ("янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек")
+
+
+def fmt_date_short(d: date) -> str:
+    """Port of `fmtDate(k, "short")`: "21 ноя"."""
+    return f"{d.day} {MONTHS_SHORT[d.month - 1]}"
