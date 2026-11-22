@@ -31,6 +31,13 @@ dev: db ## Run the API locally with auto-reload
 test: db ## Run all tests
 	uv run pytest -q
 
+golden: ## Regenerate golden expectations by running the original JS in Node
+	python3 golden/make_fixtures.py
+	node golden/run-legacy.mjs
+
+bench: db ## Latency of the screens on a user with a year of data
+	LOG_LEVEL=WARNING uv run --env-file .env python backend/scripts/bench_views.py
+
 lint: ## Ruff + mypy
 	uv run ruff check .
 	uv run ruff format --check .
@@ -40,4 +47,4 @@ fmt: ## Auto-format code
 	uv run ruff check --fix .
 	uv run ruff format .
 
-.PHONY: help up down logs migrate seed db dev test lint fmt
+.PHONY: help up down logs migrate seed db dev test golden bench lint fmt
