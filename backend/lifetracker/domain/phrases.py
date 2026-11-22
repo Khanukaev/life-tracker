@@ -42,15 +42,15 @@ CRITICAL = (
 GROWTH = "+{delta} к вчера. Так и выглядит прогресс: понемногу, но каждый день."
 
 
-def pick_phrase(
+def phrase_pool(
     score: DayScore,
     delta: int | None,
     ctx: Ctx,
     tasks: Sequence[Task],
     *,
     bed_label: str,
-    shift: int = 0,
-) -> str:
+) -> list[str]:
+    """All phrases for the situation, rotated so that [0] is today's pick (tap = next one)."""
     pool: list[str] = list(LOW if score.pct < 40 else MID if score.pct < 70 else HIGH)
     rec = ctx.days.get(ctx.today)
     n = parse_night(rec.sleep if rec else None)
@@ -68,4 +68,18 @@ def pick_phrase(
         pool += CRITICAL
     if delta is not None and delta > 0:
         pool.append(GROWTH.format(delta=delta))
-    return pool[(idx_of(ctx.today) * 7 + shift) % len(pool)]
+    start = (idx_of(ctx.today) * 7) % len(pool)
+    return pool[start:] + pool[:start]
+
+
+def pick_phrase(
+    score: DayScore,
+    delta: int | None,
+    ctx: Ctx,
+    tasks: Sequence[Task],
+    *,
+    bed_label: str,
+    shift: int = 0,
+) -> str:
+    pool = phrase_pool(score, delta, ctx, tasks, bed_label=bed_label)
+    return pool[shift % len(pool)]

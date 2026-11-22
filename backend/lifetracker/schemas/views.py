@@ -110,6 +110,7 @@ class DayView(BaseModel):
     energy_zone: str | None
     score: ScoreOut | None
     phrase: str | None
+    phrases: list[str]  # tap on the phrase shows the next one
     sleep: SleepOut | None
     sleep_planned: dict[str, Any] | None
     critical: list[DayTask]

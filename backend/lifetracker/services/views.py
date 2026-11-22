@@ -22,7 +22,7 @@ from lifetracker.domain.habits import (
 )
 from lifetracker.domain.insights import weak_spots
 from lifetracker.domain.model import Task
-from lifetracker.domain.phrases import pick_phrase
+from lifetracker.domain.phrases import phrase_pool
 from lifetracker.domain.score import bed_gain, day_score, gains, week_scores
 from lifetracker.domain.sleep import parse_night, planned_night
 from lifetracker.domain.slots import Slot, is_overdue, suggest_with_fallback
@@ -189,13 +189,12 @@ async def day_view(
         energy_now, zone_now = e.avg, None
 
     score = _score(snap, k) if relation != "future" else None
-    phrase = None
+    phrases: list[str] = []
     if score is not None and relation == "today":
         sc = day_score(k, ctx, snap.tasks)
-        assert sc is not None  # noqa: S101
-        phrase = pick_phrase(
-            sc, score.delta, ctx, snap.tasks, bed_label=_hhmm(snap.ctx.settings.bed_target)
-        )
+        if sc is not None:
+            bed_label = _hhmm(ctx.settings.bed_target)
+            phrases = phrase_pool(sc, score.delta, ctx, snap.tasks, bed_label=bed_label)
 
     rec = ctx.days.get(k)
     sleep = None
@@ -224,7 +223,8 @@ async def day_view(
         energy_now=energy_now,
         energy_zone=zone_now,
         score=score,
-        phrase=phrase,
+        phrase=phrases[0] if phrases else None,
+        phrases=phrases,
         sleep=sleep,
         sleep_planned=planned,
         critical=critical,
