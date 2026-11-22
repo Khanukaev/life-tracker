@@ -288,7 +288,7 @@ const nowISO = () => new Date().toISOString();
 function ctx() { const f = firstKey(); const sd = S.st.startDate && S.st.startDate < f ? S.st.startDate : f; return { days: S.days, st: { ...S.st, startDate: sd }, today: logicalNow().key }; }
 function firstKey() { const ks = Object.keys(S.days).sort(); const t = logicalNow().key; return ks[0] && ks[0] < t ? ks[0] : t; }
 const ZN = { focus: "Focus", steady: "Steady", recharge: "Recharge", sleep: "Сон" };
-const ZHINT = { focus: "сложная учёба, экзамены, Авито", steady: "рутина, ДЗ, отправка заказов", recharge: "отдых, восстановление" };
+const ZHINT = { focus: "сложное и важное", steady: "рутина, ДЗ, отправка заказов", recharge: "отдых, восстановление" };
 
 /* energy cache */
 let EC = new Map();
