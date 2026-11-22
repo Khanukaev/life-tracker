@@ -295,6 +295,10 @@ class Goal(Base):
         cascade="all, delete-orphan", lazy="raise"
     )
 
+    @property
+    def habit_ids(self) -> list[uuid.UUID]:
+        return [link.habit_id for link in self.habit_links]
+
     __table_args__ = (
         UniqueConstraint("id", "user_id", name="uq_goals_id_user"),
         ForeignKeyConstraint(
