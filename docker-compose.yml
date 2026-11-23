@@ -51,6 +51,25 @@ services:
         condition: service_started
     profiles: ["bot"]  # needs a real BOT_TOKEN: `docker compose --profile bot up`
 
+  mcp:
+    # Same image again: MCP tools call the shared services directly.
+    image: andreymaxim/lifetracker-backend:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    command: ["python", "-m", "lifetracker_mcp"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tracker}:${POSTGRES_PASSWORD:-tracker}@postgres:5432/${POSTGRES_DB:-tracker}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   miniapp:
     build:
       context: .
@@ -72,6 +91,7 @@ services:
       - caddy_config:/config
     depends_on:
       - backend
+      - mcp
       - miniapp
 
 volumes:
