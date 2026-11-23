@@ -25,6 +25,6 @@ export default function Sheets() {
     case "profile":
       return <ProfileSheet />;
     case "claude":
-      return <ClaudeSheet />;
+      return <ClaudeSheet key={key} date={s.props.date} kind={s.props.kind} />;
   }
 }

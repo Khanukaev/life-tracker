@@ -13,7 +13,9 @@ export type ScreenName =
   | "habits"
   | "settings"
   | "norms"
-  | "past";
+  | "past"
+  | "claude"
+  | "reviews";
 
 export interface Screen {
   name: ScreenName;

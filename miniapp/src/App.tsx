@@ -8,6 +8,7 @@ import { resource } from "./lib/store";
 import type { Me } from "./lib/types";
 import { DayScreen } from "./screens/Day";
 import { NowScreen } from "./screens/Now";
+import { ClaudeScreen, ReviewsScreen } from "./screens/Claude";
 import { Onboarding } from "./screens/Onboarding";
 import { ProfileScreen } from "./screens/Profile";
 import { ReviewScreen } from "./screens/Review";
@@ -47,6 +48,8 @@ export function App() {
       scr.name === "habits" ? <HabitsScreen /> :
       scr.name === "settings" ? <SettingsScreen /> :
       scr.name === "norms" ? <NormsScreen /> :
+      scr.name === "claude" ? <ClaudeScreen /> :
+      scr.name === "reviews" ? <ReviewsScreen /> :
       <PastDayScreen />;
   } else {
     body =

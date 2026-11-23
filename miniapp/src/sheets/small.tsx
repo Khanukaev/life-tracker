@@ -2,10 +2,11 @@ import { useState } from "preact/hooks";
 import { Icon, Sheet, SheetHead } from "../components/ui";
 import { del, patch, post, uuid7 } from "../lib/api";
 import { haptic } from "../lib/haptic";
-import { closeSheet } from "../lib/router";
+import { closeSheet, push } from "../lib/router";
 import { mutate, resource, setData } from "../lib/store";
 import { toast } from "../lib/toast";
-import type { Me } from "../lib/types";
+import type { DayView, McpStatus, Me, Review } from "../lib/types";
+import { ReviewCard } from "../screens/Claude";
 
 export function SphereSheet({ id, name: initial }: { id?: string; name?: string }) {
   const [name, setName] = useState(initial ?? "");
@@ -86,19 +87,55 @@ export function ProfileSheet() {
   );
 }
 
-/** Reviews from the user's own Claude arrive via MCP in stage 5; for now explain it. */
-export function ClaudeSheet() {
+/** Reviews written by the user's own Claude (MCP `save_review`). Opened from the ✦ button
+ * on Day / Now / Review: shows the review of that day (or week) first, then the latest. */
+export function ClaudeSheet({ date, kind }: { date?: string; kind?: "day" | "week" }) {
+  const list = resource<Review[]>("/reviews").value.data;
+  const status = resource<McpStatus>("/mcp/token").value.data;
+  const today = resource<DayView>("/views/day").value.data?.today;
+  const target = date ?? today;
+  const match = list?.find((r) => (kind ?? "day") === r.kind && (kind === "week" || r.date === target));
+  const shown = match ? [match] : (list ?? []).slice(0, 3);
+  const goConnect = () => {
+    closeSheet();
+    push("claude");
+  };
   return (
     <Sheet label="Claude">
       <SheetHead title="Разборы от Claude" />
       <div class="sheet-body">
-        <div class="note" style={{ alignItems: "center" }}>
-          <Icon name="spark" size={22} style={{ color: "var(--accent)" }} />
-          <span class="s" style={{ fontSize: "15px", lineHeight: "21px", color: "var(--soft)" }}>
-            Подключи своего Claude к трекеру — он будет смотреть твои отметки, сон и задачи и присылать сюда разборы дня и недели.
-          </span>
-        </div>
-        <div class="s">Подключение появится в Профиле → «Подключить Claude».</div>
+        {list && list.length === 0 && (
+          <>
+            <div class="note" style={{ alignItems: "center" }}>
+              <Icon name="spark" size={22} style={{ color: "var(--accent)" }} />
+              <span class="s" style={{ fontSize: "15px", lineHeight: "21px", color: "var(--soft)" }}>
+                {status?.active
+                  ? "Claude подключён, но разборов пока нет. Попроси его: «посмотри мой трекер и разбери день»."
+                  : "Подключи своего Claude к трекеру — он будет смотреть твои отметки, сон и задачи и присылать сюда разборы дня и недели."}
+              </span>
+            </div>
+            {!status?.active && (
+              <button class="btn acc lg" onClick={goConnect}>
+                Подключить Claude
+              </button>
+            )}
+          </>
+        )}
+        {list && list.length > 0 && !match && <div class="s">За этот день разбора нет — последние:</div>}
+        {shown.map((r) => (
+          <ReviewCard key={r.id} r={r} today={today} />
+        ))}
+        {list && list.length > shown.length && (
+          <button
+            class="btn lg"
+            onClick={() => {
+              closeSheet();
+              push("reviews");
+            }}
+          >
+            Все разборы
+          </button>
+        )}
       </div>
     </Sheet>
   );

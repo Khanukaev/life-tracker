@@ -310,3 +310,26 @@ export interface HabitTemplate {
   sphere: string;
   hint: string;
 }
+
+export interface Review {
+  id: Uuid;
+  kind: "day" | "week";
+  date: string;
+  text: string;
+  by: "claude" | "schedule" | "me";
+  at: string;
+}
+
+export interface McpStatus {
+  url: string;
+  active: boolean;
+  prefix: string | null;
+  created_at: string | null;
+  last_used_at: string | null;
+}
+
+export interface McpIssued {
+  url: string;
+  token: string;
+  prefix: string;
+}
