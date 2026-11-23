@@ -10,7 +10,7 @@ import { prefetch, resource } from "../lib/store";
 import type { DayTask, DayView, HabitRow } from "../lib/types";
 import { glassesNeed } from "../domain/score";
 
-const HH = 48; // px per hour on the timeline
+const HH = 60; // px per hour on the timeline: a 1-hour block fits two lines with padding
 const y = (m: number) => ((m - 300) / 60) * HH;
 const ZONE_HINT: Record<string, string> = {
   focus: "Самое сложное — сюда.",
@@ -79,6 +79,7 @@ export function DayScreen() {
         <SleepRow d={d} />
         {d.critical.length > 0 && <Critical d={d} k={key} />}
         {d.relation !== "future" && <Habits d={d} date={date} />}
+        <DayTasks d={d} k={key} />
         <Timeline d={d} />
       </main>
     </div>
@@ -175,7 +176,7 @@ function ScoreCard({ d }: { d: DayView }) {
                 </div>
               ))}
               <div class="s" style={{ paddingTop: "10px", borderTop: "1px solid var(--line)" }}>
-                Ключевые привычки и критичные задачи весят ×3, остальные задачи ×2, прочее ×1.
+                Критичные задачи весят ×3, остальные задачи ×2, привычки ×1.
                 {s.bed_gain > 0 && (
                   <>
                     {" "}
@@ -270,6 +271,48 @@ function Critical({ d, k }: { d: DayView; k: string }) {
           Когда всё важно — ничего не важно. Критичных больше трёх: оставь самое главное.
         </div>
       )}
+    </section>
+  );
+}
+
+/** The day's other tasks (critical ones are in «Главное сегодня»): undone first, by time. */
+function DayTasks({ d, k }: { d: DayView; k: string }) {
+  const list = d.tasks
+    .filter((t) => t.importance !== "critical")
+    .sort((a, b) => Number(a.done) - Number(b.done) || (a.start_time ?? "99").localeCompare(b.start_time ?? "99"));
+  if (list.length === 0 && d.relation === "past") return null;
+  const done = list.filter((t) => t.done).length;
+  return (
+    <section>
+      <Sec
+        title="Задачи"
+        end={list.length > 0 ? <span class="mono" style={{ color: "var(--text)" }}>{`${done} / ${list.length}`}</span> : undefined}
+      />
+      <div class="card list">
+        {list.map((t) => (
+          <div class="row" key={t.id} data-task={t.id}>
+            <Check
+              on={t.done}
+              variant={t.done ? "done" : t.importance === "important" ? "imp" : ""}
+              label={`Выполнить: ${t.title}`}
+              onClick={() => toggleTask(t, [k])}
+            />
+            <button class="plain col-text" onClick={() => openSheet("task", { id: t.id })}>
+              <span
+                class="t"
+                style={t.done ? { color: "var(--muted)", textDecoration: "line-through" } : t.importance === "normal" ? { color: "var(--soft)" } : undefined}
+              >
+                {t.title}
+              </span>
+              <span class="s mono">{taskMeta(t)}</span>
+            </button>
+            {t.importance === "important" && !t.done && <span class="tag">Важная</span>}
+          </div>
+        ))}
+        <button class="row plain" onClick={() => openSheet("task", { date: d.date })}>
+          <span class="t" style={{ color: "var(--accent)" }}>+ Задача</span>
+        </button>
+      </div>
     </section>
   );
 }
@@ -626,9 +669,9 @@ function Timeline({ d }: { d: DayView }) {
           ))}
         </svg>
         {blocks.map((b) => (
-          <button key={b.key} class={`blk ${b.cls}`} style={{ top: `${b.top}px`, height: `${b.h}px`, left: b.left, width: b.width }} onClick={b.onClick}>
+          <button key={b.key} class={`blk ${b.cls}${b.h < 44 ? " short" : ""}`} style={{ top: `${b.top}px`, height: `${b.h}px`, left: b.left, width: b.width }} onClick={b.onClick}>
             <b>{b.title}</b>
-            {b.h >= 40 && (
+            {b.h >= 52 && (
               <span>
                 {b.warn && <Icon name="warn" size={14} style={{ color: "var(--text)" }} />}
                 {b.meta}

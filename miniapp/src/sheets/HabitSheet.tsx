@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { Icon, Seg, Sheet, SheetHead, Switch } from "../components/ui";
+import { Icon, NumberInput, Seg, Sheet, SheetHead, Switch } from "../components/ui";
 import { del, patch, post, uuid7 } from "../lib/api";
 import { haptic } from "../lib/haptic";
 import { closeSheet, openSheet } from "../lib/router";
@@ -40,7 +40,6 @@ export function HabitSheet({ id }: { id?: string }) {
   const [config, setConfig] = useState<Record<string, any>>(existing?.config ?? {});
   const [sphere, setSphere] = useState<string | null>(existing?.sphere_id ?? null);
   const [sched, setSched] = useState<Schedule>(existing?.schedule ?? { kind: "daily" });
-  const [isKey, setIsKey] = useState(existing?.is_key ?? false);
   const [active, setActive] = useState(existing?.active ?? true);
   const [confirmDel, setConfirmDel] = useState(false);
   const cycleDay =
@@ -57,7 +56,6 @@ export function HabitSheet({ id }: { id?: string }) {
     setType(t.type);
     setConfig(t.config ?? {});
     setSched(t.schedule ?? { kind: "daily" });
-    setIsKey(t.type === "bedtime");
     setSphere(spheres.find((s) => s.name === t.sphere)?.id ?? null);
   };
 
@@ -67,7 +65,7 @@ export function HabitSheet({ id }: { id?: string }) {
       sched.kind === "every" ? { kind: "every", n: sched.n ?? 2 } :
       sched.kind === "cycle" ? { kind: "cycle", pattern: sched.pattern || "1", anchor: sched.anchor ?? today } :
       { kind: "daily" };
-    const body = { name: name.trim(), sphere_id: sphere, is_key: isKey, config: type === "check" || type === "bedtime" ? {} : cfg, schedule, active };
+    const body = { name: name.trim(), sphere_id: sphere, config: type === "check" || type === "bedtime" ? {} : cfg, schedule, active };
     const res = await mutate({
       request: () => (existing ? patch(`/habits/${existing.id}`, body) : post("/habits", { ...body, id: uuid7(), type })),
       refresh: ["/habits", "/views"],
@@ -117,7 +115,7 @@ export function HabitSheet({ id }: { id?: string }) {
               {TYPES.map(([t, label, hint]) => {
                 const disabled = t === "bedtime" && hasBedtime;
                 return (
-                  <button key={t} class="row plain" disabled={disabled} style={disabled ? { opacity: 0.4 } : undefined} onClick={() => { haptic.selection(); setType(t); setConfig({}); setIsKey(t === "bedtime"); }}>
+                  <button key={t} class="row plain" disabled={disabled} style={disabled ? { opacity: 0.4 } : undefined} onClick={() => { haptic.selection(); setType(t); setConfig({}); }}>
                     <span class={`chk sm${type === t ? " on" : ""}`}>{type === t && <Icon name="check" />}</span>
                     <span class="col-text">
                       <span class="t">{label}</span>
@@ -134,11 +132,11 @@ export function HabitSheet({ id }: { id?: string }) {
           <div class="grp">
             <div class="row">
               <span class="t" style={{ flex: 1 }}>Норма, минут</span>
-              <input type="number" class="pill-input" style={{ width: "80px" }} min={1} max={1440} value={cfg.target_min} onChange={(e) => setCfg("target_min", Number((e.target as HTMLInputElement).value) || 1)} />
+              <NumberInput label="Норма, минут" style={{ width: "80px" }} min={1} max={1440} value={cfg.target_min} onChange={(v) => setCfg("target_min", v)} />
             </div>
             <div class="row">
               <span class="t" style={{ flex: 1 }}>Шаг кнопки, минут</span>
-              <input type="number" class="pill-input" style={{ width: "80px" }} min={1} max={240} value={cfg.step_min} onChange={(e) => setCfg("step_min", Number((e.target as HTMLInputElement).value) || 1)} />
+              <NumberInput label="Шаг кнопки, минут" style={{ width: "80px" }} min={1} max={240} value={cfg.step_min} onChange={(v) => setCfg("step_min", v)} />
             </div>
           </div>
         )}
@@ -146,11 +144,11 @@ export function HabitSheet({ id }: { id?: string }) {
           <div class="grp">
             <div class="row">
               <span class="t" style={{ flex: 1 }}>Норма, литров</span>
-              <input type="number" class="pill-input" style={{ width: "80px" }} step={0.1} min={0.1} max={10} value={cfg.target_l} onChange={(e) => setCfg("target_l", Number((e.target as HTMLInputElement).value) || 0.1)} />
+              <NumberInput label="Норма, литров" decimal style={{ width: "80px" }} min={0.1} max={10} value={cfg.target_l} onChange={(v) => setCfg("target_l", v)} />
             </div>
             <div class="row">
               <span class="t" style={{ flex: 1 }}>Стакан, литров</span>
-              <input type="number" class="pill-input" style={{ width: "80px" }} step={0.05} min={0.05} max={2} value={cfg.glass_l} onChange={(e) => setCfg("glass_l", Number((e.target as HTMLInputElement).value) || 0.25)} />
+              <NumberInput label="Стакан, литров" decimal style={{ width: "80px" }} min={0.05} max={2} value={cfg.glass_l} onChange={(v) => setCfg("glass_l", v)} />
             </div>
           </div>
         )}
@@ -178,7 +176,7 @@ export function HabitSheet({ id }: { id?: string }) {
               <div class="grp" style={{ marginTop: "10px" }}>
                 <div class="row">
                   <span class="t" style={{ flex: 1 }}>Каждые N дней</span>
-                  <input type="number" class="pill-input" style={{ width: "70px" }} min={2} max={365} value={sched.n ?? 2} onChange={(e) => setSched({ ...sched, n: Math.max(2, Number((e.target as HTMLInputElement).value) || 2) })} />
+                  <NumberInput label="Каждые N дней" style={{ width: "70px" }} min={2} max={365} value={sched.n ?? 2} onChange={(n) => setSched({ ...sched, n })} />
                 </div>
               </div>
             )}
@@ -190,15 +188,13 @@ export function HabitSheet({ id }: { id?: string }) {
                 </div>
                 <div class="row">
                   <span class="t" style={{ flex: 1 }}>Сегодня — день цикла</span>
-                  <input
-                    type="number"
-                    class="pill-input"
+                  <NumberInput
+                    label="Сегодня — день цикла"
                     style={{ width: "70px" }}
                     min={1}
                     max={(sched.pattern || "1").length}
                     value={cycleDay}
-                    onChange={(e) => {
-                      const n = Math.max(1, Number((e.target as HTMLInputElement).value) || 1);
+                    onChange={(n) => {
                       const len = (sched.pattern || "1").length;
                       const anchor = new Date(Date.parse(today) - ((n - 1) % len) * 864e5).toISOString().slice(0, 10);
                       setSched({ ...sched, anchor });
@@ -225,15 +221,8 @@ export function HabitSheet({ id }: { id?: string }) {
           </div>
         </section>
 
-        <div class="grp">
-          <div class="row">
-            <span class="col-text">
-              <span class="t">Ключевая</span>
-              <span class="s">Весит ×3 в рейтинге дня</span>
-            </span>
-            <Switch on={isKey} label="Ключевая привычка" onChange={setIsKey} />
-          </div>
-          {existing && (
+        {existing && (
+          <div class="grp">
             <div class="row">
               <span class="col-text">
                 <span class="t">Включена</span>
@@ -241,8 +230,8 @@ export function HabitSheet({ id }: { id?: string }) {
               </span>
               <Switch on={active} label="Включена" onChange={setActive} />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {existing && (
           <button class="btn lg danger" onClick={remove}>

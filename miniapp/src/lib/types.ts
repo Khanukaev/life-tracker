@@ -43,7 +43,6 @@ export interface Habit {
   name: string;
   type: HabitType;
   sphere_id: Uuid | null;
-  is_key: boolean;
   config: Record<string, any>;
   schedule: Schedule;
   active: boolean;
@@ -129,7 +128,6 @@ export interface HabitRow {
   id: Uuid;
   name: string;
   type: HabitType;
-  is_key: boolean;
   sphere_id: Uuid | null;
   config: Record<string, any>;
   schedule: Schedule;
