@@ -80,39 +80,6 @@ export function NowScreen() {
         <FeelBlock d={d} />
         <EnergyChart d={d} />
 
-        <section>
-          <Sec title="Окна на сегодня" />
-          <div class="card list">
-            {d.windows.map((w) => (
-              <div class="row" key={w.start}>
-                <span class="zd" style={{ background: ZONE_DOT[w.zone] }} />
-                <span class="t" style={{ flex: 1 }}>
-                  {ZONE_NAME[w.zone]}
-                </span>
-                {d.now_min >= w.start && d.now_min < w.end && (
-                  <span class="s" style={{ marginRight: "6px" }}>
-                    сейчас
-                  </span>
-                )}
-                <span class="mono" style={{ fontSize: "15px", color: d.now_min >= w.end ? "var(--muted)" : undefined }}>
-                  {hhmm(w.start)}–{hhmm(w.end)}
-                </span>
-              </div>
-            ))}
-            {d.train && (
-              <div class="row">
-                <Icon name="dumbbell" size={18} style={{ color: "var(--muted)" }} />
-                <span class="t" style={{ flex: 1 }}>
-                  Лучшее для тренировки
-                </span>
-                <span class="mono" style={{ fontSize: "15px" }}>
-                  {hhmm(d.train.start)}–{hhmm(d.train.end)}
-                </span>
-              </div>
-            )}
-          </div>
-        </section>
-
         <Factors d={d} />
         <Hormones d={d} />
       </main>
