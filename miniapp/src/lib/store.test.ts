@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { _resetStore, mutate, resource, setData } from "./store";
+import { _resetStore, mutate, resource, setData, setUserKey } from "./store";
 import { toastText } from "./toast";
 
 function mockFetch(handler: (url: string, init?: RequestInit) => Response) {
@@ -18,7 +18,8 @@ afterEach(() => {
 
 describe("optimistic UI", () => {
   it("shows cached data instantly, then refreshes from the server", async () => {
-    localStorage.setItem("lt:c:anon:/views/now", JSON.stringify({ idx: 50 }));
+    setUserKey("u");
+    localStorage.setItem("lt:c:u:/views/now", JSON.stringify({ idx: 50 }));
     mockFetch((url) => (url.includes("/auth/") ? json({ access_token: "t", user: { id: "u" } }) : json({ idx: 77 })));
     const r = resource<{ idx: number }>("/views/now");
     expect(r.value.data?.idx).toBe(50); // from cache, before any network
@@ -26,7 +27,8 @@ describe("optimistic UI", () => {
   });
 
   it("applies a change immediately and rolls it back when the server fails", async () => {
-    localStorage.setItem("lt:c:anon:/views/day", JSON.stringify({ water: 2 }));
+    setUserKey("u");
+    localStorage.setItem("lt:c:u:/views/day", JSON.stringify({ water: 2 }));
     mockFetch(() => json({ error: { code: "conflict", message: "nope" } }, 409));
     const r = resource<{ water: number }>("/views/day");
     const p = mutate({
@@ -39,5 +41,33 @@ describe("optimistic UI", () => {
     await p;
     expect(r.value.data?.water).toBe(2); // rolled back
     expect(toastText.value).toBe("Не сохранилось. Проверь связь");
+  });
+});
+
+describe("per-account cache", () => {
+  it("never shows a cache written before login to anyone", () => {
+    localStorage.setItem("lt:c:anon:/views/day", JSON.stringify({ who: "someone else" }));
+    mockFetch(() => new Promise<Response>(() => {}) as unknown as Response);
+    expect(resource<{ who: string }>("/views/day").value.data).toBeUndefined();
+  });
+
+  it("refills mounted resources in place when the account changes", () => {
+    setUserKey("alice");
+    localStorage.setItem("lt:c:alice:/me", JSON.stringify({ name: "Alice" }));
+    localStorage.setItem("lt:c:bob:/me", JSON.stringify({ name: "Bob" }));
+    mockFetch(() => new Promise<Response>(() => {}) as unknown as Response);
+    const me = resource<{ name: string }>("/me"); // a screen keeps this signal
+    expect(me.value.data?.name).toBe("Alice");
+    setUserKey("bob");
+    expect(me.value.data?.name).toBe("Bob"); // same signal, new account's data
+  });
+
+  it("keeps data fetched right after the first login and caches it for that user", () => {
+    mockFetch(() => new Promise<Response>(() => {}) as unknown as Response);
+    const day = resource<{ n: number }>("/views/day");
+    day.value = { ...day.value, data: { n: 1 } }; // the server answered (after login)
+    setUserKey("carol");
+    expect(day.value.data?.n).toBe(1);
+    expect(localStorage.getItem("lt:c:carol:/views/day")).toBe('{"n":1}');
   });
 });

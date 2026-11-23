@@ -36,6 +36,21 @@ services:
       timeout: 3s
       retries: 5
 
+  bot:
+    # Same image as the backend: the bot calls the shared services directly, not the HTTP API.
+    image: andreymaxim/lifetracker-backend:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    command: ["python", "-m", "lifetracker_bot"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tracker}:${POSTGRES_PASSWORD:-tracker}@postgres:5432/${POSTGRES_DB:-tracker}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    profiles: ["bot"]  # needs a real BOT_TOKEN: `docker compose --profile bot up`
+
   miniapp:
     build:
       context: .

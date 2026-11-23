@@ -27,16 +27,24 @@ try {
   /* ignore */
 }
 
-/** Cache is per account (two Telegram accounts on one phone must not mix). */
+/** Cache is per account (two Telegram accounts on one phone must not mix).
+ *
+ * Screens stay subscribed to the same signals, so on a switch we refill them in place
+ * instead of dropping them. Before the first login the key is "anon": nothing is read
+ * from or written to storage then, and whatever is in memory was fetched after login
+ * (every request waits for it), so it belongs to this user and is kept. */
 export function setUserKey(id: string): void {
-  if (userKey !== id) {
-    userKey = id;
-    entries.clear();
-    try {
-      localStorage.setItem("lt:uid", id);
-    } catch {
-      /* ignore */
-    }
+  if (userKey === id) return;
+  const fromAnon = userKey === "anon";
+  userKey = id;
+  try {
+    localStorage.setItem("lt:uid", id);
+  } catch {
+    /* ignore */
+  }
+  for (const [key, e] of entries) {
+    if (fromAnon && e.value.data !== undefined) writeCache(key, e.value.data);
+    else e.value = { data: readCache(key), loading: false, error: null, at: 0 };
   }
 }
 
@@ -45,6 +53,7 @@ function storageKey(key: string) {
 }
 
 function readCache<T>(key: string): T | undefined {
+  if (userKey === "anon") return undefined;
   try {
     const raw = localStorage.getItem(storageKey(key));
     return raw ? (JSON.parse(raw) as T) : undefined;
@@ -54,6 +63,7 @@ function readCache<T>(key: string): T | undefined {
 }
 
 function writeCache(key: string, data: unknown) {
+  if (userKey === "anon") return; // unknown account: never persist
   try {
     localStorage.setItem(storageKey(key), JSON.stringify(data));
   } catch {
@@ -61,7 +71,7 @@ function writeCache(key: string, data: unknown) {
   }
 }
 
-function entry<T>(key: string): Signal<Entry<T>> {
+export function entry<T>(key: string): Signal<Entry<T>> {
   let e = entries.get(key) as Signal<Entry<T>> | undefined;
   if (!e) {
     const cached = readCache<T>(key);
@@ -170,6 +180,7 @@ export async function mutate<R>(opts: {
 
 /** Testing helper. */
 export function _resetStore(): void {
+  userKey = "anon";
   entries.clear();
   inflight.clear();
 }

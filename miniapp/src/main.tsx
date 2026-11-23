@@ -9,8 +9,9 @@ import { render } from "preact";
 import { App } from "./App";
 import { login } from "./lib/api";
 import { hapticsEnabled } from "./lib/haptic";
-import { syncBackButton } from "./lib/router";
-import { refresh, setUserKey, watchVisibility } from "./lib/store";
+import { deepLinkSheet, openSheet, syncBackButton } from "./lib/router";
+import { entry, refresh, setUserKey, watchVisibility } from "./lib/store";
+import type { DayView } from "./lib/types";
 import { setupTelegram, whenTelegram } from "./lib/telegram";
 import { applyTheme, canGlass, resolveTheme, theme } from "./lib/theme";
 import { reducedMotion, setMotion } from "./motion/tokens";
@@ -34,6 +35,11 @@ void (async () => {
     hapticsEnabled.value = me.haptics;
     applyTheme(resolveTheme(me.theme));
     void refresh("/me");
+    if (deepLinkSheet() === "sleep") {
+      await refresh("/views/day"); // the sheet needs the user's logical "today"
+      const today = (entry("/views/day").value.data as DayView | undefined)?.today;
+      if (today) openSheet("sleep", { date: today });
+    }
   } catch {
     /* App shows its own error state */
   }

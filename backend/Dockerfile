@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Build context: repository root (the uv workspace lock file lives there).
+# One image for the API and the bot (and later MCP): they share the `lifetracker` package
+# and differ only in the command — see docker-compose.yml.
 
 FROM python:3.12.12-slim AS build
 COPY --from=ghcr.io/astral-sh/uv:0.13.9 /uv /bin/uv
@@ -9,12 +11,14 @@ WORKDIR /app
 # Dependencies first: this layer stays cached until the lock file changes.
 COPY pyproject.toml uv.lock ./
 COPY backend/pyproject.toml backend/pyproject.toml
+COPY bot/pyproject.toml bot/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-workspace --package lifetracker
+    uv sync --frozen --no-dev --no-install-workspace --all-packages
 
 COPY backend backend
+COPY bot bot
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable --package lifetracker
+    uv sync --frozen --no-dev --no-editable --all-packages
 
 FROM python:3.12.12-slim
 RUN useradd --create-home --uid 10001 app

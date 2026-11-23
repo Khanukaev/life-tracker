@@ -20,7 +20,7 @@ export function Onboarding({ me }: { me: Me }) {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
-    void get<HabitTemplate[]>("/habit-templates").then(setTemplates).catch(() => {});
+    void get<HabitTemplate[]>("/habit-templates").then((t) => setTemplates(Array.isArray(t) ? t : [])).catch(() => {});
   }, []);
 
   const finish = async (skip: boolean) => {

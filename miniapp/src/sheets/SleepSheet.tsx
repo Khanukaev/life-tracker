@@ -94,7 +94,7 @@ export function SleepSheet({ date }: { date: string }) {
     <Sheet label="Сон">
       <SheetHead title="Как спал?" sub={`ночь на ${shortDate(date)}`} />
       <div class="sheet-body" style={{ gap: "20px", paddingTop: "12px" }}>
-        <div style={{ position: "relative", width: "300px", height: "300px", margin: "0 auto", touchAction: "none" }}>
+        <div data-own-drag style={{ position: "relative", width: "300px", height: "300px", margin: "0 auto", touchAction: "none" }}>
           <svg
             ref={svg}
             viewBox="0 0 300 300"
@@ -137,8 +137,9 @@ export function SleepSheet({ date }: { date: string }) {
             </g>
           </svg>
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-            <div class="mono" style={{ fontSize: "34px", fontWeight: 500, letterSpacing: "-0.03em" }}>
-              {Math.floor(durMin / 60)} ч {String(durMin % 60).padStart(2, "0")} м
+            {/* Must fit between the "06" and "18" labels (~110 px) even for "11ч 50м". */}
+            <div class="mono" style={{ fontSize: "26px", fontWeight: 500, letterSpacing: "-0.04em", whiteSpace: "nowrap" }}>
+              {Math.floor(durMin / 60)}ч {String(durMin % 60).padStart(2, "0")}м
             </div>
             <div class="s mono" style={{ marginTop: "4px" }}>
               {hhmm(bed)} → {hhmm(wake)}

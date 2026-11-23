@@ -39,6 +39,18 @@ async function rawLogin(): Promise<Me> {
     });
   } else if (import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH === "true") {
     // Browser development without Telegram (backend must run with DEV_AUTH=true).
+    // Switch accounts with ?dev_user=new (a fresh user, e.g. to test onboarding) or
+    // ?dev_user=900001 (back to the default one). The choice is remembered.
+    const params = new URLSearchParams(location.search);
+    const asked = params.get("dev_user");
+    if (asked) {
+      const next = asked === "new" ? String(910000 + Math.floor(Math.random() * 89999)) : asked;
+      if (/^\d+$/.test(next)) localStorage.setItem(DEV_ID_KEY, next);
+      // Drop only this parameter (a reload must not create another user); keep e.g. ?open=.
+      params.delete("dev_user");
+      const rest = params.toString();
+      history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : ""));
+    }
     const id = Number(localStorage.getItem(DEV_ID_KEY) ?? "900001");
     res = await fetch(`${BASE}/auth/dev`, {
       method: "POST",
@@ -85,9 +97,13 @@ export async function api<T>(method: string, path: string, body?: unknown, retry
     return api<T>(method, path, body, false);
   }
   if (res.status === 204) return undefined as T;
-  const data = await res.json().catch(() => ({}));
+  // Anything but JSON (e.g. an HTML page from a misconfigured proxy) is an error, never data:
+  // otherwise screens would receive `{}` and crash on missing fields.
+  const isJson = (res.headers.get("content-type") ?? "").includes("application/json");
+  const data = isJson ? await res.json().catch(() => null) : null;
+  if (res.ok && data === null) throw new ApiError(502, "bad_response", "Сервер недоступен");
   if (!res.ok) {
-    const err = (data as { error?: { code?: string; message?: string } }).error;
+    const err = (data as { error?: { code?: string; message?: string } } | null)?.error;
     throw new ApiError(res.status, err?.code ?? "error", err?.message ?? "Ошибка");
   }
   return data as T;
