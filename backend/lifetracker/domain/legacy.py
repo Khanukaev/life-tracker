@@ -7,11 +7,11 @@ import endpoint. Legacy special cases become universal habit types:
 * ``type: "water"``             -> WATER with the global water norm moved into the habit
 * ``type: "protein"`` (kbju)    -> DUAL with flags ``kbju`` / ``proteinOk``
 * ``key: "study"`` (+studyMin)  -> MINUTES with target ``studyNeed``
-* hard-coded weights ×3 for sleep/study/orders -> ``is_key``
+* hard-coded weights ×3 for sleep/study/orders -> dropped: every habit weighs the same
 
 It also reads this app's own export (``services/exporter.py``), which uses the same
 layout with the universal types (``bedtime``, ``minutes``, ``dual``), an explicit
-``config`` and ``is_key``, and stores every value under the habit's own key.
+``config``, and stores every value under the habit's own key.
 """
 
 from dataclasses import dataclass
@@ -37,7 +37,6 @@ LEGACY_DEFAULT_TARGETS: dict[str, Any] = {
     "bed": "01:00", "waterL": 2.5, "glassL": 0.25, "proteinG": 140, "sleepNeed": 8, "studyH": 2,
 }  # fmt: skip
 LEGACY_DEFAULT_USUAL = {"bed": "03:00", "wake": "12:30"}
-LEGACY_KEY_HABITS = {"study", "orders"}  # SCORE_W keys besides sleep
 
 # `DEFAULT_SETTINGS` of the old app: used only when an export has no habits/spheres.
 DEFAULT_SPHERES = ["Сон", "Учёба", "Бизнес", "Спорт", "Здоровье", "Английский", "Личное"]
@@ -124,7 +123,6 @@ def convert_habit(h: dict[str, Any], targets: dict[str, Any], start: date) -> Ha
         name=habit_name(h.get("name", ""), targets),
         sphere=h.get("sphere"),
         active=h.get("active") is not False,
-        is_key=bool(h["is_key"]) if "is_key" in h else h["key"] in LEGACY_KEY_HABITS,
         sched=kind,
         sched_n=(sched.get("n") or 2) if kind == ScheduleKind.EVERY else None,
         sched_pattern=(sched.get("p") or "1") if kind == ScheduleKind.CYCLE else None,
@@ -133,10 +131,9 @@ def convert_habit(h: dict[str, Any], targets: dict[str, Any], start: date) -> Ha
     own_config = h.get("config") if isinstance(h.get("config"), dict) else None
     match h.get("type"):
         case "sleep":
-            habit.type, habit.is_key = HabitType.BEDTIME, True
+            habit.type = HabitType.BEDTIME
         case "bedtime":  # this app's export
             habit.type = HabitType.BEDTIME
-            habit.is_key = bool(h.get("is_key", True))
         case "minutes" if own_config:
             habit.type, habit.config = HabitType.MINUTES, own_config
         case "dual" if own_config:

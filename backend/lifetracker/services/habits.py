@@ -69,7 +69,6 @@ async def create_habit(
         name=data.name,
         type=data.type,
         sphere_id=data.sphere_id,
-        is_key=data.is_key if data.is_key is not None else data.type == HabitType.BEDTIME,
         config=data.config,
         active=data.active,
         position=data.position

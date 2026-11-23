@@ -52,17 +52,18 @@ def test_each_task_is_its_own_item_and_critical_weighs_three() -> None:
     assert gains(sc)[0].points == 38
 
 
-def test_key_habits_weigh_three() -> None:
+def test_habits_weigh_the_same() -> None:
     ctx = make_ctx(
         [
-            Habit(id="read", type=HabitType.CHECK, is_key=True),
+            Habit(id="read", type=HabitType.CHECK),
             Habit(id="vit", type=HabitType.CHECK),
         ],
         {TODAY: DayRec(values={"read": True})},
     )
     sc = day_score(TODAY, ctx, [])
     assert sc is not None
-    assert sc.pct == 75
+    assert sc.pct == 50
+    assert {x.w for x in sc.items} == {1}
 
 
 def test_no_bedtime_habit_means_no_sleep_item() -> None:
@@ -77,7 +78,7 @@ def test_no_bedtime_habit_means_no_sleep_item() -> None:
 
 
 def test_bedtime_item_scales_with_lateness() -> None:
-    bed = Habit(id="bed", type=HabitType.BEDTIME, is_key=True)
+    bed = Habit(id="bed", type=HabitType.BEDTIME)
     on_time = make_ctx([bed], {TODAY: DayRec(sleep=SleepRec(bed=23 * 60, wake=7 * 60))})
     an_hour_late = make_ctx([bed], {TODAY: DayRec(sleep=SleepRec(bed=30, wake=8 * 60))})
     assert day_score(TODAY, on_time, []).pct == 100  # type: ignore[union-attr]

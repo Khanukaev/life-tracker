@@ -22,7 +22,7 @@ from lifetracker.domain.habits import (
 from lifetracker.domain.insights import weak_spots_last
 from lifetracker.domain.score import day_score, tasks_on
 from lifetracker.domain.slots import energy_left, is_overdue, suggest_slot
-from tests.golden.conftest import Case, r6
+from tests.golden.conftest import Case, equal_weights, r6
 
 pytestmark = pytest.mark.nodb
 
@@ -61,7 +61,10 @@ def test_goals(case: Case) -> None:
 
 
 def test_day_score_matches_where_rules_coincide(case: Case) -> None:
-    """New rule: one item per task (critical ×3). With ≤1 task a day it equals the original."""
+    """New rules: one item per task (critical ×3) and every habit ×1.
+
+    With ≤1 task a day the items and their values equal the original's; the percentage
+    is the original's items re-weighted (see ``equal_weights``)."""
     ctx, tasks = case.data.ctx, case.data.tasks
     compared = 0
     for k, exp in case.expected["dayScore"].items():
@@ -75,8 +78,9 @@ def test_day_score_matches_where_rules_coincide(case: Case) -> None:
             continue
         legacy_key = {"sleep": "sleep", "task": "tasks"}
         got = [[legacy_key.get(x.kind, x.ref), x.w, r6(x.v)] for x in sc.items]
-        assert got == exp["items"], k
-        assert (sc.pct, sc.W) == (exp["pct"], exp["W"]), k
+        items, pct, total = equal_weights(exp["items"])
+        assert got == items, k
+        assert (sc.pct, sc.W) == (pct, total), k
         compared += 1
     if case.expected["dayScore"] and any(v for v in case.expected["dayScore"].values()):
         assert compared > 0, "no comparable days in fixture"

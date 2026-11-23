@@ -114,7 +114,6 @@ async def export_account(
                     "name": h.name,
                     "type": h.type.value,
                     "config": h.config,
-                    "is_key": h.is_key,
                     "sphere": sphere_name.get(h.sphere_id) if h.sphere_id else None,
                     "sched": _sched(h),
                     "active": h.active,

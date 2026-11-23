@@ -1,14 +1,14 @@
 """Day score ("рейтинг выкладывания"): weighted share of what was done.
 
 Rules (agreed in stage 0, generalising the reference app):
-* key habits weigh ×3, other habits ×1; the bedtime item is the night that ended
-  this morning: full points at the target, zero when 2 h late;
+* every habit weighs ×1 (importance is a task notion); the bedtime item is the night
+  that ended this morning: full points at the target, zero when 2 h late;
 * every task of the day is its own item: critical ×3, others ×2;
 * water, minute counters and dual habits count partially;
 * habits resting by schedule are not counted.
 
-With at most one task per day these rules reduce exactly to the original
-`dayScore`, which the golden tests verify.
+The original `dayScore` weighted sleep/study/orders ×3. The golden tests check that
+every item and its value match the original, and recompute the percentage with ×1.
 """
 
 from collections.abc import Hashable, Sequence
@@ -28,7 +28,7 @@ from lifetracker.domain.habits import (
 from lifetracker.domain.model import Ctx, Task
 from lifetracker.domain.sleep import parse_night, planned_night
 
-KEY_WEIGHT, HABIT_WEIGHT = 3, 1
+HABIT_WEIGHT = 1
 CRITICAL_TASK_WEIGHT, TASK_WEIGHT = 3, 2
 
 
@@ -74,7 +74,7 @@ def day_score(k: date, ctx: Ctx, tasks: Sequence[Task]) -> DayScore | None:
         v = clamp(1 - max(0, n.bed - goal) / 120, 0, 1) if n else 0
         items.append(
             ScoreItem(
-                "sleep", bedtime.id, bedtime.name, KEY_WEIGHT if bedtime.is_key else HABIT_WEIGHT,
+                "sleep", bedtime.id, bedtime.name, HABIT_WEIGHT,
                 v, f"лёг в {fmt_hm(n.bed)}" if n else "сон не отмечен",
             )
         )  # fmt: skip
@@ -95,9 +95,7 @@ def day_score(k: date, ctx: Ctx, tasks: Sequence[Task]) -> DayScore | None:
             val = (0.5 if raw and raw.get("a") else 0) + (0.5 if raw and raw.get("b") else 0)
         elif h.type == HabitType.MINUTES and raw is not None:
             val, note = min(1, raw / minutes_need(h)), f"{raw} мин"
-        items.append(
-            ScoreItem("habit", h.id, h.name, KEY_WEIGHT if h.is_key else HABIT_WEIGHT, val, note)
-        )
+        items.append(ScoreItem("habit", h.id, h.name, HABIT_WEIGHT, val, note))
 
     for t in tasks_on(tasks, k):
         w = CRITICAL_TASK_WEIGHT if t.importance == Importance.CRITICAL else TASK_WEIGHT

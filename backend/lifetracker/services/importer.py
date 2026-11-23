@@ -187,7 +187,6 @@ async def import_export(
                 user_id=user_id,
                 name=h.name[:80],
                 type=h.type,
-                is_key=h.is_key,
                 config=dict(h.config or {}),
                 sched_kind=h.sched,
                 sched_n=h.sched_n,

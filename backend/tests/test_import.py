@@ -17,6 +17,7 @@ from httpx import AsyncClient
 from lifetracker.db.session import get_sessionmaker
 from lifetracker.domain.enums import ReviewKind
 from lifetracker.services import reviews
+from tests.golden.conftest import equal_weights
 
 GOLDEN = Path(__file__).resolve().parents[2] / "golden"
 
@@ -59,7 +60,8 @@ async def test_import_reproduces_the_old_apps_scores(alice: AsyncClient) -> None
     assert {"bedtime", "water", "dual", "minutes", "check"} <= types
 
     # Same comparison rule as the golden tests: our score has one item per task (critical
-    # ×3), the old app had one "tasks" item, so the two coincide on days with ≤ 1 task.
+    # ×3), the old app had one "tasks" item, so the two coincide on days with ≤ 1 task;
+    # habits all weigh ×1 here, so the original's items are re-weighted.
     tasks_per_day: dict[str, int] = {}
     for t in fixture("regular")["tasks"].values():
         if t.get("date"):
@@ -70,7 +72,7 @@ async def test_import_reproduces_the_old_apps_scores(alice: AsyncClient) -> None
             continue  # today depends on the minute of the day
         got = (await alice.get(f"/views/day?date={day}")).json()["score"]
         assert got is not None, day
-        assert got["pct"] == want["pct"], day
+        assert got["pct"] == equal_weights(want["items"])[1], day
         checked += 1
     assert checked >= 5
 

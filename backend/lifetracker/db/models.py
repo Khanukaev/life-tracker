@@ -134,7 +134,6 @@ class Habit(Base):
     sphere_id: Mapped[uuid.UUID | None] = mapped_column()
     name: Mapped[str] = mapped_column(String(80))
     type: Mapped[HabitType] = mapped_column(str_enum(HabitType, "habit_type"))
-    is_key: Mapped[bool] = mapped_column(Boolean, default=False)
     # water: {target_l, glass_l}; minutes: {target_min, step_min}; dual: {labels: [a, b]}
     config: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     sched_kind: Mapped[ScheduleKind] = mapped_column(
