@@ -94,7 +94,7 @@ export function SleepSheet({ date }: { date: string }) {
     <Sheet label="Сон">
       <SheetHead title="Как спал?" sub={`ночь на ${shortDate(date)}`} />
       <div class="sheet-body" style={{ gap: "20px", paddingTop: "12px" }}>
-        <div style={{ position: "relative", width: "300px", height: "300px", margin: "0 auto", touchAction: "none" }}>
+        <div data-own-drag style={{ position: "relative", width: "300px", height: "300px", margin: "0 auto", touchAction: "none" }}>
           <svg
             ref={svg}
             viewBox="0 0 300 300"

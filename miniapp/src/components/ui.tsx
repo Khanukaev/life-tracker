@@ -192,7 +192,10 @@ export function Sheet({ children, label }: { children: ComponentChildren; label:
     let dy = 0;
     let tracking = false;
     const down = (e: TouchEvent) => {
-      tracking = el.scrollTop <= 0;
+      // Controls with their own drag (the sleep dial) mark themselves; a swipe that starts
+      // on them is theirs, not a request to close the sheet.
+      const own = (e.target as Element | null)?.closest?.("[data-own-drag]");
+      tracking = !own && el.scrollTop <= 0;
       startY = lastY = e.touches[0]!.clientY;
       lastT = performance.now();
       dy = 0;
