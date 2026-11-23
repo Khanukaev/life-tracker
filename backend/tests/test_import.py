@@ -6,11 +6,17 @@ equals what the old app computed for the same data.
 """
 
 import json
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
 from httpx import AsyncClient
+
+from lifetracker.db.session import get_sessionmaker
+from lifetracker.domain.enums import ReviewKind
+from lifetracker.services import reviews
 
 GOLDEN = Path(__file__).resolve().parents[2] / "golden"
 
@@ -73,9 +79,7 @@ async def test_reimport_is_idempotent(alice: AsyncClient) -> None:
     first = (await alice.post("/import", json=fixture("regular"))).json()
     second = (await alice.post("/import", json=fixture("regular"))).json()
     assert second["habits_created"] == []
-    assert len(second["habits_reused"]) == len(
-        first["habits_created"]
-    )
+    assert len(second["habits_reused"]) == len(first["habits_created"])
     assert second["tasks_created"] == 0
     assert second["tasks_updated"] == first["tasks_created"]
     assert second["goals_created"] == 0
@@ -141,3 +145,80 @@ async def test_garbage_is_rejected_with_a_clear_message(alice: AsyncClient, body
     r = await alice.post("/import", json=body)
     assert r.status_code == 422, r.text
     assert (await alice.get("/habits")).json() == []  # nothing half-imported
+
+
+# ---- export: the same layout, so backup and move are a round trip ----
+
+
+async def _rich_account(c: AsyncClient) -> None:
+    """Every habit type, a schedule, sleep, an explicit ❌, a task, a goal and a review."""
+    await c.post("/import", json=fixture("regular"))
+    read = (
+        await c.post(
+            "/habits", json={"name": "Чтение", "type": "minutes", "config": {"target_min": 25}}
+        )
+    ).json()["id"]
+    vit = (
+        await c.post(
+            "/habits",
+            json={"name": "Витамины", "type": "check", "schedule": {"kind": "every", "n": 3}},
+        )
+    ).json()["id"]
+    await c.put(f"/days/2026-11-21/habits/{read}", json={"value": 40})
+    await c.put(f"/days/2026-11-21/habits/{vit}", json={"value": False})
+
+    uid = uuid.UUID((await c.get("/me")).json()["id"])
+    async with get_sessionmaker()() as s:
+        await reviews.save_review(
+            s, uid, ReviewKind.DAY, "Разбор", datetime(2026, 11, 22, 12, tzinfo=UTC)
+        )
+
+
+async def test_export_has_everything(alice: AsyncClient) -> None:
+    await _rich_account(alice)
+    r = await alice.get("/export")
+    assert r.status_code == 200
+    ex = r.json()
+    assert ex["format"] == "life-tracker/1"
+    types = {h["type"] for h in ex["settings"]["habits"]}
+    assert {"bedtime", "water", "dual", "minutes", "check"} <= types
+    assert ex["days"]["2026-11-21"]["sleep"]["bed"]
+    assert len(ex["tasks"]) == 24
+    assert len(ex["goals"]) == 7
+    assert ex["reviews"][0]["text"] == "Разбор"
+    assert any(g["history"] for g in ex["goals"].values())
+
+
+async def test_reimporting_own_export_changes_nothing(alice: AsyncClient) -> None:
+    await _rich_account(alice)
+    before = (await alice.get("/export")).json()
+    rep = (await alice.post("/import", json=before)).json()
+    assert rep["habits_created"] == []
+    assert rep["tasks_created"] == 0
+    assert rep["goals_created"] == 0
+    assert rep["reviews"] == 0
+    after = (await alice.get("/export")).json()
+    for key in ("days", "tasks"):
+        assert after[key] == before[key], key
+    assert [h["key"] for h in after["settings"]["habits"]] == [
+        h["key"] for h in before["settings"]["habits"]
+    ]
+
+
+async def test_export_moves_to_another_account(alice: AsyncClient, bob: AsyncClient) -> None:
+    await _rich_account(alice)
+    ex = (await alice.get("/export")).json()
+    rep = (await bob.post("/import", json=ex)).json()
+    assert len(rep["habits_created"]) == len(ex["settings"]["habits"])
+    assert rep["reviews"] == 1
+
+    for day in ("2026-11-19", "2026-11-20", "2026-11-21"):
+        a = (await alice.get(f"/views/day?date={day}")).json()
+        b = (await bob.get(f"/views/day?date={day}")).json()
+        assert a["score"]["pct"] == b["score"]["pct"], day
+        assert sorted((h["name"], h["status"], h["value"]) for h in a["habits"]) == sorted(
+            (h["name"], h["status"], h["value"]) for h in b["habits"]
+        ), day
+    # Bob's rows are his own: Alice's ids were not reused for him.
+    a_ids = {h["id"] for h in (await alice.get("/habits")).json()}
+    assert not a_ids & {h["id"] for h in (await bob.get("/habits")).json()}

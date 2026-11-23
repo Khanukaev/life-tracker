@@ -8,6 +8,10 @@ import endpoint. Legacy special cases become universal habit types:
 * ``type: "protein"`` (kbju)    -> DUAL with flags ``kbju`` / ``proteinOk``
 * ``key: "study"`` (+studyMin)  -> MINUTES with target ``studyNeed``
 * hard-coded weights ×3 for sleep/study/orders -> ``is_key``
+
+It also reads this app's own export (``services/exporter.py``), which uses the same
+layout with the universal types (``bedtime``, ``minutes``, ``dual``), an explicit
+``config`` and ``is_key``, and stores every value under the habit's own key.
 """
 
 from dataclasses import dataclass
@@ -120,15 +124,25 @@ def convert_habit(h: dict[str, Any], targets: dict[str, Any], start: date) -> Ha
         name=habit_name(h.get("name", ""), targets),
         sphere=h.get("sphere"),
         active=h.get("active") is not False,
-        is_key=h["key"] in LEGACY_KEY_HABITS,
+        is_key=bool(h["is_key"]) if "is_key" in h else h["key"] in LEGACY_KEY_HABITS,
         sched=kind,
         sched_n=(sched.get("n") or 2) if kind == ScheduleKind.EVERY else None,
         sched_pattern=(sched.get("p") or "1") if kind == ScheduleKind.CYCLE else None,
         sched_anchor=(_d(sched.get("a")) or start) if kind == ScheduleKind.CYCLE else None,
     )
+    own_config = h.get("config") if isinstance(h.get("config"), dict) else None
     match h.get("type"):
         case "sleep":
             habit.type, habit.is_key = HabitType.BEDTIME, True
+        case "bedtime":  # this app's export
+            habit.type = HabitType.BEDTIME
+            habit.is_key = bool(h.get("is_key", True))
+        case "minutes" if own_config:
+            habit.type, habit.config = HabitType.MINUTES, own_config
+        case "dual" if own_config:
+            habit.type, habit.config = HabitType.DUAL, own_config
+        case "water" if own_config:
+            habit.type, habit.config = HabitType.WATER, own_config
         case "water":
             habit.type = HabitType.WATER
             habit.config = {"target_l": targets["waterL"], "glass_l": targets["glassL"]}
@@ -152,10 +166,16 @@ def convert_values(h_raw: dict[str, Any], habits: list[Habit]) -> dict[HabitId, 
                 if h_raw.get(key) is not None:
                     out[key] = int(h_raw[key])
             case HabitType.DUAL:
-                if "kbju" in h_raw or "proteinOk" in h_raw:
+                if isinstance(h_raw.get(key), dict):  # this app's export
+                    v = h_raw[key]
+                    out[key] = {"a": bool(v.get("a")), "b": bool(v.get("b"))}
+                elif "kbju" in h_raw or "proteinOk" in h_raw:
                     out[key] = {"a": bool(h_raw.get("kbju")), "b": bool(h_raw.get("proteinOk"))}
             case HabitType.MINUTES:
-                if h_raw.get("studyMin") is not None:
+                own = h_raw.get(key)
+                if isinstance(own, int) and not isinstance(own, bool):  # this app's export
+                    out[key] = own
+                elif h_raw.get("studyMin") is not None:
                     out[key] = int(h_raw["studyMin"])
                 elif h_raw.get("study"):
                     # Old check-only record without minutes: counts as the full norm.
@@ -163,6 +183,8 @@ def convert_values(h_raw: dict[str, Any], habits: list[Habit]) -> dict[HabitId, 
             case _:
                 if h_raw.get(key):
                     out[key] = True
+                elif h_raw.get(key) is False:  # an explicit "not done" (bot ❌) survives export
+                    out[key] = False
     return out
 
 

@@ -15,7 +15,7 @@ Rules:
 
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, time
+from datetime import UTC, date, datetime, time
 from typing import Any
 
 from sqlalchemy import func, select
@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.core.errors import DomainValidationError
 from lifetracker.db import models as m
-from lifetracker.domain.enums import Actor, HabitType, SleepQuality
+from lifetracker.domain.enums import Actor, HabitType, ReviewAuthor, ReviewKind, SleepQuality
 from lifetracker.domain.legacy import convert
 from lifetracker.services.clock import user_now
 
@@ -46,6 +46,7 @@ class ImportReport:
     tasks_updated: int = 0
     goals_created: int = 0
     goals_updated: int = 0
+    reviews: int = 0
     period: tuple[str, str] | None = None
     warnings: list[str] = field(default_factory=list)
 
@@ -107,7 +108,17 @@ async def import_export(
     report = ImportReport(dry_run=dry_run)
     ns = user_id  # namespace for deterministic ids: same file → same rows
 
-    def nid(kind: str, legacy_id: str) -> uuid.UUID:
+    def nid(kind: str, legacy_id: str, mine: set[uuid.UUID] | None = None) -> uuid.UUID:
+        """This app's own export carries real ids: if the row is already ours, reuse it
+        (a round trip changes nothing). Otherwise derive a per-user id, so the same file
+        imported by two users never collides."""
+        if mine is not None:
+            try:
+                own = uuid.UUID(legacy_id)
+            except ValueError:
+                own = None
+            if own is not None and own in mine:
+                return own
         return uuid.uuid5(ns, f"{kind}:{legacy_id}")
 
     try:
@@ -163,7 +174,7 @@ async def import_export(
         hpos = len(existing_h)
         for h in data.ctx.habits:
             key = str(h.id)
-            new_id = nid("habit", key)
+            new_id = nid("habit", key, set(by_id))
             found = by_id.get(new_id) or by_name.get((h.name.lower(), h.type))
             if found is None and h.type == HabitType.BEDTIME:
                 found = bedtime
@@ -267,7 +278,7 @@ async def import_export(
             raw_t: dict[str, Any] = raw_tasks.get(str(t.id)) or next(
                 (x for x in raw_tasks.values() if x.get("id") == t.id), {}
             )
-            tid = nid("task", str(t.id))
+            tid = nid("task", str(t.id), known_tasks)
             fields: dict[str, Any] = {
                 "title": (t.title or "Без названия")[:200],
                 "description": str(raw_t.get("desc") or raw_t.get("description") or "")[:2000],
@@ -292,13 +303,14 @@ async def import_export(
 
         # ---- goals with steps, linked habits and history ----
         raw_goals = export.get("goals") or {}
+        known_goals = set(await session.scalars(select(m.Goal.id).where(m.Goal.user_id == user_id)))
         gpos = await session.scalar(
             select(func.coalesce(func.max(m.Goal.position), -1)).where(m.Goal.user_id == user_id)
         )
         gpos = int(gpos or -1) + 1
         for g in data.goals:
             raw_g: dict[str, Any] = raw_goals.get(str(g.id)) or {}
-            gid = nid("goal", str(g.id))
+            gid = nid("goal", str(g.id), known_goals)
             existing_goal = await session.get(m.Goal, gid)
             stage = raw_g.get("stage") if raw_g.get("stage") in (1, 2) else 1
             goal_fields: dict[str, Any] = {
@@ -359,6 +371,38 @@ async def import_export(
                 )
             )
             report.goals_created += 1
+
+        # ---- reviews (this app's export only) ----
+        raw_reviews = export.get("reviews")
+        if isinstance(raw_reviews, list):
+            known_reviews = set(
+                await session.scalars(select(m.Review.id).where(m.Review.user_id == user_id))
+            )
+            for rv in raw_reviews[:2000]:
+                if not isinstance(rv, dict) or not rv.get("text") or not rv.get("date"):
+                    continue
+                rid = nid("review", str(rv.get("id")), known_reviews)
+                if rid in known_reviews:
+                    continue
+                kind = ReviewKind.WEEK if rv.get("kind") == "week" else ReviewKind.DAY
+                by = (
+                    ReviewAuthor(rv["by"])
+                    if rv.get("by") in ("claude", "me", "schedule")
+                    else (ReviewAuthor.CLAUDE)
+                )
+                session.add(
+                    m.Review(
+                        id=rid,
+                        user_id=user_id,
+                        kind=kind,
+                        by=by,
+                        date=date.fromisoformat(str(rv["date"])),
+                        body=str(rv["text"])[:20_000],
+                        at=_ts(rv.get("at")) or now,
+                    )
+                )
+                known_reviews.add(rid)
+                report.reviews += 1
 
         await session.flush()
     except Exception:
