@@ -3,11 +3,12 @@
 
 import { useState } from "preact/hooks";
 import { Icon, Sec, StackHead } from "../components/ui";
-import { ApiError, post } from "../lib/api";
+import { ApiError, get, post } from "../lib/api";
 import { shortDate } from "../lib/format";
 import { haptic } from "../lib/haptic";
 import { invalidate } from "../lib/store";
 import { toast } from "../lib/toast";
+import { copy } from "./Claude";
 
 export interface ImportReport {
   dry_run: boolean;
@@ -21,6 +22,7 @@ export interface ImportReport {
   tasks_updated: number;
   goals_created: number;
   goals_updated: number;
+  reviews: number;
   period: [string, string] | null;
   warnings: string[];
 }
@@ -50,6 +52,55 @@ function plural(n: number, one: string, few: string, many: string): string {
   return `${n} ${w}`;
 }
 
+/** «Скопировать данные (JSON)» — the same layout the import reads, so it is also a backup. */
+function ExportCard() {
+  const [busy, setBusy] = useState(false);
+  const load = async (): Promise<string | null> => {
+    setBusy(true);
+    try {
+      return JSON.stringify(await get<unknown>("/export"), null, 1);
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Не получилось. Проверь связь");
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+  const copyJson = async () => {
+    const text = await load();
+    if (text) await copy(text, "JSON");
+  };
+  const saveFile = async () => {
+    const text = await load();
+    if (!text) return;
+    const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `life-tracker-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    haptic.success();
+  };
+  return (
+    <section>
+      <Sec title="Скопировать мои данные" />
+      <div class="card" style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "16px" }}>
+        <span class="s" style={{ fontSize: "15px", lineHeight: "21px" }}>
+          Всё в одном JSON: привычки, дни, сон, задачи, цели и разборы. Подходит как резервная копия и для переноса в другой аккаунт — через этот же экран.
+        </span>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button class="btn lg" style={{ flex: 1 }} disabled={busy} onClick={() => void copyJson()}>
+            Скопировать JSON
+          </button>
+          <button class="btn lg" style={{ flex: 1 }} disabled={busy} onClick={() => void saveFile()}>
+            Сохранить файл
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Line({ label, value }: { label: string; value: string }) {
   return (
     <div class="row">
@@ -71,6 +122,7 @@ function Report({ r }: { r: ImportReport }) {
       />
       <Line label="Задачи" value={`${r.tasks_created} новых${r.tasks_updated ? ` · ${r.tasks_updated} обновится` : ""}`} />
       <Line label="Цели" value={`${r.goals_created} новых${r.goals_updated ? ` · ${r.goals_updated} обновится` : ""}`} />
+      {r.reviews > 0 && <Line label="Разборы" value={String(r.reviews)} />}
       {r.spheres_created.length > 0 && <Line label="Сферы" value={r.spheres_created.join(", ")} />}
     </div>
   );
@@ -124,7 +176,7 @@ export function ImportScreen() {
 
   return (
     <div class="page">
-      <StackHead back="Профиль" title="Перенос данных" />
+      <StackHead back="Профиль" title="Данные" />
       <main class="main" style={{ paddingTop: "12px" }}>
         {done ? (
           <>
@@ -142,13 +194,15 @@ export function ImportScreen() {
           </>
         ) : (
           <>
+            <ExportCard />
+
             <section>
-              <Sec title="Откуда взять данные" />
+              <Sec title="Перенести из старого трекера или копии" />
               <div class="card" style={{ padding: "16px" }}>
                 <ol class="steps-list">
                   <li>Открой старый трекер → карточка <b>«Данные и Claude»</b>.</li>
                   <li>Нажми <b>«Скопировать данные (JSON)»</b>.</li>
-                  <li>Вставь сюда или выбери сохранённый файл .json.</li>
+                  <li>Вставь сюда или выбери сохранённый файл .json. Копия из этого приложения тоже подходит.</li>
                 </ol>
                 <p class="s" style={{ margin: "12px 0 0" }}>
                   Данные добавятся к текущим, ничего не удалится. Повторный перенос того же файла ничего не задвоит.

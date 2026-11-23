@@ -186,7 +186,7 @@ export function ProfileScreen() {
                   <Icon name="right" size={16} style={{ color: "var(--dim)" }} />
                 </button>
                 <button class="row plain" onClick={() => push("import")}>
-                  <span class="t" style={{ flex: 1 }}>Перенести из старого трекера</span>
+                  <span class="t" style={{ flex: 1 }}>Данные: копия и перенос</span>
                   <span class="s">JSON</span>
                   <Icon name="right" size={16} style={{ color: "var(--dim)" }} />
                 </button>
