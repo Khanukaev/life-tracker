@@ -9,13 +9,14 @@ here because the token itself is 256 random bits — there is nothing to brute-f
 import hashlib
 import secrets
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.db.models import McpToken
 
+LAST_USED_EVERY = timedelta(minutes=5)
 TOKEN_PREFIX = "lt_"  # noqa: S105  (a visible marker, not a secret)
 
 
@@ -31,9 +32,20 @@ async def issue_token(session: AsyncSession, user_id: uuid.UUID, now: datetime) 
         .where(McpToken.user_id == user_id, McpToken.revoked_at.is_(None))
         .values(revoked_at=now)
     )
+    await session.flush()  # the partial unique index allows one active token per user
     session.add(McpToken(user_id=user_id, token_hash=hash_token(token), prefix=token[:10]))
     await session.commit()
     return token
+
+
+async def revoke_token(session: AsyncSession, user_id: uuid.UUID, now: datetime) -> None:
+    """Disconnect Claude: the current token stops working at once."""
+    await session.execute(
+        update(McpToken)
+        .where(McpToken.user_id == user_id, McpToken.revoked_at.is_(None))
+        .values(revoked_at=now)
+    )
+    await session.commit()
 
 
 async def active_token(session: AsyncSession, user_id: uuid.UUID) -> McpToken | None:
@@ -51,6 +63,8 @@ async def user_by_token(session: AsyncSession, token: str, now: datetime) -> uui
     )
     if row is None:
         return None
-    row.last_used_at = now
-    await session.commit()
+    # "Last used" is informational: one write per few minutes, not one per tool call.
+    if row.last_used_at is None or now - row.last_used_at > LAST_USED_EVERY:
+        row.last_used_at = now
+        await session.commit()
     return row.user_id
