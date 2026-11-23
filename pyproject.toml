@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["backend", "bot"]
+members = ["backend", "bot", "mcp"]
 
 [dependency-groups]
 dev = [
@@ -20,7 +20,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "ASYNC", "RUF", "N", "S", "PT"]
 ignore = ["RUF001", "RUF002", "RUF003"]  # Cyrillic text in user-facing strings is intentional
 
 [tool.ruff.lint.isort]
-known-first-party = ["lifetracker", "lifetracker_bot"]
+known-first-party = ["lifetracker", "lifetracker_bot", "lifetracker_mcp"]
 known-third-party = ["alembic"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -38,5 +38,5 @@ exclude = ["alembic/versions/"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
-testpaths = ["backend/tests", "bot/tests"]
+testpaths = ["backend/tests", "bot/tests", "mcp/tests"]
 markers = ["nodb: pure tests that do not need PostgreSQL"]
