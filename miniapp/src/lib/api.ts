@@ -23,6 +23,26 @@ try {
 } catch {
   /* ignore */
 }
+
+// Browser development only: switch accounts with ?dev_user=new (a fresh user, e.g. to test
+// onboarding) or ?dev_user=900001 (back to the default one). Runs before any request, and
+// drops the stored token — otherwise the old account's token would keep being used.
+if (import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH === "true") {
+  const params = new URLSearchParams(location.search);
+  const asked = params.get("dev_user");
+  if (asked) {
+    const next = asked === "new" ? String(910000 + Math.floor(Math.random() * 89999)) : asked;
+    if (/^\d+$/.test(next)) {
+      localStorage.setItem(DEV_ID_KEY, next);
+      token = null;
+      sessionStorage.removeItem(TOKEN_KEY);
+    }
+    // Drop only this parameter (a reload must not create another user); keep e.g. ?open=.
+    params.delete("dev_user");
+    const rest = params.toString();
+    history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : ""));
+  }
+}
 let loggingIn: Promise<Me> | null = null;
 
 export let currentUser: Me | null = null;
@@ -39,18 +59,6 @@ async function rawLogin(): Promise<Me> {
     });
   } else if (import.meta.env.DEV || import.meta.env.VITE_DEV_AUTH === "true") {
     // Browser development without Telegram (backend must run with DEV_AUTH=true).
-    // Switch accounts with ?dev_user=new (a fresh user, e.g. to test onboarding) or
-    // ?dev_user=900001 (back to the default one). The choice is remembered.
-    const params = new URLSearchParams(location.search);
-    const asked = params.get("dev_user");
-    if (asked) {
-      const next = asked === "new" ? String(910000 + Math.floor(Math.random() * 89999)) : asked;
-      if (/^\d+$/.test(next)) localStorage.setItem(DEV_ID_KEY, next);
-      // Drop only this parameter (a reload must not create another user); keep e.g. ?open=.
-      params.delete("dev_user");
-      const rest = params.toString();
-      history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : ""));
-    }
     const id = Number(localStorage.getItem(DEV_ID_KEY) ?? "900001");
     res = await fetch(`${BASE}/auth/dev`, {
       method: "POST",
