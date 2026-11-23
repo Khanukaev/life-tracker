@@ -53,7 +53,7 @@ export function ReviewScreen() {
             </button>
           </div>
         </div>
-        <button class="ib" aria-label="Разбор от Claude" onClick={() => openSheet("claude")}>
+        <button class="ib" aria-label="Разбор от Claude" onClick={() => openSheet("claude", { kind: period === "week" ? "week" : undefined })}>
           <Icon name="spark" />
         </button>
       </header>
@@ -178,7 +178,7 @@ export function ReviewScreen() {
 
             <Bedtimes d={d} />
 
-            <button class="btn lg card-btn" onClick={() => openSheet("claude")}>
+            <button class="btn lg card-btn" onClick={() => openSheet("claude", { kind: period === "week" ? "week" : undefined })}>
               <Icon name="spark" />
               Разбор {period === "month" ? "месяца" : "недели"} от Claude
             </button>

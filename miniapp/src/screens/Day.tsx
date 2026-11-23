@@ -53,7 +53,7 @@ export function DayScreen() {
                 <span style={{ color: "var(--muted)" }}>{d.energy_zone ? ZONE_NAME[d.energy_zone] : "ср."}</span>
               </button>
             )}
-            <button class="ib" aria-label="Разбор от Claude" onClick={() => openSheet("claude")}>
+            <button class="ib" aria-label="Разбор от Claude" onClick={() => openSheet("claude", { date: d.date })}>
               <Icon name="spark" />
             </button>
           </div>

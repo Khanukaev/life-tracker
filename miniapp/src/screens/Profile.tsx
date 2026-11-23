@@ -4,7 +4,7 @@ import { haptic } from "../lib/haptic";
 import { openSheet, push } from "../lib/router";
 import { mutate, resource } from "../lib/store";
 import { toast } from "../lib/toast";
-import type { GoalCard, Me, ProfileView } from "../lib/types";
+import type { GoalCard, McpStatus, Me, ProfileView, Review } from "../lib/types";
 import { shortDate } from "../lib/format";
 
 export function goalMeta(g: GoalCard): string {
@@ -25,6 +25,8 @@ function habitMeta(h: ProfileView["habits"][number]): string {
 export function ProfileScreen() {
   const me = resource<Me>("/me").value.data;
   const d = resource<ProfileView>("/views/profile").value.data;
+  const mcp = resource<McpStatus>("/mcp/token").value.data;
+  const reviewCount = resource<Review[]>("/reviews").value.data?.length ?? 0;
   const active = d?.habits.filter((h) => h.active) ?? [];
   const rest = (d?.habits.length ?? 0) - Math.min(3, active.length);
 
@@ -146,6 +148,23 @@ export function ProfileScreen() {
                 <button class="chip dashed" onClick={() => openSheet("sphere", {})}>
                   <Icon name="plus" size={16} />
                   Добавить сферу
+                </button>
+              </div>
+            </section>
+
+            <section>
+              <Sec title="Claude" />
+              <div class="card list">
+                <button class="row plain" onClick={() => push("claude")}>
+                  <Icon name="spark" size={20} style={{ color: "var(--accent)" }} />
+                  <span class="t" style={{ flex: 1 }}>Подключить Claude</span>
+                  <span class="s">{mcp?.active ? "подключён" : "не подключён"}</span>
+                  <Icon name="right" size={16} style={{ color: "var(--dim)" }} />
+                </button>
+                <button class="row plain" onClick={() => push("reviews")}>
+                  <span class="t" style={{ flex: 1 }}>Разборы</span>
+                  <span class="s">{reviewCount ? reviewCount : ""}</span>
+                  <Icon name="right" size={16} style={{ color: "var(--dim)" }} />
                 </button>
               </div>
             </section>

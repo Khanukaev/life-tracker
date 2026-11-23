@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter
 from aiogram.methods import AnswerCallbackQuery, EditMessageText, SendMessage
 from aiogram.types import InlineKeyboardMarkup, Update
-from conftest import FakeTelegram
+from fake_telegram import FakeTelegram
 from httpx import AsyncClient
 from sqlalchemy import select
 from tests.conftest import Clock

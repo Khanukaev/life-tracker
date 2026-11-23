@@ -17,7 +17,11 @@
 		reverse_proxy backend:8000
 	}
 
-	# MCP server is added in stage 5.
+	# Remote MCP server (Streamable HTTP). Auth is the user's bearer token; Caddy only
+	# terminates TLS. Access logs are off, so tokens in headers are never written to disk.
+	handle /mcp* {
+		reverse_proxy mcp:8001
+	}
 
 	# Mini App: static files with long-lived caching (hashed names), served precompressed.
 	handle {

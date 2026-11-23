@@ -13,10 +13,11 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from lifetracker.api.deps import SessionDep
-from lifetracker.api.routes import auth, days, goals, habits, me, spheres, tasks, views
+from lifetracker.api.routes import auth, claude, days, goals, habits, me, spheres, tasks, views
 from lifetracker.core.config import get_settings
 from lifetracker.core.errors import AppError
 from lifetracker.core.logging import configure_logging
+from lifetracker.core.ratelimit import RateLimitMiddleware, SlidingWindowLimiter
 
 log = structlog.get_logger("api")
 
@@ -85,8 +86,18 @@ def create_app() -> FastAPI:
         await session.execute(text("SELECT 1"))
         return {"status": "ok"}
 
+    # Outermost: a client over its limit costs us nothing beyond this check.
+    app.state.rate_limiter = SlidingWindowLimiter(settings.rate_limit_api)
+    app.state.auth_limiter = SlidingWindowLimiter(settings.rate_limit_auth)
+    app.add_middleware(
+        RateLimitMiddleware,
+        limiter=app.state.rate_limiter,
+        strict=app.state.auth_limiter,
+        strict_paths=("/api/v1/auth/",),
+    )
+
     api = APIRouter(prefix="/api/v1")
-    for module in (auth, me, spheres, habits, days, tasks, goals, views):
+    for module in (auth, me, spheres, habits, days, tasks, goals, views, claude):
         api.include_router(module.router)
     app.include_router(api)
     return app

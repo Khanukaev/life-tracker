@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Build context: repository root (the uv workspace lock file lives there).
-# One image for the API and the bot (and later MCP): they share the `lifetracker` package
+# One image for the API, the bot and the MCP server: they share the `lifetracker` package
 # and differ only in the command — see docker-compose.yml.
 
 FROM python:3.12.12-slim AS build
@@ -12,11 +12,13 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY backend/pyproject.toml backend/pyproject.toml
 COPY bot/pyproject.toml bot/pyproject.toml
+COPY mcp/pyproject.toml mcp/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-workspace --all-packages
 
 COPY backend backend
 COPY bot bot
+COPY mcp mcp
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-editable --all-packages
 

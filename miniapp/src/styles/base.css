@@ -936,3 +936,55 @@ input[type="time"] {
   align-items: center;
   margin-top: 14px;
 }
+
+/* ---- Claude: reviews and the connect screen ---- */
+.md {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 23px;
+  color: var(--soft);
+}
+.md p {
+  margin: 0;
+}
+.md b,
+.md .md-h {
+  color: var(--text);
+  font-weight: 600;
+}
+.md-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.secret {
+  font: 500 14px/20px var(--mono);
+  word-break: break-all;
+  user-select: all;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--sheet-fill);
+  color: var(--text);
+}
+.secret.masked {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.steps-list {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 21px;
+  color: var(--soft);
+}
+.steps-list b {
+  color: var(--text);
+  font-weight: 600;
+}
