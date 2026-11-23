@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # Telegram allows ~30 messages per second per bot; stay below it for broadcasts.
     bot_send_rate: float = 25.0
 
+    # Requests per minute. API: per access token (or IP); login: per IP; MCP: per token.
+    rate_limit_api: int = 300
+    rate_limit_auth: int = 30
+    rate_limit_mcp: int = 120
+
     @property
     def public_url(self) -> str:
         return f"https://{self.domain}"

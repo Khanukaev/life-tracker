@@ -99,6 +99,17 @@ def clock() -> Iterator[Clock]:
     app.dependency_overrides.pop(get_now, None)
 
 
+@pytest.fixture(autouse=True)
+def no_rate_limit() -> Iterator[None]:
+    """The suite fires hundreds of requests a second; test_ratelimit.py turns limits back on."""
+    limiters = (app.state.rate_limiter, app.state.auth_limiter)
+    for lim in limiters:
+        lim.enabled = False
+    yield
+    for lim in limiters:
+        lim.enabled = True
+
+
 def make_init_data(
     tg_id: int,
     *,
