@@ -36,7 +36,10 @@ function useSlow(active: boolean, ms = 500): boolean {
 const flashed = new Set<string>(); // the 100 % flash plays once per day
 
 export function TodayScreen() {
-  const key = dayKey(useDayParam());
+  const param = useDayParam();
+  const key = dayKey(param);
+  // Another day = a new page: it appears with the usual entrance instead of being patched in place.
+  const pageKey = param ?? "today";
   const e = resource<DayView>(key).value;
   const d = e.data;
   const me = resource<Me>("/me").value.data;
@@ -48,7 +51,7 @@ export function TodayScreen() {
 
   if (!d) {
     return (
-      <div class="k-page">
+      <div class="k-page" key={pageKey}>
         <div class="k-bg" aria-hidden="true" />
         <Header d={undefined} me={me} empty={false} />
         <main class="k-main">
@@ -81,7 +84,7 @@ export function TodayScreen() {
   const remindOf = new Map((habitsMeta ?? []).map((h) => [h.id, h.remind_at]));
 
   return (
-    <div class="k-page">
+    <div class="k-page" key={pageKey}>
       <div class="k-bg" aria-hidden="true" />
       <Header d={d} me={me} empty={empty && isToday} />
       <main class="k-main">

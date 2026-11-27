@@ -39,14 +39,26 @@ export function animateScreen(): void {
   if (!root) return;
   let next = prepare(blocks(root), 0);
   settleSoon();
-  const main = root.querySelector(".main, .k-main");
-  if (main) {
-    mo = new MutationObserver(() => {
-      next = prepare(blocks(root), next);
-    });
-    mo.observe(main, { childList: true });
-    stopTimer = setTimeout(() => mo?.disconnect(), WATCH_MS);
-  }
+  // Fresh data may arrive right after open, or the whole page may be swapped (a cached
+  // screen → the loaded one, another day): new blocks get the same entrance.
+  let page: Element = root;
+  let main = root.querySelector(".main, .k-main");
+  mo = new MutationObserver(() => {
+    const r = document.querySelector(".page, .k-page");
+    if (!r) return;
+    if (r !== page) {
+      page = r;
+      next = 0;
+    }
+    const m = r.querySelector(".main, .k-main");
+    if (m && m !== main) mo?.observe(m, { childList: true });
+    main = m;
+    next = prepare(blocks(r), next);
+  });
+  const app = document.getElementById("app");
+  if (app) mo.observe(app, { childList: true });
+  if (main) mo.observe(main, { childList: true });
+  stopTimer = setTimeout(() => mo?.disconnect(), WATCH_MS);
 }
 
 function cleanup() {
