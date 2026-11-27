@@ -15,7 +15,7 @@ let mo: MutationObserver | null = null;
 let stopTimer: ReturnType<typeof setTimeout> | null = null;
 
 function blocks(root: Element): HTMLElement[] {
-  const main = root.querySelector(".main");
+  const main = root.querySelector(".main, .k-main");
   const head = root.querySelector("header");
   return [...(head ? [head] : []), ...(main ? Array.from(main.children) : [])] as HTMLElement[];
 }
@@ -41,7 +41,7 @@ function prepare(els: HTMLElement[], startIndex: number): number {
 export function animateScreen(): void {
   cleanup();
   if (!motionOk.value) return;
-  const root = document.querySelector(".page");
+  const root = document.querySelector(".page, .k-page");
   if (!root) return;
   io = new IntersectionObserver(
     (entries) => {
@@ -56,7 +56,7 @@ export function animateScreen(): void {
   );
   let next = prepare(blocks(root), 0);
   settleSoon();
-  const main = root.querySelector(".main");
+  const main = root.querySelector(".main, .k-main");
   if (main) {
     mo = new MutationObserver(() => {
       next = prepare(blocks(root), next);

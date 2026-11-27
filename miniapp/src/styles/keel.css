@@ -1,0 +1,1148 @@
+/* Keel redesign (reference/design-v2, dark Glass). Values are copied 1:1 from the
+   *.dc.html artboards. Classes are prefixed with `k-` so they never clash with the older
+   screens (Profile → Claude / Settings / Import) that still use base.css until part 3.
+
+   Performance rule: backdrop-filter ONLY on the tab bar, sheets and the toast. Animations
+   only on transform, opacity and SVG. */
+
+.k-n {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.k-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 560px;
+  pointer-events: none;
+  background: radial-gradient(520px 360px at 50% -60px, rgba(120, 140, 190, 0.16), transparent 72%);
+}
+.k-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: calc(130px + var(--safe-bottom));
+  color: #f5f5f7;
+  font-family: Geist, var(--font);
+}
+.k-ic {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.k-cap {
+  font-size: 13px;
+  line-height: 18px;
+  color: #8e8e93;
+}
+.k-lab {
+  font-size: 15px;
+  line-height: 20px;
+  color: #d1d1d6;
+}
+.k-h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.k-btnreset {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.k-page a:focus-visible,
+.k-page button:focus-visible,
+.sheet button:focus-visible {
+  outline: 2px solid #f5f5f7;
+  outline-offset: 2px;
+}
+
+/* ---------- header ---------- */
+.k-head {
+  position: relative;
+  padding: max(16px, calc(var(--safe-top) + var(--content-top) + 8px)) 16px 0 20px;
+}
+.k-headrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.k-h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.k-h1.detail {
+  font-size: 28px;
+  line-height: 35px;
+}
+.k-energy {
+  height: 44px;
+  display: flex;
+  align-items: center;
+}
+.k-energy > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px 0 9px;
+  border-radius: 999px;
+  background: rgba(160, 130, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(160, 130, 255, 0.28);
+  color: #c9b8ff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.k-avatar {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: -6px;
+}
+.k-avatar > span {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+.k-arrow {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8e8e93;
+}
+.k-date {
+  font-size: 15px;
+  color: #8e8e93;
+  white-space: nowrap;
+}
+.k-seg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  height: 44px;
+  width: 160px;
+  flex: none;
+}
+.k-seg button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  background: transparent;
+  color: #aeaeb2;
+  cursor: pointer;
+}
+.k-seg button[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.18);
+  color: #f5f5f7;
+}
+.k-totoday {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+.k-sub {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: #8e8e93;
+}
+
+/* ---------- main column & cards ---------- */
+.k-main {
+  position: relative;
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.k-card {
+  position: relative;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #f5f5f7;
+}
+.k-card.clip {
+  overflow: hidden;
+}
+.k-cardhead {
+  padding: 16px 18px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.k-cardhead .k-n {
+  font-size: 15px;
+  color: #aeaeb2;
+}
+.k-stats {
+  display: flex;
+}
+.k-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 18px;
+  text-align: left;
+}
+.k-stat + .k-stat {
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+}
+.k-stat b {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.k-lr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 16px 8px 18px;
+  width: 100%;
+  color: #f5f5f7;
+  position: relative;
+}
+.k-lr + .k-lr {
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+.k-lr .t {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 16px;
+}
+.k-lr .v {
+  font-size: 15px;
+  color: #aeaeb2;
+  font-variant-numeric: tabular-nums;
+}
+.k-lr .chev {
+  width: 16px;
+  height: 16px;
+  color: #636366;
+}
+/* Native pickers sit invisibly over a row: one tap opens the system time/date picker. */
+.k-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ---------- day score ---------- */
+.k-score {
+  position: relative;
+  padding: 4px 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.k-score > * {
+  position: relative;
+}
+.k-score .k-glow {
+  position: absolute;
+  left: -40px;
+  right: -40px;
+  top: -50px;
+  bottom: -40px;
+  pointer-events: none;
+}
+.k-pct {
+  font-size: 72px;
+  line-height: 70px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+}
+.k-pct small {
+  font-size: 30px;
+  font-weight: 500;
+  color: #8e8e93;
+  letter-spacing: -0.01em;
+  margin-left: 4px;
+  text-shadow: none;
+}
+.k-bars {
+  display: flex;
+  gap: 3px;
+  height: 10px;
+  width: 132px;
+}
+.k-bars i {
+  display: block;
+  flex: 1;
+  height: 100%;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.k-bars i.on {
+  background: #69ff79;
+}
+.k-dayflash {
+  opacity: 0;
+  animation: k-dayflash 1.8s ease-out 0.3s 1 both;
+}
+@keyframes k-dayflash {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k-dayflash {
+    animation: none !important;
+    opacity: 0;
+  }
+}
+
+/* ---------- gradient-border cards (Claude's plan, motto) ---------- */
+.k-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  margin: 0 -4px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#0a0a0d, #0a0a0d) padding-box,
+    linear-gradient(120deg, rgba(160, 130, 255, 0.95) 0%, rgba(160, 130, 255, 0.25) 35%, rgba(110, 140, 255, 0.25) 65%, rgba(110, 140, 255, 0.95) 100%) border-box;
+  box-shadow:
+    -34px -26px 70px -18px rgba(140, 105, 255, 0.45),
+    34px 30px 70px -18px rgba(84, 120, 255, 0.55);
+}
+.k-sum.claude {
+  background:
+    linear-gradient(#0a0a0d, #0a0a0d) padding-box,
+    linear-gradient(120deg, rgba(255, 138, 92, 0.95) 0%, rgba(255, 138, 92, 0.25) 35%, rgba(110, 140, 255, 0.25) 65%, rgba(110, 140, 255, 0.95) 100%) border-box;
+  box-shadow:
+    -34px -26px 70px -18px rgba(255, 112, 64, 0.45),
+    34px 30px 70px -18px rgba(84, 120, 255, 0.55);
+}
+.k-motto {
+  margin: 0;
+  font-size: 18px;
+  line-height: 25px;
+  color: #f5f5f7;
+  letter-spacing: -0.015em;
+}
+.k-plan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.k-plan li {
+  display: flex;
+  gap: 12px;
+}
+.k-plan li > span:first-child {
+  width: 92px;
+  flex: none;
+  font-size: 14px;
+  color: #8e8e93;
+}
+.k-plan li > span:last-child {
+  font-size: 15px;
+  line-height: 20px;
+}
+.k-pair {
+  display: flex;
+  gap: 8px;
+}
+.k-pair > * {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.k-pair .pri {
+  background: #f5f5f7;
+  color: #000;
+  font-weight: 600;
+}
+.k-pair .sec {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  font-weight: 500;
+}
+
+/* ---------- prompts and banners ---------- */
+.k-ask {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+}
+.k-ask .txt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.k-pillbtn {
+  flex: none;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #f5f5f7;
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+.k-offline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.k-offline span {
+  flex: 1;
+  font-size: 14px;
+  line-height: 19px;
+  color: #d1d1d6;
+}
+.k-overdue {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 14px 10px 18px;
+  width: 100%;
+}
+
+/* ---------- task / habit row (Row.dc.html) ---------- */
+.k-row {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px 6px 6px;
+  letter-spacing: -0.01em;
+  transition:
+    opacity 0.26s ease-out,
+    transform 0.26s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+.k-row + .k-row,
+.k-row.sep {
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+.k-row.leave {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.k-tick {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.k-tick > span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1.6px #636366;
+  transition: background-color 0.16s ease-out;
+}
+.k-tick > span.done {
+  background: #69ff79;
+  box-shadow: none;
+}
+.k-tick > span.alert {
+  box-shadow:
+    inset 0 0 0 2px #ff453a,
+    0 0 10px rgba(255, 69, 58, 0.35);
+}
+.k-tick > span.miss {
+  box-shadow: inset 0 0 0 1.6px #48484a;
+}
+.k-tick svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #000;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.k-tick:active > span {
+  transform: scale(0.92);
+}
+.k-rowbody {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.k-rowbody .t {
+  font-size: 16px;
+  line-height: 21px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-rowbody .m {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #8e8e93;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.k-rowbody .m > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.k-rowright {
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  flex: none;
+  color: #aeaeb2;
+}
+.k-fold {
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  width: 100%;
+  min-height: 48px;
+  padding: 0 18px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #aeaeb2;
+}
+.k-fold.only {
+  border-top: 0;
+}
+
+/* ---------- day by hours ---------- */
+.k-hours {
+  position: relative;
+  margin: 4px -4px 0 -8px;
+}
+.k-hours .lbl {
+  position: absolute;
+  left: 14px;
+  width: 34px;
+  text-align: right;
+  font-size: 11px;
+  line-height: 14px;
+  color: #636366;
+}
+.k-hours .zone {
+  position: absolute;
+  left: -4px;
+  margin-left: 10px;
+  transform: translate(-50%, -50%) rotate(-90deg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.k-hblock {
+  position: absolute;
+  left: 72px;
+  right: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.k-hitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+  width: 100%;
+}
+.k-hitem + .k-hitem {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.k-hdot {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.k-hdot.done {
+  background: #69ff79;
+}
+.k-hitem .t {
+  font-size: 15px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.k-hitem .m {
+  font-size: 12px;
+  line-height: 16px;
+  color: #8e8e93;
+}
+
+/* ---------- skeleton ---------- */
+.k-sk {
+  display: block;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- tab bar ---------- */
+.k-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(20px, calc(var(--safe-bottom) + 12px));
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.k-tabbar > * {
+  pointer-events: auto;
+}
+.k-glass {
+  background: rgba(28, 28, 32, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.k-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+}
+.k-nav button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  height: 48px;
+  width: 48px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  transition:
+    background-color 0.2s ease-out,
+    color 0.2s ease-out;
+}
+.k-nav button[aria-current="page"] {
+  width: auto;
+  padding: 0 20px 0 16px;
+  background: #f5f5f7;
+  color: #000;
+}
+.k-nav svg,
+.k-fab svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.k-fab {
+  appearance: none;
+  padding: 0;
+  cursor: pointer;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.k-fab > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f5f5f7;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.k-fab:active > span,
+.k-nav button:active {
+  transform: scale(0.95);
+}
+.k-hint {
+  position: fixed;
+  right: 16px;
+  bottom: calc(max(20px, calc(var(--safe-bottom) + 12px)) + 78px);
+  z-index: 41;
+  max-width: 250px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f5f5f7;
+  color: #000;
+}
+.k-hint i {
+  position: absolute;
+  bottom: -7px;
+  right: 30px;
+  width: 14px;
+  height: 14px;
+  background: #f5f5f7;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+
+/* ---------- toast ---------- */
+.k-toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(max(20px, calc(var(--safe-bottom) + 12px)) + 74px);
+  z-index: 80;
+  min-height: 52px;
+  border-radius: 16px;
+  background: rgba(44, 44, 50, 0.88);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #f5f5f7;
+}
+.motion-ok .k-toast {
+  animation: k-toast-in 0.26s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+@keyframes k-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.k-toast span {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 20px;
+}
+.k-toast button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: transparent;
+  color: #f5f5f7;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- sheets ---------- */
+.scrim.k-scrim {
+  background: rgba(0, 0, 0, 0.6);
+}
+.sheet.k-sheet {
+  padding: 10px 20px calc(24px + var(--safe-bottom));
+  border-radius: 28px 28px 0 0;
+  background: rgba(22, 22, 26, 0.9);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #f5f5f7;
+}
+.sheet.k-full {
+  height: calc(100vh - max(56px, calc(var(--safe-top) + var(--content-top) + 24px)));
+  max-height: none;
+  padding: 10px 16px calc(32px + var(--safe-bottom));
+  border-radius: 28px 28px 0 0;
+  background:
+    radial-gradient(520px 320px at 50% -60px, rgba(120, 140, 190, 0.16), transparent 72%),
+    #0a0a0d;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #f5f5f7;
+}
+.k-sheet .grabber,
+.k-full .grabber {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 auto;
+  flex: none;
+}
+.k-formhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.k-formhead button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  min-height: 44px;
+  cursor: pointer;
+  padding: 0;
+}
+.k-formhead h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+.k-type {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  height: 44px;
+  flex: none;
+}
+.k-type button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+  color: #aeaeb2;
+}
+.k-type button[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.18);
+  color: #f5f5f7;
+}
+.k-input {
+  height: 52px;
+  flex: none;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f7;
+  caret-color: #69ff79;
+  font: inherit;
+  font-size: 18px;
+  padding: 0 16px;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.k-input::placeholder {
+  color: #636366;
+}
+.k-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.k-field > .k-cap {
+  margin: 0 4px;
+}
+.k-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.k-chip {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 15px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  color: #aeaeb2;
+  position: relative;
+  overflow: hidden;
+}
+.k-chip[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.18);
+  color: #f5f5f7;
+}
+.k-switch {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  position: relative;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  flex: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background-color 0.2s ease-out;
+}
+.k-switch i {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+.k-switch[aria-checked="true"] {
+  background: #69ff79;
+}
+.k-switch[aria-checked="true"] i {
+  background: #000;
+  transform: translateX(20px);
+}
+.k-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.k-step button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.k-step span {
+  min-width: 34px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 500;
+}
+.k-cyc {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  width: 40px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #aeaeb2;
+}
+.k-cyc.on {
+  background: #69ff79;
+  color: #000;
+}
+.k-cyc.edit {
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 20px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+.k-cyc b {
+  font-size: 17px;
+  font-weight: 600;
+}
+.k-cyc small {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.k-feel {
+  display: flex;
+  gap: 8px;
+}
+.k-feel button {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  flex: 1;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 15px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+.k-feel button[aria-pressed="true"] {
+  background: #f5f5f7;
+  color: #000;
+}
+.k-save {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  height: 52px;
+  border-radius: 999px;
+  background: #f5f5f7;
+  color: #000;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: none;
+}
+.k-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  border-radius: 16px;
+  background: #f5f5f7;
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.k-btn.ghost {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f5f5f7;
+}
+.k-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #d1d1d6;
+  font-size: 13px;
+  font-weight: 500;
+}
+.k-tag.red {
+  background: rgba(255, 69, 58, 0.16);
+  color: #ff6961;
+}
+.k-month {
+  display: grid;
+  grid-template-columns: repeat(7, 20px);
+  gap: 5px;
+  justify-content: start;
+}
+.k-month span {
+  text-align: center;
+  font-size: 11px;
+  color: #8e8e93;
+}
+.k-month i {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: transparent;
+}

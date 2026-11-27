@@ -27,6 +27,7 @@ from lifetracker.domain.score import bed_gain, day_score, gains, week_scores
 from lifetracker.domain.sleep import parse_night, planned_night
 from lifetracker.domain.slots import Slot, is_overdue, suggest_with_fallback
 from lifetracker.domain.timeline import free_gaps, next_window, window_at
+from lifetracker.schemas.claude import ReviewOut
 from lifetracker.schemas.days import SleepOut
 from lifetracker.schemas.habits import HabitOut
 from lifetracker.schemas.tasks import TaskOut
@@ -53,6 +54,7 @@ from lifetracker.schemas.views import (
     WeekBar,
     ZoneSpan,
 )
+from lifetracker.services.reviews import latest_plan
 from lifetracker.services.snapshot import Snapshot, load_snapshot
 
 
@@ -207,6 +209,9 @@ async def day_view(
         planned = {"bed": _hhmm(ctx.settings.bed_target), "need_h": ctx.settings.sleep_need_h}
 
     tasks = _day_tasks(snap, k)
+    # «План на сегодня»: the newest plan replaces older ones; once added, it disappears.
+    plan_row = await latest_plan(session, user_id, k) if relation != "past" else None
+    plan = ReviewOut.model_validate(plan_row) if plan_row and plan_row.applied_at is None else None
     return DayView(
         date=k,
         today=ctx.today,
@@ -223,6 +228,7 @@ async def day_view(
         habits=_habit_rows(snap, k) if relation != "future" else [],
         tasks=tasks,
         timeline=_timeline(snap, k),
+        plan=plan,
     )
 
 

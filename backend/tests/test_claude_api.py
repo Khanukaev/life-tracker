@@ -171,6 +171,29 @@ async def test_plan_is_added_to_the_day_once(alice: AsyncClient, bob: AsyncClien
     assert len((await alice.get("/tasks?view=today")).json()) == 2
 
 
+async def test_day_view_shows_the_latest_plan_until_it_is_added(
+    alice: AsyncClient, bob: AsyncClient
+) -> None:
+    a = await uid(alice)
+    assert (await alice.get("/views/day")).json()["plan"] is None
+    async with get_sessionmaker()() as s:
+        await reviews.save_plan(s, a, [{"title": "Старый", "dur": 30}], NOW)
+        plan = await reviews.save_plan(
+            s, a, [{"title": "Лаба", "start": "10:00", "dur": 180, "note": "пик"}],
+            NOW.replace(minute=5), text="Утро для лабы",
+        )  # fmt: skip
+    got = (await alice.get("/views/day")).json()["plan"]
+    assert got["id"] == str(plan.id)
+    assert got["kind"] == "plan"
+    assert got["text"] == "Утро для лабы"
+    assert got["items"][0]["title"] == "Лаба"
+    assert (await bob.get("/views/day")).json()["plan"] is None
+    assert (await alice.get("/views/day?date=2026-11-21")).json()["plan"] is None
+
+    assert (await alice.post(f"/reviews/{plan.id}/apply")).status_code == 201
+    assert (await alice.get("/views/day")).json()["plan"] is None
+
+
 async def test_review_lists_what_claude_changed_since_the_last_one(alice: AsyncClient) -> None:
     from lifetracker.services import journal
 

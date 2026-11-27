@@ -1,9 +1,7 @@
 /** API types (mirror backend/lifetracker/schemas). Times "HH:MM", day minutes as numbers. */
 
 export type Uuid = string;
-export type Zone = "focus" | "steady" | "recharge";
-export type Importance = "normal" | "important" | "critical";
-export type HabitType = "check" | "bedtime" | "water" | "minutes" | "dual";
+export type HabitType = "check" | "count" | "bedtime";
 export type Status = "done" | "missed" | "rest" | "pending" | "nodata" | "future";
 
 export interface Me {
@@ -14,8 +12,8 @@ export interface Me {
   language: string;
   timezone: string;
   reminder_time: string | null;
-  morning_ping: boolean;
-  theme: "base" | "glass" | null;
+  morning_time: string | null;
+  week_note_time: string | null;
   haptics: boolean;
   onboarded: boolean;
   motto: string | null;
@@ -32,26 +30,24 @@ export interface Settings {
 }
 
 export interface Schedule {
-  kind: "daily" | "every" | "cycle";
-  n?: number | null;
+  kind: "daily" | "weekdays" | "cycle";
   pattern?: string | null;
   anchor?: string | null;
+}
+
+export interface CountConfig {
+  norm: number;
+  step: number;
 }
 
 export interface Habit {
   id: Uuid;
   name: string;
   type: HabitType;
-  sphere_id: Uuid | null;
   config: Record<string, any>;
   schedule: Schedule;
   active: boolean;
-  position: number;
-}
-
-export interface Sphere {
-  id: Uuid;
-  name: string;
+  remind_at: string | null;
   position: number;
 }
 
@@ -62,9 +58,9 @@ export interface Task {
   date: string | null;
   start_time: string | null;
   duration_min: number;
-  energy: Zone;
-  sphere_id: Uuid | null;
-  importance: Importance;
+  important: boolean;
+  fresh: boolean;
+  remind_at: string | null;
   done: boolean;
   done_at: string | null;
   created_by: "me" | "claude";
@@ -75,19 +71,6 @@ export interface Task {
 export interface DayTask extends Task {
   overdue: boolean;
   low_energy: boolean;
-}
-
-export interface Slot {
-  date: string;
-  start: number;
-  end: number;
-  fit: number;
-  avg: number;
-  zone: string | null;
-}
-
-export interface ListTask extends DayTask {
-  slot: Slot | null;
 }
 
 export interface ScoreItem {
@@ -128,7 +111,6 @@ export interface HabitRow {
   id: Uuid;
   name: string;
   type: HabitType;
-  sphere_id: Uuid | null;
   config: Record<string, any>;
   schedule: Schedule;
   status: Status;
@@ -139,10 +121,37 @@ export interface HabitRow {
 }
 
 export interface ZoneSpan {
-  zone: Zone;
+  zone: string;
   start: number;
   end: number;
   avg: number;
+}
+
+export interface PlanItem {
+  title: string;
+  start?: string | null;
+  dur?: number;
+  note?: string;
+}
+
+export interface Review {
+  id: Uuid;
+  kind: "day" | "week" | "month" | "plan";
+  date: string;
+  text: string;
+  by: "claude" | "schedule" | "me";
+  at: string;
+  used_note: boolean;
+  changes: string[];
+  items?: PlanItem[] | null;
+  applied_at?: string | null;
+}
+
+export interface SleepRec {
+  bed: string;
+  wake: string;
+  quality: "bad" | "ok" | "good";
+  duration_min: number;
 }
 
 export interface DayView {
@@ -156,10 +165,8 @@ export interface DayView {
   score: Score | null;
   phrase: string | null;
   phrases: string[];
-  sleep: { bed: string; wake: string; quality: string; duration_min: number } | null;
+  sleep: SleepRec | null;
   sleep_planned: { bed: string; need_h: number } | null;
-  critical: DayTask[];
-  critical_overload: boolean;
   habits: HabitRow[];
   tasks: DayTask[];
   timeline: {
@@ -170,6 +177,7 @@ export interface DayView {
     free: { start: number; end: number; zone: string | null }[];
     now: { zone: string; until: number; idx: number | null; next_zone: string | null } | null;
   };
+  plan?: Review | null;
 }
 
 export interface NowView {
@@ -190,22 +198,6 @@ export interface NowView {
   min: number;
   min_at: number | null;
   windows: ZoneSpan[];
-  train: { start: number; end: number } | null;
-  factors: { key: string; label: string; val: number; note: string }[];
-  personal: number;
-  personal_n: number;
-  debt_h: number;
-  late_min: number;
-  irr_sd_h: number | null;
-  hormones: {
-    step_min: number;
-    alertness: number[];
-    motivation: number[];
-    cortisol: number[];
-    melatonin: number[];
-    now: Record<string, number> | null;
-    melatonin_rise: number;
-  };
 }
 
 export interface ReviewView {
@@ -213,109 +205,7 @@ export interface ReviewView {
   start: string;
   end: string;
   label: string;
-  prev_anchor: string;
-  next_anchor: string | null;
-  scores: WeekBar[];
-  avg: number | null;
-  days_70: number;
-  best_run_70: number;
-  best_day: WeekBar | null;
-  alerts: { kind: string; title: string; subtitle: string; severe: boolean }[];
-  habits_pct: number | null;
-  tasks_pct: number | null;
-  tasks_done: number;
-  tasks_total: number;
   habits: { id: Uuid; name: string; pct: number | null; dots: Status[]; streak: number; best: number }[];
-  spheres: { id: Uuid; name: string; streak: number; best: number; pct: number | null }[];
-  bed_goal: number;
-  nights: { date: string; bed: number | null; on_time: boolean | null }[];
-}
-
-export interface GoalCard {
-  id: Uuid;
-  title: string;
-  criterion: string;
-  kind: "subtasks" | "streak" | "count" | "manual";
-  stage: number;
-  deadline: string | null;
-  sphere_id: Uuid | null;
-  sphere_name: string | null;
-  archived: boolean;
-  progress: { pct: number; label: string; cur?: number | null; t?: number | null };
-  overdue: boolean;
-  overdue_steps: number;
-  steps: { id: Uuid; title: string; done: boolean; deadline: string | null; overdue: boolean }[];
-  cells: { date: string; ok: string }[];
-}
-
-export interface GoalsView {
-  base: GoalCard[];
-  next: GoalCard[];
-  archived: GoalCard[];
-  history: { goal_id: Uuid; goal_title: string; by: string; what: string; at: string }[];
-  base_holds: boolean;
-}
-
-export interface GoalDetail {
-  id: Uuid;
-  title: string;
-  criterion: string;
-  deadline: string | null;
-  stage: number;
-  kind: GoalCard["kind"];
-  target: number | null;
-  window_days: number | null;
-  manual_pct: number | null;
-  sphere_id: Uuid | null;
-  archived: boolean;
-  position: number;
-  habit_ids: Uuid[];
-  subtasks: { id: Uuid; title: string; deadline: string | null; done: boolean; done_at: string | null; position: number }[];
-  history: { at: string; by: string; what: string }[];
-}
-
-export interface TaskCounts {
-  inbox: number;
-  today: number;
-  overdue: number;
-  overdue_critical: number;
-  upcoming: number;
-  done: number;
-}
-
-export interface TasksView {
-  view: string;
-  counts: TaskCounts;
-  items: ListTask[];
-  loads: { zone: Zone; need_min: number; free_min: number; task_ids: Uuid[] }[];
-  critical_today: number;
-}
-
-export interface ProfileView {
-  goals: GoalCard[];
-  goals_total: number;
-  tasks: TaskCounts;
-  habits: { id: Uuid; name: string; type: HabitType; active: boolean; sphere_name: string | null; schedule_label: string; streak: number }[];
-  spheres: { id: Uuid; name: string; count: number }[];
-}
-
-export interface HabitTemplate {
-  key: string;
-  name: string;
-  type: HabitType;
-  config?: Record<string, any>;
-  schedule?: Schedule;
-  sphere: string;
-  hint: string;
-}
-
-export interface Review {
-  id: Uuid;
-  kind: "day" | "week";
-  date: string;
-  text: string;
-  by: "claude" | "schedule" | "me";
-  at: string;
 }
 
 export interface McpStatus {

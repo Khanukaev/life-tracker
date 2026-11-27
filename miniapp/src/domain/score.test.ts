@@ -21,10 +21,12 @@ interface LegacyHabit {
   active?: boolean;
 }
 
+/** Same conversion as backend/lifetracker/domain/legacy.py: water, protein (КБЖУ + белок)
+ * and study minutes all become `count` habits with a daily norm. */
 function convert(h: LegacyHabit, targets: Record<string, number>): { type: HabitType; config: Record<string, any> } {
-  if (h.type === "water") return { type: "water", config: { target_l: targets.waterL, glass_l: targets.glassL } };
-  if (h.type === "protein") return { type: "dual", config: { labels: ["a", "b"] } };
-  if (h.key === "study") return { type: "minutes", config: { target_min: Math.max(15, Math.round((targets.studyH || 2) * 60)) } };
+  if (h.type === "water") return { type: "count", config: { norm: Math.max(1, Math.ceil(targets.waterL! / targets.glassL! - 1e-9)), step: 1 } };
+  if (h.type === "protein") return { type: "count", config: { norm: 2, step: 1 } };
+  if (h.key === "study") return { type: "count", config: { norm: Math.max(15, Math.round((targets.studyH || 2) * 60)), step: 15 } };
   return { type: "check", config: {} };
 }
 
@@ -37,10 +39,10 @@ function equalWeights(items: [string, number, number][]) {
   return { items: out, W, pct: W ? Math.round((got / W) * 100) : 0 };
 }
 
-function valueOf(h: LegacyHabit, type: HabitType, config: Record<string, any>, raw: Record<string, any>): any {
-  if (type === "water") return raw[h.key] ?? null;
-  if (type === "dual") return "kbju" in raw || "proteinOk" in raw ? { a: !!raw.kbju, b: !!raw.proteinOk } : null;
-  if (type === "minutes") return raw.studyMin ?? (raw.study ? config.target_min : null);
+function valueOf(h: LegacyHabit, config: Record<string, any>, raw: Record<string, any>): any {
+  if (h.type === "water") return raw[h.key] ?? null;
+  if (h.type === "protein") return "kbju" in raw || "proteinOk" in raw ? (raw.kbju ? 1 : 0) + (raw.proteinOk ? 1 : 0) : null;
+  if (h.key === "study") return raw.studyMin ?? (raw.study ? config.norm : null);
   return raw[h.key] ? true : null;
 }
 
@@ -62,9 +64,9 @@ describe.each(names)("golden %s", (file) => {
         .map((h) => {
           const c = convert(h, targets);
           return {
-            id: h.key, name: h.key, type: c.type, sphere_id: null, config: c.config,
+            id: h.key, name: h.key, type: c.type, config: c.config,
             schedule: { kind: "daily" }, status: exp.habits[h.key].status[day] as Status,
-            due: exp.habits[h.key].due[day], value: valueOf(h, c.type, c.config, raw),
+            due: exp.habits[h.key].due[day], value: valueOf(h, c.config, raw),
             streak: 0, streak_base: 0,
           };
         });
@@ -74,7 +76,7 @@ describe.each(names)("golden %s", (file) => {
         : null;
       const got = computeScore(
         rows,
-        tasks.map((t) => ({ id: t.id, title: t.title, importance: "normal", done: !!t.done })),
+        tasks.map((t) => ({ id: t.id, title: t.title, important: false, done: !!t.done })),
         sleep,
       );
       const legacy = got.items.map((x) => [x.kind === "sleep" ? "sleep" : x.kind === "task" ? "tasks" : x.ref, x.w, r6(x.v)]);
@@ -90,11 +92,25 @@ describe.each(names)("golden %s", (file) => {
 
 describe("optimistic helpers", () => {
   it("knows when a habit is done", () => {
-    expect(isDone("water", { target_l: 2, glass_l: 0.25 }, 8)).toBe(true);
-    expect(isDone("water", { target_l: 2, glass_l: 0.25 }, 7)).toBe(false);
-    expect(isDone("minutes", { target_min: 30 }, 30)).toBe(true);
-    expect(isDone("dual", {}, { a: true, b: false })).toBe(false);
+    expect(isDone("count", { norm: 8, step: 1 }, 8)).toBe(true);
+    expect(isDone("count", { norm: 8, step: 1 }, 7)).toBe(false);
+    expect(isDone("check", {}, true)).toBe(true);
     expect(isDone("bedtime", {}, null)).toBeNull();
+  });
+
+  it("weighs habits ×1, tasks ×2 and important tasks ×3, counts partially", () => {
+    const row = (id: string, value: number): HabitRow => ({
+      id, name: id, type: "count", config: { norm: 4, step: 1 }, schedule: { kind: "daily" },
+      status: "pending", due: true, value, streak: 0, streak_base: 0,
+    });
+    const got = computeScore(
+      [row("water", 2)],
+      [{ id: "a", title: "a", important: true, done: true }, { id: "b", title: "b", important: false, done: false }],
+      null,
+    );
+    expect(got.items.map((x) => x.w)).toEqual([1, 3, 2]);
+    expect(got.W).toBe(6);
+    expect(got.pct).toBe(Math.round(((0.5 + 3) / 6) * 100));
   });
 
   it("adds today to the streak only when it counts", () => {

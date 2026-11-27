@@ -1,71 +1,48 @@
-/** Navigation: 4 tabs, a stack of screens inside Profile, one sheet at a time.
- * The Telegram Back button closes the sheet first, then pops the stack. */
+/** Navigation: 3 tabs (Сегодня · План · Итоги), a stack of nested screens, one sheet at a time.
+ * There is no own Back button: Telegram's BackButton closes the sheet first, then pops the stack. */
 
 import { computed, effect, signal } from "@preact/signals";
 import { haptic } from "./haptic";
 import { setBackButton } from "./telegram";
-import { withTransition } from "../motion/screen";
 
-export type Tab = "day" | "now" | "review" | "profile";
-export type ScreenName =
-  | "tasks"
-  | "goals"
-  | "habits"
-  | "settings"
-  | "norms"
-  | "past"
-  | "claude"
-  | "reviews"
-  | "import";
+export type Tab = "today" | "plan" | "results";
+export type ScreenName = "task" | "habit" | "profile" | "settings" | "norms" | "claude" | "reviews" | "import";
 
 export interface Screen {
   name: ScreenName;
   params?: Record<string, string>;
 }
 
-export type SheetKind =
-  | "task"
-  | "sleep"
-  | "habit"
-  | "goal"
-  | "sphere"
-  | "profile"
-  | "claude";
+export type SheetKind = "add" | "energy" | "sleep";
 
 export interface SheetState {
   kind: SheetKind;
   props: Record<string, any>;
 }
 
-export const tab = signal<Tab>("day");
+export const tab = signal<Tab>("today");
 export const stack = signal<Screen[]>([]);
 export const sheet = signal<SheetState | null>(null);
 export const dayDate = signal<string | null>(null); // null = today
+export const dayMode = signal<"list" | "hours">("list");
 
 export const current = computed<Screen | null>(() => stack.value[stack.value.length - 1] ?? null);
 
 export function goTab(t: Tab): void {
   if (tab.value === t && !stack.value.length) return;
   haptic.light();
-  withTransition(() => {
-    tab.value = t;
-    stack.value = [];
-    window.scrollTo(0, 0);
-  });
+  tab.value = t;
+  stack.value = [];
+  window.scrollTo(0, 0);
 }
 
 export function push(name: ScreenName, params?: Record<string, string>): void {
-  withTransition(() => {
-    if (tab.value !== "profile" && name !== "past") tab.value = "profile";
-    stack.value = [...stack.value, { name, params }];
-    window.scrollTo(0, 0);
-  });
+  stack.value = [...stack.value, { name, params }];
+  window.scrollTo(0, 0);
 }
 
 export function pop(): void {
-  withTransition(() => {
-    stack.value = stack.value.slice(0, -1);
-  });
+  stack.value = stack.value.slice(0, -1);
 }
 
 export function openSheet(kind: SheetKind, props: Record<string, any> = {}): void {
@@ -87,11 +64,9 @@ export function closeSheetNow(): void {
 }
 
 export function openDay(date: string | null): void {
-  withTransition(() => {
-    dayDate.value = date;
-    tab.value = "day";
-    stack.value = [];
-  });
+  dayDate.value = date;
+  tab.value = "today";
+  stack.value = [];
 }
 
 /** Keep the native Back button in sync with what can be closed. */

@@ -108,3 +108,13 @@ export const ZONE_DOT: Record<string, string> = {
   steady: "var(--steady-dot)",
   recharge: "var(--recharge-dot)",
 };
+
+/** "30 мин", "1 час", "1,5 часа", "2 часа" (task duration in the redesign). */
+export function durLabel(min: number | null | undefined): string {
+  if (!min) return "нет";
+  if (min < 60) return `${min} мин`;
+  const h = min / 60;
+  if (Number.isInteger(h)) return `${h} ${plural(h, "час", "часа", "часов")}`;
+  if (Number.isInteger(h * 2)) return `${String(h).replace(".", ",")} часа`;
+  return `${Math.floor(h)} ч ${min % 60} мин`;
+}

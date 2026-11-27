@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" class="theme-base">
+<html lang="ru" class="theme-glass">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -8,20 +8,10 @@
     />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#000000" />
-    <title>Трекер жизни</title>
+    <title>Keel</title>
     <script>
-      // Apply the cached theme before the first paint: no flash of the wrong theme.
-      (function () {
-        try {
-          var t = localStorage.getItem("lt:theme");
-          if (t === "glass" || t === "base") {
-            document.documentElement.className = "theme-" + t;
-            if (t === "glass" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-              document.documentElement.classList.add("motion-ok");
-            }
-          }
-        } catch (e) {}
-      })();
+      // Motion flag before the first paint (one dark theme, nothing else to restore).
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("motion-ok");
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js" async></script>
   </head>

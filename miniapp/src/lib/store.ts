@@ -8,6 +8,7 @@
 import { signal, type Signal } from "@preact/signals";
 import { ApiError, get } from "./api";
 import { haptic } from "./haptic";
+import { canEdit } from "./net";
 import { toast } from "./toast";
 
 export interface Entry<T> {
@@ -128,6 +129,11 @@ export function setData<T>(key: string, update: (d: T) => T): () => void {
   };
 }
 
+/** Keys of every resource in memory that start with the prefix (e.g. all cached days). */
+export function keysWith(prefix: string): string[] {
+  return [...entries.keys()].filter((k) => k.startsWith(prefix));
+}
+
 /** Refresh every cached resource whose key starts with one of the prefixes. */
 export function invalidate(...prefixes: string[]): void {
   for (const key of entries.keys()) {
@@ -163,6 +169,7 @@ export async function mutate<R>(opts: {
   refresh?: string[];
   errorText?: string;
 }): Promise<R | undefined> {
+  if (!canEdit()) return undefined;
   const rb = opts.apply?.();
   const rollbacks = Array.isArray(rb) ? rb : rb ? [rb] : [];
   try {
@@ -172,7 +179,10 @@ export async function mutate<R>(opts: {
   } catch (err) {
     rollbacks.reverse().forEach((f) => f());
     haptic.error();
-    const msg = err instanceof ApiError && err.status === 422 ? err.message : opts.errorText;
+    const msg =
+      err instanceof ApiError && err.status === 0 ? "Нет связи — изменение не сохранилось"
+      : err instanceof ApiError && err.status === 422 ? err.message
+      : opts.errorText;
     toast(msg ?? "Не сохранилось. Проверь связь");
     return undefined;
   }

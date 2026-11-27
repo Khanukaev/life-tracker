@@ -3,10 +3,9 @@
 import type { ComponentChildren, CSSProperties } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { haptic } from "../lib/haptic";
-import { closeSheet, closeSheetNow, pop, registerSheetClose } from "../lib/router";
+import { closeSheet, closeSheetNow, registerSheetClose } from "../lib/router";
 import { springY, type SpringHandle } from "../motion/spring";
 import { motionOk } from "../motion/tokens";
-import { toastText } from "../lib/toast";
 
 const PATHS: Record<string, string> = {
   spark: "M12 3l1.8 4.7 4.7 1.8-4.7 1.8L12 16l-1.8-4.7-4.7-1.8 4.7-1.8zM18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z",
@@ -180,16 +179,11 @@ export function Empty({ text, action, onAction }: { text: string; action?: strin
   );
 }
 
-export function StackHead({ back, title, action }: { back: string; title: string; action?: ComponentChildren }) {
+/** Header of a nested screen. No own Back button: Telegram's BackButton does that. */
+export function StackHead({ title, action }: { back?: string; title: string; action?: ComponentChildren }) {
   return (
     <header class="stack-head">
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <button class="ib" style={{ width: "auto", padding: "0 8px", gap: "2px", fontSize: "17px" }} onClick={pop}>
-          <Icon name="left" />
-          {back}
-        </button>
-        {action}
-      </div>
+      {action && <div style={{ display: "flex", justifyContent: "flex-end" }}>{action}</div>}
       <h1 class="h1">{title}</h1>
     </header>
   );
@@ -197,7 +191,7 @@ export function StackHead({ back, title, action }: { back: string; title: string
 
 /** Bottom sheet. Closes on scrim tap or a swipe down from the top area.
  * In Liquid Glass it opens and closes on a spring and follows the finger. */
-export function Sheet({ children, label }: { children: ComponentChildren; label: string }) {
+export function Sheet({ children, label, cls = "k-sheet" }: { children: ComponentChildren; label: string; cls?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const scrim = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -281,8 +275,8 @@ export function Sheet({ children, label }: { children: ComponentChildren; label:
   }, []);
 
   return (
-    <div class="scrim" ref={scrim} onClick={(e) => e.target === e.currentTarget && closeSheet()}>
-      <div class="sheet" ref={ref} role="dialog" aria-modal="true" aria-label={label}>
+    <div class="scrim k-scrim" ref={scrim} onClick={(e) => e.target === e.currentTarget && closeSheet()}>
+      <div class={`sheet ${cls}`} ref={ref} role="dialog" aria-modal="true" aria-label={label}>
         <div class="grabber" />
         {children}
       </div>
@@ -330,15 +324,6 @@ export function SheetHead({
       )}
     </div>
   );
-}
-
-export function Toast() {
-  const text = toastText.value;
-  return text ? (
-    <div class="toast" role="status">
-      {text}
-    </div>
-  ) : null;
 }
 
 /** Hold a button to repeat or run an alternative action (e.g. long-press = minus). */
