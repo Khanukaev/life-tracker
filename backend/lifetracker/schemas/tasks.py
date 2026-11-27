@@ -5,7 +5,7 @@ from enum import StrEnum
 
 from pydantic import Field, model_validator
 
-from lifetracker.domain.enums import Actor, EnergyZone, Importance
+from lifetracker.domain.enums import Actor
 from lifetracker.schemas.common import HHMM, ApiModel, InputModel
 
 
@@ -24,8 +24,8 @@ class TaskOut(ApiModel):
     date: dt.date | None
     start_time: HHMM | None
     duration_min: int
-    energy: EnergyZone
-    importance: Importance
+    important: bool
+    fresh: bool
     done: bool
     done_at: datetime | None
     created_by: Actor
@@ -42,8 +42,8 @@ class TaskCreate(InputModel):
         default=None, description="00:00–04:59 belongs to the night after `date`"
     )
     duration_min: int = Field(default=30, ge=5, le=1440)
-    energy: EnergyZone = EnergyZone.STEADY
-    importance: Importance = Importance.NORMAL
+    important: bool = Field(default=False, description="Top of the list, weighs ×3")
+    fresh: bool = Field(default=False, description="Needs a fresh head: goes to the energy peak")
 
     @model_validator(mode="after")
     def _time_needs_date(self) -> "TaskCreate":
@@ -58,8 +58,8 @@ class TaskUpdate(InputModel):
     date: dt.date | None = None
     start_time: HHMM | None = None
     duration_min: int | None = Field(default=None, ge=5, le=1440)
-    energy: EnergyZone | None = None
-    importance: Importance | None = None
+    important: bool | None = None
+    fresh: bool | None = None
     done: bool | None = None
 
 

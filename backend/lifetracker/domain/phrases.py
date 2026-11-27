@@ -2,13 +2,13 @@
 
 Selection rules come from `pickPhrase` (pool by score, extra pools for a late night,
 a lagging minute counter in the evening, growth vs yesterday); the texts are neutral
-and work for anyone. The redesign adds a pool for unfinished critical tasks.
+and work for anyone. The redesign adds a pool for unfinished important tasks.
 """
 
 from collections.abc import Sequence
 
 from lifetracker.domain.dates import idx_of
-from lifetracker.domain.enums import HabitType, Importance
+from lifetracker.domain.enums import HabitType
 from lifetracker.domain.model import Ctx, Task
 from lifetracker.domain.score import DayScore
 from lifetracker.domain.sleep import parse_night, planned_night
@@ -62,9 +62,7 @@ def phrase_pool(
             if h and h.type == HabitType.COUNT and 0 < item.v < 1:
                 pool += [p.format(name=h.name) for p in UNFINISHED]
                 break
-    if any(
-        t.date == ctx.today and t.importance == Importance.CRITICAL and not t.done for t in tasks
-    ):
+    if any(t.date == ctx.today and t.important and not t.done for t in tasks):
         pool += CRITICAL
     if delta is not None and delta > 0:
         pool.append(GROWTH.format(delta=delta))

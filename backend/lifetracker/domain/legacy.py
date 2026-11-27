@@ -21,7 +21,7 @@ from datetime import date, datetime
 from typing import Any
 
 from lifetracker.domain.dates import hm, js_round, logical_now, task_min
-from lifetracker.domain.enums import EnergyZone, HabitType, Importance, ScheduleKind
+from lifetracker.domain.enums import EnergyZone, HabitType, ScheduleKind
 from lifetracker.domain.model import (
     Ctx,
     DayRec,
@@ -261,8 +261,9 @@ def convert(export: dict[str, Any], *, today: date, now_min: int) -> LegacyData:
             date=_d(t.get("date")),
             start=task_min(t.get("start")),
             dur=t.get("dur") or 30,
-            energy=EnergyZone(t.get("energy") or "steady"),
-            importance=Importance(t.get("importance") or "normal"),
+            energy=EnergyZone.FOCUS if t.get("fresh") else EnergyZone(t.get("energy") or "steady"),
+            important=t.get("importance") in ("important", "critical")
+            or t.get("important") is True,
             done=bool(t.get("done")),
         )
         for tid, t in (export.get("tasks") or {}).items()

@@ -112,7 +112,7 @@ async def setup_habits(c: AsyncClient) -> dict[str, str]:
         r = await c.post("/habits", json=body)
         assert r.status_code in (200, 201), r.text
         ids[name] = r.json()["id"]
-    await c.post("/tasks", json={"title": "Report", "date": "2026-11-22", "importance": "critical"})
+    await c.post("/tasks", json={"title": "Report", "date": "2026-11-22", "important": True})
     await c.post("/tasks", json={"title": "Chill", "date": "2026-11-22"})
     return ids
 
@@ -124,7 +124,7 @@ async def test_evening_content(alice: AsyncClient, session: AsyncSession) -> Non
     assert e.score is not None
     assert {h.name for h in e.habits} == {"Read", "Water", "Food"}  # bedtime is never here
     assert (e.done_habits, e.total_habits) == (1, 4)
-    assert e.critical == ["Report"]
+    assert e.important == ["Report"]
 
 
 async def test_mark_buttons_per_habit_type(alice: AsyncClient, session: AsyncSession) -> None:

@@ -62,9 +62,9 @@ def evening_text(e: Evening) -> str:
         parts.append("\nНе отмечено — отметь кнопками:")
     elif e.total_habits:
         parts.append("\nВсе привычки отмечены 👌")
-    if e.critical:
-        tasks = "\n".join(f"• {escape(t)}" for t in e.critical)
-        parts.append(f"\n🔴 Критичные задачи не закрыты:\n{tasks}")
+    if e.important:
+        tasks = "\n".join(f"• {escape(t)}" for t in e.important)
+        parts.append(f"\nВажное, что ещё не сделано:\n{tasks}")
     return "\n".join(parts)
 
 

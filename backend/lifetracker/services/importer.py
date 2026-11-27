@@ -24,7 +24,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.core.errors import DomainValidationError
 from lifetracker.db import models as m
-from lifetracker.domain.enums import Actor, HabitType, ReviewAuthor, ReviewKind, SleepQuality
+from lifetracker.domain.enums import (
+    Actor,
+    EnergyZone,
+    HabitType,
+    ReviewAuthor,
+    ReviewKind,
+    SleepQuality,
+)
 from lifetracker.domain.legacy import convert
 from lifetracker.services.clock import user_now
 
@@ -250,8 +257,8 @@ async def import_export(
                 "date": t.date,
                 "start_time": _hhmm(t.start) if t.date else None,
                 "duration_min": max(5, min(1440, int(t.dur or 30))),
-                "energy": t.energy,
-                "importance": t.importance,
+                "important": t.important,
+                "fresh": t.energy == EnergyZone.FOCUS,
                 "done": t.done,
                 "done_at": _ts(raw_t.get("doneAt")) if t.done else None,
                 "created_by": Actor.CLAUDE if raw_t.get("by") == "claude" else Actor.ME,

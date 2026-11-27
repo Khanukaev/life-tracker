@@ -10,7 +10,7 @@ from sqlalchemy.sql.elements import ColumnElement
 
 from lifetracker.core.errors import DomainValidationError
 from lifetracker.db.models import Task
-from lifetracker.domain.enums import Actor, Importance
+from lifetracker.domain.enums import Actor
 from lifetracker.schemas.tasks import TaskCreate, TaskUpdate, TaskView
 from lifetracker.services.clock import user_now
 from lifetracker.services.common import apply_patch, get_owned, resolve_client_id
@@ -18,11 +18,7 @@ from lifetracker.services.common import apply_patch, get_owned, resolve_client_i
 UPCOMING_DAYS = 14
 DONE_LIMIT = 60
 
-IMPORTANCE_RANK: ColumnElement[int] = case(
-    (Task.importance == Importance.CRITICAL, 0),
-    (Task.importance == Importance.IMPORTANT, 1),
-    else_=2,
-)
+IMPORTANCE_RANK: ColumnElement[int] = case((Task.important, 0), else_=1)
 
 
 async def list_tasks(

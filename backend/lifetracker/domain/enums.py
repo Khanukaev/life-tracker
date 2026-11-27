@@ -27,12 +27,6 @@ class EnergyZone(StrEnum):
     RECHARGE = "recharge"
 
 
-class Importance(StrEnum):
-    NORMAL = "normal"
-    IMPORTANT = "important"
-    CRITICAL = "critical"
-
-
 class Actor(StrEnum):
     """Who made a change: the user in the app or their Claude via MCP."""
 

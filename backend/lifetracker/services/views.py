@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.domain.dates import MONTHS, add_days, fmt_date, fmt_date_short, js_round
 from lifetracker.domain.energy import Window, bucket_of
-from lifetracker.domain.enums import EnergyZone, Importance
+from lifetracker.domain.enums import EnergyZone
 from lifetracker.domain.habits import (
     active_habits,
     best_streak,
@@ -55,9 +55,6 @@ from lifetracker.schemas.views import (
 )
 from lifetracker.services.snapshot import Snapshot, load_snapshot
 
-CRITICAL_LIMIT = 3  # "Когда всё важно — ничего не важно"
-RANK = {Importance.CRITICAL: 0, Importance.IMPORTANT: 1, Importance.NORMAL: 2}
-
 
 def _hhmm(minutes: int) -> str:
     x = minutes % 1440
@@ -68,7 +65,7 @@ def _day_tasks(snap: Snapshot, k: date) -> list[DayTask]:
     e = snap.energy(k)
     ts = sorted(
         (t for t in snap.tasks if t.date == k),
-        key=lambda t: (t.done, RANK[t.importance], t.start if t.start is not None else 9999),
+        key=lambda t: (t.done, not t.important, t.start if t.start is not None else 9999),
     )
     out = []
     for t in ts:
@@ -210,7 +207,6 @@ async def day_view(
         planned = {"bed": _hhmm(ctx.settings.bed_target), "need_h": ctx.settings.sleep_need_h}
 
     tasks = _day_tasks(snap, k)
-    critical = [t for t in tasks if t.importance == Importance.CRITICAL]
     return DayView(
         date=k,
         today=ctx.today,
@@ -224,8 +220,6 @@ async def day_view(
         phrases=phrases,
         sleep=sleep,
         sleep_planned=planned,
-        critical=critical,
-        critical_overload=len(critical) > CRITICAL_LIMIT,
         habits=_habit_rows(snap, k) if relation != "future" else [],
         tasks=tasks,
         timeline=_timeline(snap, k),

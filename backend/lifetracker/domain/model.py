@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from lifetracker.domain.enums import EnergyZone, HabitType, Importance, ScheduleKind
+from lifetracker.domain.enums import EnergyZone, HabitType, ScheduleKind
 
 HabitId = Hashable
 
@@ -67,8 +67,8 @@ class Task:
     date: date | None
     start: int | None = None  # task minute of the logical day (00:00–04:59 -> 1440+)
     dur: int = 30
-    energy: EnergyZone = EnergyZone.STEADY
-    importance: Importance = Importance.NORMAL
+    energy: EnergyZone = EnergyZone.STEADY  # focus = "needs a fresh head"
+    important: bool = False
     done: bool = False
 
 

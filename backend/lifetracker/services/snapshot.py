@@ -16,6 +16,7 @@ from lifetracker.core.errors import NotFoundError
 from lifetracker.db import models as m
 from lifetracker.domain.dates import logical_now, time_to_task_min
 from lifetracker.domain.energy import EnergyDay, energy_day
+from lifetracker.domain.enums import EnergyZone
 from lifetracker.domain.habits import STREAK_LOOKBACK
 from lifetracker.domain.model import (
     Ctx,
@@ -61,7 +62,8 @@ def to_domain_task(t: m.Task) -> Task:
     return Task(
         id=t.id, title=t.title, date=t.date,
         start=time_to_task_min(_min(t.start_time)) if t.start_time else None,
-        dur=t.duration_min, energy=t.energy, importance=t.importance, done=t.done,
+        dur=t.duration_min, energy=EnergyZone.FOCUS if t.fresh else EnergyZone.STEADY,
+        important=t.important, done=t.done,
     )  # fmt: skip
 
 

@@ -182,7 +182,7 @@ def test_evening_text_and_keyboard() -> None:
         score=72,
         delta=-5,
         habits=[PendingHabit(hid, "Очень длинное название привычки")],
-        critical=["Отчёт <срочно>"],
+        important=["Отчёт <срочно>"],
         done_habits=2,
         total_habits=3,
     )

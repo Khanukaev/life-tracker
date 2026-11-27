@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.core.errors import DomainValidationError
 from lifetracker.db.models import Delivery, Habit, User
-from lifetracker.domain.enums import DeliveryKind, HabitType, Importance
+from lifetracker.domain.enums import DeliveryKind, HabitType
 from lifetracker.domain.habits import count_norm
 from lifetracker.services import days as days_service
 from lifetracker.services.common import get_owned
@@ -153,7 +153,7 @@ class Evening:
     score: int | None
     delta: int | None
     habits: list[PendingHabit]  # due today and not marked either way yet
-    critical: list[str]  # titles of unfinished critical tasks
+    important: list[str]  # titles of unfinished important tasks
     done_habits: int
     total_habits: int
 
@@ -174,9 +174,7 @@ async def evening_content(
         score=view.score.pct if view.score else None,
         delta=view.score.delta if view.score else None,
         habits=pending,
-        critical=[
-            t.title for t in view.tasks if t.importance == Importance.CRITICAL and not t.done
-        ],
+        important=[t.title for t in view.tasks if t.important and not t.done],
         done_habits=sum(1 for h in rows if h.status == "done"),
         total_habits=len(rows),
     )

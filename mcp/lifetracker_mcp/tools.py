@@ -33,9 +33,7 @@ from lifetracker.core.errors import AppError
 from lifetracker.db.session import get_sessionmaker
 from lifetracker.domain.enums import (
     Actor,
-    EnergyZone,
     HabitType,
-    Importance,
     ReviewKind,
     SleepQuality,
 )
@@ -65,12 +63,12 @@ Model:
   water or 20 minutes of reading; each tap in the app adds `step`), bedtime (derived from
   sleep: met when they went to bed by the target time; never logged directly).
   Schedules: daily, weekdays (Mon–Fri), or a cycle like "1101100" (1 = do, 0 = rest).
-  Every habit weighs the same in the day score; tasks weigh more (critical the most).
+  Every habit weighs the same in the day score; tasks weigh more (important ones most).
 - Sleep of a date = the night that ended on that date's morning (bed, wake, quality).
 - Energy is predicted from sleep with a circadian model and split into zones:
   focus (best for hard thinking), steady (routine work), recharge (rest, admin).
-- Tasks have a date (or none = inbox), optional start time and duration, energy zone,
-  importance (normal, important, critical). Critical tasks weigh most in the score.
+- Tasks have a date (or none = inbox), optional start time and duration, `important`
+  (top of the list, ×3 in the score) and `fresh` (needs a fresh head: best in a focus zone).
 - Day score ("рейтинг", 0–100 %) = weighted share of what was done: sleep, habits, tasks.
 
 Etiquette: answer in the user's language (usually Russian). Prefer reading before
@@ -136,8 +134,8 @@ def _task(t: Any) -> dict[str, Any]:
         "date",
         "start_time",
         "duration_min",
-        "energy",
-        "importance",
+        "important",
+        "fresh",
         "done",
         "created_by",
     )
@@ -357,8 +355,8 @@ async def list_tasks(
     ] = "today",
     date: Annotated[date | None, Field(description="Required when filter=date")] = None,
 ) -> list[dict[str, Any]]:
-    """Tasks by view. Each task: id, title, date, start_time, duration_min, energy zone,
-    importance, done, created_by (me or claude)."""
+    """Tasks by view. Each task: id, title, date, start_time, duration_min, important,
+    fresh, done, created_by (me or claude)."""
     async with _Call() as (s, uid, now):
         if filter == "date":
             if date is None:
@@ -427,15 +425,17 @@ async def create_task(
         str | None, Field(description="HH:MM; needs a date. 00:00–04:59 = the night after date")
     ] = None,
     duration_min: Annotated[int, Field(ge=5, le=1440)] = 30,
-    energy: Annotated[
-        EnergyZone, Field(description="focus = hard thinking, steady = routine, recharge = light")
-    ] = EnergyZone.STEADY,
-    importance: Importance = Importance.NORMAL,
+    important: Annotated[
+        bool, Field(description="Top of the list, weighs ×3 in the score; keep it rare")
+    ] = False,
+    fresh: Annotated[
+        bool, Field(description="Needs a fresh head: the app suggests the energy peak")
+    ] = False,
     description: Annotated[str, Field(max_length=2000)] = "",
 ) -> dict[str, Any]:
-    """Create a task. It is marked as created by Claude in the app. Keep critical tasks
-    rare: more than 3 per day dilutes them. Place focus tasks into focus zones
-    (see get_energy) when you pick a time."""
+    """Create a task. It is marked as created by Claude in the app. Keep important tasks
+    rare: when everything is important, nothing is. Place fresh-head tasks into focus
+    zones (see get_energy) when you pick a time."""
     async with _Call() as (s, uid, _):
         data = TaskCreate.model_validate(
             {
@@ -443,8 +443,8 @@ async def create_task(
                 "date": date,
                 "start_time": start_time,
                 "duration_min": duration_min,
-                "energy": energy,
-                "importance": importance,
+                "important": important,
+                "fresh": fresh,
                 "description": description,
             }
         )
@@ -460,8 +460,8 @@ async def update_task(
     start_time: Annotated[str | None, Field(description="HH:MM")] = None,
     clear_time: Annotated[bool, Field(description="Keep the date, remove the time")] = False,
     duration_min: Annotated[int | None, Field(ge=5, le=1440)] = None,
-    energy: EnergyZone | None = None,
-    importance: Importance | None = None,
+    important: bool | None = None,
+    fresh: bool | None = None,
     description: Annotated[str | None, Field(max_length=2000)] = None,
     done: bool | None = None,
 ) -> dict[str, Any]:
@@ -473,8 +473,8 @@ async def update_task(
             "date": date,
             "start_time": start_time,
             "duration_min": duration_min,
-            "energy": energy,
-            "importance": importance,
+            "important": important,
+            "fresh": fresh,
             "description": description,
             "done": done,
         }.items()

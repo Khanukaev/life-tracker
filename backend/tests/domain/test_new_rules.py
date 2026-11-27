@@ -7,7 +7,7 @@ import pytest
 
 from lifetracker.domain.dates import add_days
 from lifetracker.domain.energy import EnergyDay, energy_day
-from lifetracker.domain.enums import HabitType, Importance, ScheduleKind
+from lifetracker.domain.enums import HabitType, ScheduleKind
 from lifetracker.domain.habits import habit_status
 from lifetracker.domain.model import Ctx, DayRec, Habit, Settings, SleepRec, Task
 from lifetracker.domain.phrases import CRITICAL, pick_phrase
@@ -32,12 +32,12 @@ def make_ctx(
     )
 
 
-def test_each_task_is_its_own_item_and_critical_weighs_three() -> None:
+def test_each_task_is_its_own_item_and_important_weighs_three() -> None:
     ctx = make_ctx([Habit(id="vit", type=HabitType.CHECK)])
     tasks = [
-        Task(id="a", title="Critical", date=TODAY, importance=Importance.CRITICAL),
+        Task(id="a", title="Important", date=TODAY, important=True),
         Task(id="b", title="Normal", date=TODAY, done=True),
-        Task(id="c", title="Important", date=TODAY, importance=Importance.IMPORTANT),
+        Task(id="c", title="Other", date=TODAY),
     ]
     sc = day_score(TODAY, ctx, tasks)
     assert sc is not None
@@ -49,7 +49,7 @@ def test_each_task_is_its_own_item_and_critical_weighs_three() -> None:
     ]
     assert sc.W == 8
     assert sc.pct == 25  # only the normal task (2 of 8) is done
-    # The unfinished critical task is the biggest gain.
+    # The unfinished important task is the biggest gain.
     assert gains(sc)[0].item.ref == "a"
     assert gains(sc)[0].points == 38
 
@@ -123,9 +123,9 @@ def test_slot_falls_back_to_next_day_when_today_fits_poorly() -> None:
     assert s.alternative.fit >= 0.6
 
 
-def test_phrase_mentions_critical_tasks_when_they_are_open() -> None:
+def test_phrase_mentions_important_tasks_when_they_are_open() -> None:
     ctx = make_ctx([Habit(id="vit", type=HabitType.CHECK)])
-    tasks = [Task(id="a", title="x", date=TODAY, importance=Importance.CRITICAL)]
+    tasks = [Task(id="a", title="x", date=TODAY, important=True)]
     sc = day_score(TODAY, ctx, tasks)
     assert sc is not None
     phrases = {pick_phrase(sc, None, ctx, tasks, bed_label="23:30", shift=i) for i in range(20)}

@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.db import models as m
-from lifetracker.domain.enums import EnergyZone, Importance, ScheduleKind
+from lifetracker.domain.enums import EnergyZone, ScheduleKind
 from lifetracker.domain.habits import streak_of
 from lifetracker.domain.slots import energy_left, is_overdue, suggest_with_fallback
 from lifetracker.schemas.tasks import TaskOut, TaskView
@@ -37,9 +37,7 @@ async def task_counts(session: AsyncSession, user_id: uuid.UUID, today: date) ->
                 func.count().filter(t.date.is_(None) & open_),
                 func.count().filter((t.date == today) & open_),
                 func.count().filter((t.date < today) & open_),
-                func.count().filter(
-                    (t.date < today) & open_ & (t.importance == Importance.CRITICAL)
-                ),
+                func.count().filter((t.date < today) & open_ & t.important),
                 func.count().filter(
                     (t.date > today) & (t.date <= today + timedelta(days=UPCOMING_DAYS)) & open_
                 ),
@@ -48,7 +46,7 @@ async def task_counts(session: AsyncSession, user_id: uuid.UUID, today: date) ->
         )
     ).one()
     return TaskCounts(
-        inbox=row[0], today=row[1], overdue=row[2], overdue_critical=row[3], upcoming=row[4],
+        inbox=row[0], today=row[1], overdue=row[2], overdue_important=row[3], upcoming=row[4],
         done=min(row[5], task_service.DONE_LIMIT),
     )  # fmt: skip
 
@@ -120,8 +118,7 @@ async def tasks_view(
             )
         )
     if view == "energy":
-        rank = {Importance.CRITICAL: 0, Importance.IMPORTANT: 1, Importance.NORMAL: 2}
-        items.sort(key=lambda x: (rank[x.importance], x.date or ctx.today))
+        items.sort(key=lambda x: (not x.important, x.date or ctx.today))
     loads = []
     if view == "energy":
         loads = [
@@ -129,11 +126,10 @@ async def tasks_view(
                         task_ids=[cast(uuid.UUID, i) for i in z.task_ids])
             for z in energy_left(ctx, snap.tasks, snap.energy(ctx.today))
         ]  # fmt: skip
-    critical_today = sum(
-        1 for t in snap.tasks
-        if t.date == ctx.today and t.importance == Importance.CRITICAL and not t.done
-    )  # fmt: skip
+    important_today = sum(
+        1 for t in snap.tasks if t.date == ctx.today and t.important and not t.done
+    )
     return TasksView(
         view=view, counts=await task_counts(session, user_id, ctx.today), items=items,
-        loads=loads, critical_today=critical_today,
+        loads=loads, important_today=important_today,
     )  # fmt: skip

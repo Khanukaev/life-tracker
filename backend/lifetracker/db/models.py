@@ -37,9 +37,7 @@ from lifetracker.db.base import Base, created_at_col, str_enum, updated_at_col, 
 from lifetracker.domain.enums import (
     Actor,
     DeliveryKind,
-    EnergyZone,
     HabitType,
-    Importance,
     ReviewAuthor,
     ReviewKind,
     ScheduleKind,
@@ -204,12 +202,8 @@ class Task(Base):
     date: Mapped[dt.date | None] = mapped_column(Date, nullable=True)  # NULL = inbox
     start_time: Mapped[time | None] = mapped_column(Time)
     duration_min: Mapped[int] = mapped_column(SmallInteger, default=30)
-    energy: Mapped[EnergyZone] = mapped_column(
-        str_enum(EnergyZone, "energy_zone"), default=EnergyZone.STEADY
-    )
-    importance: Mapped[Importance] = mapped_column(
-        str_enum(Importance, "importance"), default=Importance.NORMAL
-    )
+    important: Mapped[bool] = mapped_column(Boolean, default=False)  # top of lists, ×3
+    fresh: Mapped[bool] = mapped_column(Boolean, default=False)  # needs a fresh head: peak
     done: Mapped[bool] = mapped_column(Boolean, default=False)
     done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[Actor] = mapped_column(str_enum(Actor, "actor"), default=Actor.ME)

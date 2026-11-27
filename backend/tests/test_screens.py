@@ -22,14 +22,12 @@ async def test_profile_view(alice: AsyncClient) -> None:
     off = (await alice.post("/habits", json={"name": "Old", "type": "check"})).json()["id"]
     await alice.patch(f"/habits/{off}", json={"active": False})
     await alice.post("/tasks", json={"title": "T", "date": TODAY})
-    await alice.post(
-        "/tasks", json={"title": "Old", "date": "2026-11-20", "importance": "critical"}
-    )
+    await alice.post("/tasks", json={"title": "Old", "date": "2026-11-20", "important": True})
     await alice.post("/tasks", json={"title": "Inbox"})
 
     v = (await alice.get("/views/profile")).json()
     assert v["tasks"] == {
-        "inbox": 1, "today": 1, "overdue": 1, "overdue_critical": 1, "upcoming": 0, "done": 0
+        "inbox": 1, "today": 1, "overdue": 1, "overdue_important": 1, "upcoming": 0, "done": 0
     }  # fmt: skip
     assert [h["name"] for h in v["habits"]] == ["Water", "Old"]  # active first
 
@@ -37,13 +35,11 @@ async def test_profile_view(alice: AsyncClient) -> None:
 async def test_tasks_view_with_energy_tab(alice: AsyncClient) -> None:
     await alice.post(
         "/tasks",
-        json={"title": "Deep work late", "date": TODAY, "start_time": "23:30", "energy": "focus",
+        json={"title": "Deep work late", "date": TODAY, "start_time": "23:30", "fresh": True,
               "duration_min": 60},
     )  # fmt: skip
-    await alice.post("/tasks", json={"title": "Routine", "date": TODAY, "energy": "steady"})
-    await alice.post(
-        "/tasks", json={"title": "Old", "date": "2026-11-19", "importance": "critical"}
-    )
+    await alice.post("/tasks", json={"title": "Routine", "date": TODAY})
+    await alice.post("/tasks", json={"title": "Old", "date": "2026-11-19", "important": True})
 
     today = (await alice.get("/views/tasks", params={"view": "today"})).json()
     assert today["counts"]["today"] == 2
@@ -52,7 +48,7 @@ async def test_tasks_view_with_energy_tab(alice: AsyncClient) -> None:
     assert late["slot"] is not None  # a better Focus slot is suggested
 
     energy = (await alice.get("/views/tasks", params={"view": "energy"})).json()
-    assert energy["items"][0]["title"] == "Old"  # critical first
+    assert energy["items"][0]["title"] == "Old"  # important first
     assert {z["zone"] for z in energy["loads"]} == {"focus", "steady", "recharge"}
     assert (await alice.get("/views/tasks", params={"view": "bogus"})).status_code == 422
 

@@ -91,7 +91,7 @@ def weak_spots(
     overdue = [t for t in tasks if not t.done and t.date is not None and t.date < ctx.today]
     if overdue:
         oldest = min(t.date for t in overdue if t.date is not None)
-        crit = sum(1 for t in overdue if t.importance == "critical")
+        crit = sum(1 for t in overdue if t.important)
         n = len(overdue)
         out.append(
             Alert(
@@ -99,9 +99,9 @@ def weak_spots(
                 f"Просрочено задач: {n}, самая старая с {fmt_date_short(oldest)}.",
                 f"{n} {plural(n, 'просроченная', 'просроченные', 'просроченных')} "
                 f"{plural(n, 'задача', 'задачи', 'задач')}",
-                (f"Из них {crit} {plural(crit, 'критичная', 'критичные', 'критичных')}"
+                (f"Из них {crit} {plural(crit, 'важная', 'важные', 'важных')}"
                  if crit else f"Самая старая — с {fmt_date_short(oldest)}"),
-                {"count": n, "critical": crit, "oldest": oldest.isoformat()},
+                {"count": n, "important": crit, "oldest": oldest.isoformat()},
             )
         )  # fmt: skip
 

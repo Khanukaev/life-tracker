@@ -128,7 +128,7 @@ async def setup(c: AsyncClient) -> dict[str, str]:
     await c.post("/habits", json={"name": "Bed", "type": "bedtime"})
     await c.put(f"/days/{TODAY}/sleep", json={"bed": "23:30", "wake": "07:30"})
     task = (
-        await c.post("/tasks", json={"title": "Report", "date": TODAY, "importance": "critical"})
+        await c.post("/tasks", json={"title": "Report", "date": TODAY, "important": True})
     ).json()["id"]
     return {"vit": vit, "read": read, "task": task}
 
@@ -184,7 +184,7 @@ async def test_write_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Ca
         title="Plan week",
         date="2026-11-23",
         start_time="10:00",
-        energy="focus",
+        fresh=True,
         duration_min=60,
     )
     assert t["created_by"] == "claude"

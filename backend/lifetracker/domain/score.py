@@ -3,7 +3,7 @@
 Rules (agreed in stage 0, generalising the reference app):
 * every habit weighs ×1 (importance is a task notion); the bedtime item is the night
   that ended this morning: full points at the target, zero when 2 h late;
-* every task of the day is its own item: critical ×3, others ×2;
+* every task of the day is its own item: important ×3, others ×2;
 * count habits (water, minutes, pages…) count partially toward their norm;
 * habits resting by schedule are not counted.
 
@@ -17,7 +17,7 @@ from datetime import date
 
 from lifetracker.domain.dates import add_days, fmt_hm, js_round
 from lifetracker.domain.energy import clamp
-from lifetracker.domain.enums import HabitType, Importance
+from lifetracker.domain.enums import HabitType
 from lifetracker.domain.habits import (
     active_habits,
     count_norm,
@@ -28,7 +28,7 @@ from lifetracker.domain.model import Ctx, Task
 from lifetracker.domain.sleep import parse_night, planned_night
 
 HABIT_WEIGHT = 1
-CRITICAL_TASK_WEIGHT, TASK_WEIGHT = 3, 2
+IMPORTANT_TASK_WEIGHT, TASK_WEIGHT = 3, 2
 
 
 @dataclass(slots=True)
@@ -93,7 +93,7 @@ def day_score(k: date, ctx: Ctx, tasks: Sequence[Task]) -> DayScore | None:
         items.append(ScoreItem("habit", h.id, h.name, HABIT_WEIGHT, val, note))
 
     for t in tasks_on(tasks, k):
-        w = CRITICAL_TASK_WEIGHT if t.importance == Importance.CRITICAL else TASK_WEIGHT
+        w = IMPORTANT_TASK_WEIGHT if t.important else TASK_WEIGHT
         items.append(ScoreItem("task", t.id, t.title, w, 1 if t.done else 0))
 
     total_w = sum(x.w for x in items)

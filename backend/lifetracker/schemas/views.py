@@ -111,8 +111,6 @@ class DayView(BaseModel):
     phrases: list[str]  # tap on the phrase shows the next one
     sleep: SleepOut | None
     sleep_planned: dict[str, Any] | None
-    critical: list[DayTask]
-    critical_overload: bool
     habits: list[HabitRow]
     tasks: list[DayTask]
     timeline: TimelineOut
@@ -243,7 +241,7 @@ class TaskCounts(BaseModel):
     inbox: int
     today: int
     overdue: int
-    overdue_critical: int
+    overdue_important: int
     upcoming: int
     done: int
 
@@ -264,7 +262,7 @@ class TasksView(BaseModel):
     counts: TaskCounts
     items: list[ListTask]
     loads: list[ZoneLoadOut]
-    critical_today: int
+    important_today: int
 
 
 class ProfileHabit(BaseModel):
