@@ -1,8 +1,8 @@
 /**
- * Screen entrance: cards visible on open appear one after another (stagger);
- * blocks below the fold reveal once when they scroll into view (IntersectionObserver),
- * never again on scrolling back. Content is final and clickable from the first frame —
- * only opacity/transform are animated on top.
+ * Screen entrance: cards visible on open appear one after another (stagger). Blocks below
+ * the fold are left alone: animating them while the page scrolls gave every card its own
+ * compositor layer and made scrolling stutter in Chrome. Content is final and clickable
+ * from the first frame — only opacity/transform are animated on top.
  */
 
 import { motionOk } from "./tokens";
@@ -10,7 +10,6 @@ import { motionOk } from "./tokens";
 const MAX_STAGGER = 8;
 const WATCH_MS = 1500; // cached first paint → fresh data: animate what arrives right after open
 
-let io: IntersectionObserver | null = null;
 let mo: MutationObserver | null = null;
 let stopTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -26,13 +25,8 @@ function prepare(els: HTMLElement[], startIndex: number): number {
   for (const el of els) {
     if (el.dataset.motion) continue;
     const top = el.getBoundingClientRect().top;
-    if (top < vh) {
-      el.dataset.motion = "enter";
-      el.style.setProperty("--i", String(Math.min(i++, MAX_STAGGER)));
-    } else {
-      el.dataset.motion = "reveal";
-      io?.observe(el);
-    }
+    el.dataset.motion = top < vh ? "enter" : "still";
+    if (top < vh) el.style.setProperty("--i", String(Math.min(i++, MAX_STAGGER)));
   }
   return i;
 }
@@ -43,17 +37,6 @@ export function animateScreen(): void {
   if (!motionOk.value) return;
   const root = document.querySelector(".page, .k-page");
   if (!root) return;
-  io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          (e.target as HTMLElement).classList.add("in");
-          io?.unobserve(e.target);
-        }
-      }
-    },
-    { rootMargin: "0px 0px -8% 0px" },
-  );
   let next = prepare(blocks(root), 0);
   settleSoon();
   const main = root.querySelector(".main, .k-main");
@@ -67,10 +50,9 @@ export function animateScreen(): void {
 }
 
 function cleanup() {
-  io?.disconnect();
   mo?.disconnect();
   if (stopTimer) clearTimeout(stopTimer);
-  io = mo = null;
+  mo = null;
 }
 
 /** Screen changes update the DOM immediately. (View Transitions were tried and dropped:

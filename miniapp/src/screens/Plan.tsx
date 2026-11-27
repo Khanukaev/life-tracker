@@ -1,8 +1,8 @@
 /** «План»: only what is ahead — overdue, the next days, «Дальше», no date (PlanGlass). */
 
 import { useState } from "preact/hooks";
-import { Chevron } from "../components/icons";
-import { PLAN_KEY } from "../lib/actions";
+import { CHECK, Chevron } from "../components/icons";
+import { PLAN_KEY, toggleTask } from "../lib/actions";
 import { addDays, parseDate, plural } from "../lib/format";
 import { haptic } from "../lib/haptic";
 import { canEdit } from "../lib/net";
@@ -49,7 +49,19 @@ export function PlanRow({ t, sub, action, sep }: { t: Task; sub?: string; action
   const s = sub ?? meta(t);
   return (
     <div class="k-prow" style={sep ? { borderTop: "1px solid rgba(255,255,255,0.09)" } : undefined}>
-      <span class={`k-pdot${t.important && !t.done ? " alert" : ""}${t.done ? " done" : ""}`} />
+      <button
+        class="k-btnreset k-ptick"
+        aria-label={`${t.done ? "Снять отметку" : "Отметить"}: ${t.title}`}
+        onClick={() => toggleTask(t)}
+      >
+        <span class={`k-pdot${t.important && !t.done ? " alert" : ""}${t.done ? " done" : ""}`}>
+          {t.done && (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d={CHECK} />
+            </svg>
+          )}
+        </span>
+      </button>
       <button class="k-btnreset" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "1px" }} onClick={() => push("task", { id: t.id })}>
         <span class="t" style={{ color: t.done ? "#8e8e93" : undefined }}>{t.title}</span>
         {s && (

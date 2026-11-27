@@ -20,6 +20,18 @@ const motion = () => setMotion(canMotion());
 motion();
 matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", motion);
 
+// Invisible native pickers sit over rows (time, date, select). Safari opens them on tap;
+// Chrome and Android webviews only focus the field, so open the picker explicitly.
+document.addEventListener("click", (e) => {
+  const el = (e.target as Element | null)?.closest?.(".k-native") as (HTMLInputElement | HTMLSelectElement) | null;
+  if (!el || !("showPicker" in el)) return;
+  try {
+    el.showPicker();
+  } catch {
+    /* already open, or not allowed here: the native focus still works */
+  }
+});
+
 // 1) Paint immediately from the local cache.
 render(<App />, document.getElementById("app")!);
 

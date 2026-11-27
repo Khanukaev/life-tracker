@@ -720,13 +720,17 @@ a {
   pointer-events: auto;
 }
 .k-glass {
-  background: rgba(28, 28, 32, 0.72);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  /* A smaller blur radius looks the same over the dark page and costs much less in Chrome,
+     which re-blurs what is under a fixed element on every scroll frame. */
+  background: rgba(28, 28, 32, 0.8);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 .k-nav {
+  position: relative;
+  contain: layout;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -740,27 +744,58 @@ a {
   cursor: pointer;
   height: 48px;
   width: 48px;
+  flex: none;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.1);
   color: #f5f5f7;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
+  padding: 0 0 0 13.5px;
+  overflow: hidden;
   font-size: 15px;
   font-weight: 600;
-  transition:
-    background-color 0.2s ease-out,
-    color 0.2s ease-out;
 }
 .k-nav button[aria-current="page"] {
-  width: auto;
-  padding: 0 20px 0 16px;
   background: #f5f5f7;
   color: #000;
 }
+.k-nav .lbl {
+  white-space: nowrap;
+  opacity: 0;
+}
+.k-nav button[aria-current="page"] .lbl {
+  opacity: 1;
+}
+/* The switch: the old tab narrows and turns grey, the new one widens and turns white.
+   Only this small fixed bar re-lays out; the page underneath is untouched. */
+.motion-ok .k-nav button {
+  transition:
+    width 0.36s cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 0.3s ease-out,
+    color 0.3s ease-out,
+    transform 0.16s ease-out;
+}
+.motion-ok .k-nav .lbl {
+  transition: opacity 0.14s ease-out;
+}
+.motion-ok .k-nav button[aria-current="page"] .lbl {
+  transition: opacity 0.22s ease-out 0.12s;
+}
+.k-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  gap: 20px;
+}
 .k-nav svg,
 .k-fab svg {
+  flex: none;
   width: 21px;
   height: 21px;
   fill: none;
@@ -825,9 +860,9 @@ a {
   z-index: 80;
   min-height: 52px;
   border-radius: 16px;
-  background: rgba(44, 44, 50, 0.88);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  background: rgba(44, 44, 50, 0.9);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
@@ -1213,7 +1248,33 @@ a {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* The circle is a 44 px target that looks like the 22 px dot of the artboard. */
+.k-ptick {
+  width: 44px;
+  height: 44px;
+  margin: -11px -11px -11px -11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.k-ptick:active .k-pdot {
+  transform: scale(0.9);
+}
+.k-pdot svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: #000;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .k-pdot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.16s ease-out;
   width: 22px;
   height: 22px;
   flex: none;

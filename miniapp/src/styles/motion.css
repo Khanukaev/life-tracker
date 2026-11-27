@@ -55,25 +55,10 @@
   }
 }
 
-/* ---- screen open: stagger visible cards; reveal the rest once on scroll ---- */
+/* ---- screen open: stagger the cards visible on open (the rest stay still) ---- */
 .motion-ok [data-motion="enter"] {
   animation: lt-enter var(--dur-slow) var(--ease-out) backwards;
   animation-delay: calc(var(--i, 0) * var(--stagger));
-}
-.motion-ok [data-motion="reveal"] {
-  opacity: 0.5;
-  transform: translate3d(0, 14px, 0);
-  transition:
-    opacity var(--dur-slow) var(--ease-out),
-    transform var(--dur-slow) var(--ease-out);
-}
-.motion-ok [data-motion="reveal"].in {
-  opacity: 1;
-  transform: none;
-}
-/* Charts inside a not-yet-revealed block wait until it is on screen. */
-.motion-ok [data-motion="reveal"]:not(.in) :is(.draw, .grow-y, .grow-x, .pop-in, .bar > i) {
-  animation-play-state: paused;
 }
 
 /* ---- charts draw themselves ---- */
@@ -140,9 +125,5 @@
   .motion-ok *::after {
     animation: none !important;
     transition: none !important;
-  }
-  .motion-ok [data-motion="reveal"] {
-    opacity: 1;
-    transform: none;
   }
 }

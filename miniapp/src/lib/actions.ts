@@ -10,7 +10,7 @@ import { haptic } from "./haptic";
 import { canEdit } from "./net";
 import { entry, invalidateSoon, keysWith, mutate, setData } from "./store";
 import { toast } from "./toast";
-import type { DayTask, DayView, Habit, HabitRow, Note, PlanView, Review, Schedule, Task } from "./types";
+import type { DayTask, DayView, Habit, HabitRow, Note, PlanView, ResultsView, Review, Schedule, Task } from "./types";
 
 export const dayKey = (date: string | null) => (date ? `/views/day?date=${date}` : "/views/day");
 export const OVERDUE_KEY = "/views/tasks?view=overdue";
@@ -203,7 +203,20 @@ async function commitDelete(path: string, undo: () => void, refresh: string[]): 
 // ---------- tasks ----------
 
 function patchTaskEverywhere(id: string, update: (t: Task) => Task): (() => void)[] {
+  const f = <T extends Task>(t: T): T => (t.id === id ? { ...t, ...update(t) } : t);
   return [
+    setData<PlanView>("/views/plan", (v) => ({
+      ...v,
+      overdue: v.overdue.map(f),
+      inbox: v.inbox.map(f),
+      days: v.days.map((d) => ({ ...d, tasks: d.tasks.map(f) })),
+    })),
+    ...(["week", "month"] as const).map((p) =>
+      setData<ResultsView>(`/views/results?period=${p}`, (r) => ({
+        ...r,
+        tasks: { ...r.tasks, overdue: r.tasks.overdue.map(f), inbox: r.tasks.inbox.map(f) },
+      })),
+    ),
     ...eachDay((d) => ({ ...d, tasks: d.tasks.map((t) => (t.id === id ? { ...t, ...update(t) } : t)) })),
     setData<Task>(`/tasks/${id}`, update),
     setData<{ items: DayTask[] }>(OVERDUE_KEY, (v) => ({ ...v, items: v.items.map((t) => (t.id === id ? { ...t, ...update(t) } : t)) })),
