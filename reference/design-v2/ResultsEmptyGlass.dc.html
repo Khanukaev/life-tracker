@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Glass · Итоги, пусто</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.n{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{position:relative;border-radius:24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12)}
+.tile{display:flex;flex-direction:column;justify-content:space-between;height:148px;padding:14px 16px 16px;text-decoration:none;color:#f5f5f7}
+.tl{display:flex;justify-content:space-between;align-items:center;font-size:15px;line-height:20px;color:#d1d1d6}
+.tv{font-size:30px;line-height:34px;font-weight:600;letter-spacing:-0.03em}
+.tv small{font-size:15px;font-weight:500;color:#8e8e93;letter-spacing:0;margin-left:2px}
+.lab{font-size:15px;line-height:20px;color:#d1d1d6}
+.lead{margin:0;font-size:17px;line-height:24px;color:#d1d1d6;max-width:340px}
+.lead b{color:#f5f5f7;font-weight:600}
+.cap{font-size:13px;line-height:18px;color:#8e8e93}
+.h2{margin:0;font-size:17px;line-height:22px;font-weight:600}
+.stat{flex:1;display:flex;flex-direction:column;gap:2px;padding:14px 18px}
+.stat+.stat{border-left:1px solid rgba(255,255,255,0.09)}
+.stat b{font-size:20px;line-height:24px;font-weight:600;letter-spacing:-0.02em}
+.lr{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px 8px 18px;text-decoration:none;color:#f5f5f7}
+.lr+.lr{border-top:1px solid rgba(255,255,255,0.09)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:2px;border-radius:999px;background:rgba(255,255,255,0.08);height:44px;width:168px}
+.seg button{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;border-radius:999px;background:transparent;color:#aeaeb2;cursor:pointer}
+.seg button.on{background:rgba(255,255,255,0.18);color:#f5f5f7}
+.clogo{display:inline-block;flex:none;width:20px;height:20px;border-radius:6px;border:1.5px dashed rgba(255,255,255,0.45)}
+.pill{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:rgba(47,86,176,0.35);color:#d7e0f7;font-size:12px;font-weight:500}
+.sum{display:flex;flex-direction:column;gap:10px;padding:18px 18px;border-radius:24px;border:1px solid transparent;background:linear-gradient(#0a0a0d,#0a0a0d) padding-box,linear-gradient(120deg,rgba(160,130,255,0.95) 0%,rgba(160,130,255,0.25) 35%,rgba(110,140,255,0.25) 65%,rgba(110,140,255,0.95) 100%) border-box;box-shadow:-34px -26px 70px -18px rgba(140,105,255,0.45),34px 30px 70px -18px rgba(84,120,255,0.55)}
+.src{display:flex;align-items:center;gap:6px;font-size:13px;line-height:18px;color:#8e8e93}
+.sum p{margin:0;font-size:16px;line-height:22px;color:#d1d1d6}
+.sum b{color:#f5f5f7;font-weight:600}
+.motto{margin:0;font-size:18px;line-height:25px;font-weight:400;color:#f5f5f7;letter-spacing:-0.015em}
+.row3{display:flex;align-items:center;gap:14px;min-height:84px;padding:12px 16px 12px 18px;text-decoration:none;color:#f5f5f7}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:56px;text-decoration:none;font-size:11px;font-weight:500;color:#aeaeb2}
+a:focus-visible,button:focus-visible{outline:2px solid #f5f5f7;outline-offset:2px}
+.todo{outline:1.5px dashed #2f56b0;outline-offset:3px}
+</style>
+</helmet>
+<div style="width: 390px; height: 890px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 560px; pointer-events: none; background: radial-gradient(520px 360px at 50% -60px, rgba(120,140,190,0.16), transparent 72%)"></div>
+<header style="position: relative; padding: 56px 16px 0 20px; display: flex; align-items: center; justify-content: space-between">
+<h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.03em">Итоги</h1>
+<div class="seg" role="group" aria-label="Период"><button class="{{wCls}}" onClick="{{setW}}" aria-pressed="{{isW}}">Неделя</button><button class="{{mCls}}" onClick="{{setM}}" aria-pressed="{{isM}}">Месяц</button></div>
+</header>
+<main style="position: relative; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px">
+<section style="padding: 4px 0 4px; display: flex; flex-direction: column; gap: 10px">
+<span class="lab" style="padding: 0 4px">Средний итог недели</span>
+<span class="n" style="padding: 0 4px; font-size: 72px; line-height: 70px; font-weight: 600; letter-spacing: -0.05em; color: #3a3a3c">—</span>
+<div class="sum"><p>Итоги появятся, когда будет что считать. Отметь первую привычку или задачу на «Сегодня» — завтра здесь будет первый итог.</p><p class="motto">Начни с одного дела сегодня.</p>
+<a href="TodayGlass.dc.html" style="display: flex; align-items: center; justify-content: center; height: 48px; margin-top: 4px; border-radius: 14px; background: #f5f5f7; color: #000; font-size: 16px; font-weight: 600; text-decoration: none">Отметить первое дело</a></div>
+</section>
+<div class="card" style="overflow: hidden">
+<div class="row3" style="min-height: 72px"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="lab">Привычки</span><span class="tv n" style="color: #48484a">—</span></span><span aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, 13px); gap: 3px"><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i></span></div><div style="height: 1px; background: rgba(255,255,255,0.09); margin-left: 18px"></div><div class="row3" style="min-height: 72px"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="lab">Задачи</span><span class="tv n" style="color: #48484a">—</span></span><span aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, 13px); gap: 3px"><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i></span></div><div style="height: 1px; background: rgba(255,255,255,0.09); margin-left: 18px"></div><div class="row3" style="min-height: 72px"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="lab">Сон</span><span class="tv n" style="color: #48484a">—</span></span><span aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, 13px); gap: 3px"><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i><i style="display: block; width: 13px; height: 13px; border-radius: 3px; background: rgba(255,255,255,0.06)"></i></span></div>
+</div>
+<p class="cap" style="margin: 0 4px">Сон появится после первой ночи: отбой и подъём приложение берёт из отметок сна.</p>
+</main>
+
+<div data-nav="pill" style="position: absolute; left: 0; right: 0; bottom: 34px; display: flex; justify-content: center; align-items: center; gap: 10px">
+<nav aria-label="Разделы" style="display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 999px; background: rgba(28,28,32,0.72); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 24px rgba(0,0,0,0.45)">
+<a href="TodayGlass.dc.html" aria-label="Сегодня" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.10); color: #f5f5f7; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round"><circle cx="12" cy="12" r="8.5"></circle><path d="M8.5 12.2l2.4 2.3 4.6-4.8"></path></svg></a>
+<a href="PlanGlass.dc.html" aria-label="План" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.10); color: #f5f5f7; display: flex; align-items: center; justify-content: center; text-decoration: none"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="0.8"></circle></svg></a>
+<a href="ResultsGlass.dc.html" aria-current="page" style="height: 48px; padding: 0 20px 0 16px; border-radius: 999px; background: #f5f5f7; color: #000; display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 15px; font-weight: 600"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round"><path d="M5 20v-6M12 20V5M19 20v-10"></path></svg>Итоги</a>
+</nav>
+<a href="AddFullGlass.dc.html" aria-label="Добавить привычку или задачу" style="width: 60px; height: 60px; border-radius: 50%; background: rgba(28,28,32,0.72); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 8px 24px rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; text-decoration: none"><span style="width: 48px; height: 48px; border-radius: 50%; background: #f5f5f7; color: #000; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round"><path d="M12 5v14M5 12h14"></path></svg></span></a>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":890}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { p: 'w' }; }
+  spark(vals, w, h, lo, hi) {
+    const P = vals.map((v, i) => [i * w / (vals.length - 1), h - (v - lo) / (hi - lo) * h]);
+    let d = 'M' + P[0][0].toFixed(1) + ',' + P[0][1].toFixed(1);
+    for (let i = 0; i < P.length - 1; i++) {
+      const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
+      d += ' C' + (p1[0] + (p2[0] - p0[0]) / 6).toFixed(1) + ',' + (p1[1] + (p2[1] - p0[1]) / 6).toFixed(1) + ' ' + (p2[0] - (p3[0] - p1[0]) / 6).toFixed(1) + ',' + (p2[1] - (p3[1] - p1[1]) / 6).toFixed(1) + ' ' + p2[0].toFixed(1) + ',' + p2[1].toFixed(1);
+    }
+    return { d, last: P[P.length - 1] };
+  }
+  renderVals() {
+    const W = this.state.p === 'w';
+    const HR = W;
+    const trend = W ? [44, 51, 47, 55, 49, 48, 53, 59] : [47, 52, 49, 53, 56];
+    const t = this.spark(trend, 124, 36, 40, 62);
+    const bedW = [2.67, 3.17, 2.83];
+    const bedM = [2.4, 2.9, 3.3, 3.6, 2.2, 2.6, 3.1, 2.5, 2.9, 3.4, 3.6, 2.3, 2.6, 3.0, 2.6, 3.0, 3.4, 3.7, 2.2, 2.7, 3.2, 2.5, 2.9, 3.3, 2.83];
+    const bedOld = [2.17, 3.33, 2.67, 4, 2.5, 3.17, 2.83];
+    const b = this.spark(bedOld.map((x) => -x), 116, 26, -4.2, -2.2);
+    const hd = W ? [100, 70, 60, 90, 60, 60, 60] : [80, 75, 70, 72, 78, 74, 70];
+    const T = W ? [12, 15, 2] : [48, 61, 5];
+    const GR = '#69ff79', GY = 'rgba(255,255,255,0.12)';
+    const HW = [[1, 1, 1], [1, 0, 1], [1, 1, 0], [0, 1, 0], [1, 0, 0]];
+    const HM = [20, 15, 13, 7, 6].map((k, hi) => { const row = []; let done = 0; for (let day = 1; day <= 24; day++) { const i = day + 5; const want = Math.round(day * k / 24); const on = day < 24 && want > done && ((i * 7 + hi * 3) % 5 !== 0 || 24 - day < k - done); if (on) done++; row.push(on ? 1 : 0); } return row; });
+    const dayOk = [1, 1, 0, 1, 1, 0, 1];
+    const dayOkM = Array.from({ length: 28 }, (_, d) => d >= 25 ? -1 : (HM.reduce((a, r) => a + r[Math.min(d, 23)], 0) * 2 >= HM.length ? 1 : 0));
+    const hcells = (W ? dayOk : dayOkM).map((v) => ({ bg: v === 1 ? GR : (v === 0 ? GY : 'rgba(255,255,255,0.04)') }));
+    const TG = W ? [[4, 4], [8, 11]] : [[3, 3], [10, 11], [35, 47]];
+    return {
+      isW: W, isM: !W, wCls: W ? 'on' : '', mCls: W ? '' : 'on',
+      setW: () => this.setState({ p: 'w' }), setM: () => this.setState({ p: 'm' }),
+      heroLabel: W ? 'Итог недели, с понедельника' : 'Средний итог за ноябрь',
+      avg: W ? 59 : 56, delta: W ? '+6 к прошлой' : '+3 к октябрю',
+      trendD: t.d, tx: t.last[0].toFixed(1), ty: t.last[1].toFixed(1),
+      trendAria: W ? 'Итог за 8 недель, растёт' : 'Итог за 5 месяцев',
+      lead: W ? 'Ровнее прошлой недели. Вниз тянут поздние отбои и вода после обеда.' : 'Лучше октября. Слабее всего выходные: на 20% ниже будней.',
+      advice: 'Неделя началась ровно, но все три отбоя позже нормы. Сегодня ляг до 00:30 — и в пятницу, самый тяжёлый день, будет проще.', advFrom: 'Claude, сегодня в 08:10', hasReview: HR, noReview: !HR, sumGlow: HR ? 'background: linear-gradient(#0a0a0d,#0a0a0d) padding-box, linear-gradient(120deg,rgba(255,138,92,0.95) 0%,rgba(255,138,92,0.25) 35%,rgba(110,140,255,0.25) 65%,rgba(110,140,255,0.95) 100%) border-box; box-shadow: -34px -26px 70px -18px rgba(255,112,64,0.45), 34px 30px 70px -18px rgba(84,120,255,0.55)' : '',
+      noteHref: W ? 'NoteSheetFilled.dc.html' : 'NoteSheetEmpty.dc.html', noteLine: W ? 'Твоя заметка, воскресенье' : 'Запиши, как прошёл ноябрь', noteAct: W ? 'Изменить' : 'Написать',
+      motto: W ? 'Ты можешь больше: пару раз лечь до 00:30 — и неделя выше 60%.' : 'Держи темп и подтяни выходные.',
+      noteDone: W, noteTodo: !W, noteAsk: 'Как прошёл ноябрь?',
+      sleepHref: W ? 'SleepGlass.dc.html' : 'SleepMonthGlass.dc.html', tasksHref: W ? 'TasksGlass.dc.html' : 'TasksMonthGlass.dc.html',
+      hab: W ? 60 : 48, habHref: W ? 'HabitsGlass.dc.html' : 'HabitsMonthGlass.dc.html', habSub: '',
+      hcells, hCols: W ? 'repeat(7, 13px)' : 'repeat(7, 7px)', hGap: W ? '3px' : '2px', hSize: W ? '13px' : '7px', hRad: W ? '3px' : '1.5px',
+      hAria: W ? 'Дни недели: зелёный — сделал больше половины привычек' : 'Дни ноября: зелёный — сделал больше половины привычек',
+      tDone: T[0], tAll: T[1], tSub: T[2] + ' просрочено', tAria: 'Задачи по важности: сделано ' + T[0] + ' из ' + T[1],
+      tgroups: TG.map(([k, p]) => ({ segs: Array.from({ length: p }, (_, i) => ({ bg: i < k ? GR : GY })) })), tGap: W ? '3px' : '1px',
+      sleepH: 7, sleepM: W ? 23 : 31, sleepSub: W ? 'ложишься в 00:52, норма 00:30' : 'ложишься в 01:04, норма 00:30', bedD: b.d
+    };
+  }
+}
+</script>
+</body>
+</html>
