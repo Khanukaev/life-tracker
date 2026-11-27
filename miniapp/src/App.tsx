@@ -2,21 +2,16 @@ import { lazy, Suspense } from "preact/compat";
 import { useLayoutEffect } from "preact/hooks";
 import { animateScreen } from "./motion/screen";
 import { TabBar } from "./components/TabBar";
-import { Toast } from "./components/ui";
-import { current, dayDate, sheet, tab } from "./lib/router";
+import { Toast } from "./components/Toast";
+import { current, dayDate, dayMode, sheet, tab } from "./lib/router";
 import { resource } from "./lib/store";
-import type { Me } from "./lib/types";
-import { DayScreen } from "./screens/Day";
-import { NowScreen } from "./screens/Now";
+import type { DayView, Me } from "./lib/types";
 import { ClaudeScreen, ReviewsScreen } from "./screens/Claude";
+import { HabitDetail, TaskDetail } from "./screens/Detail";
 import { ImportScreen } from "./screens/Import";
-import { Onboarding } from "./screens/Onboarding";
-import { ProfileScreen } from "./screens/Profile";
-import { ReviewScreen } from "./screens/Review";
-import { GoalsScreen } from "./screens/Goals";
-import { HabitsScreen } from "./screens/Habits";
-import { NormsScreen, PastDayScreen, SettingsScreen } from "./screens/Settings";
-import { TasksScreen } from "./screens/Tasks";
+import { Onboarding, ProfileScreen, Stub } from "./screens/Misc";
+import { NormsScreen, SettingsScreen } from "./screens/Settings";
+import { TodayScreen } from "./screens/Today";
 
 // Sheets are split into their own chunk: not needed for the first paint.
 const Sheets = lazy(() => import("./sheets"));
@@ -24,9 +19,8 @@ const Sheets = lazy(() => import("./sheets"));
 export function App() {
   const me = resource<Me>("/me").value.data;
   const scr = current.value;
-  const screenKey = `${tab.value}|${scr?.name ?? ""}|${scr?.params?.view ?? ""}|${dayDate.value ?? ""}|${me?.onboarded}`;
-  // Before the new screen is painted (layout effect, not rAF): mark which cards stagger in
-  // and which reveal on scroll. Nothing here waits for a frame.
+  const screenKey = `${tab.value}|${scr?.name ?? ""}|${scr?.params?.id ?? ""}|${dayDate.value ?? ""}|${dayMode.value}|${me?.onboarded}`;
+  // Before the new screen is painted (layout effect, not rAF): mark which cards stagger in.
   useLayoutEffect(() => {
     animateScreen();
   }, [screenKey]);
@@ -34,8 +28,7 @@ export function App() {
   if (me && !me.onboarded) {
     return (
       <>
-        <div class="glass-bg" aria-hidden="true" />
-        <Onboarding me={me} />
+        <Onboarding />
         <Toast />
       </>
     );
@@ -44,28 +37,29 @@ export function App() {
   let body;
   if (scr) {
     body =
-      scr.name === "tasks" ? <TasksScreen initial={scr.params?.view} /> :
-      scr.name === "goals" ? <GoalsScreen /> :
-      scr.name === "habits" ? <HabitsScreen /> :
+      scr.name === "task" ? <TaskDetail id={scr.params!.id!} /> :
+      scr.name === "habit" ? <HabitDetail id={scr.params!.id!} /> :
+      scr.name === "profile" ? <ProfileScreen /> :
       scr.name === "settings" ? <SettingsScreen /> :
       scr.name === "norms" ? <NormsScreen /> :
       scr.name === "claude" ? <ClaudeScreen /> :
       scr.name === "reviews" ? <ReviewsScreen /> :
-      scr.name === "import" ? <ImportScreen /> :
-      <PastDayScreen />;
+      <ImportScreen />;
   } else {
     body =
-      tab.value === "day" ? <DayScreen /> :
-      tab.value === "now" ? <NowScreen /> :
-      tab.value === "review" ? <ReviewScreen /> :
-      <ProfileScreen />;
+      tab.value === "today" ? <TodayScreen /> :
+      tab.value === "plan" ? <Stub title="План" text="Здесь будет то, что впереди: просроченное, ближайшие дни и дела без даты." /> :
+      <Stub title="Итоги" text="Здесь будут итоги недели и месяца: привычки, задачи и сон." />;
   }
+
+  // «Добавь первое дело»: on the first, still empty «Сегодня».
+  const day = resource<DayView>("/views/day").value.data;
+  const hint = !scr && tab.value === "today" && !dayDate.value && !!day && day.habits.length === 0 && day.tasks.length === 0;
 
   return (
     <>
-      <div class="glass-bg" aria-hidden="true" />
       {body}
-      <TabBar />
+      <TabBar hint={hint} />
       {sheet.value && (
         <Suspense fallback={null}>
           <Sheets />
