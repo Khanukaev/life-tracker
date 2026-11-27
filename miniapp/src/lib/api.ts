@@ -126,8 +126,9 @@ export async function api<T>(method: string, path: string, body?: unknown, retry
   // Anything but JSON (e.g. an HTML page from a misconfigured proxy) is an error, never data:
   // otherwise screens would receive `{}` and crash on missing fields.
   const isJson = (res.headers.get("content-type") ?? "").includes("application/json");
-  const data = isJson ? await res.json().catch(() => null) : null;
-  if (res.ok && data === null) throw new ApiError(502, "bad_response", "Сервер недоступен");
+  // `null` is a valid answer (e.g. «no note yet»); only unreadable bodies are errors.
+  const data = isJson ? await res.json().catch(() => undefined) : undefined;
+  if (res.ok && data === undefined) throw new ApiError(502, "bad_response", "Сервер недоступен");
   if (!res.ok) {
     const err = (data as { error?: { code?: string; message?: string } } | null)?.error;
     throw new ApiError(res.status, err?.code ?? "error", err?.message ?? "Ошибка");

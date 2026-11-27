@@ -14,6 +14,7 @@ export interface TgWebApp {
   setBackgroundColor(c: string): void;
   setBottomBarColor?(c: string): void;
   disableVerticalSwipes?(): void;
+  openLink?(url: string): void;
   HapticFeedback: {
     impactOccurred(s: Impact): void;
     notificationOccurred(t: Notice): void;
@@ -80,4 +81,11 @@ export function setBackButton(handler: (() => void) | null): void {
   } else {
     app.BackButton.hide();
   }
+}
+
+/** External links leave the Mini App through Telegram (in-app browser), else a new tab. */
+export function openLink(url: string): void {
+  const app = tg();
+  if (app?.openLink) app.openLink(url);
+  else window.open(url, "_blank", "noopener");
 }

@@ -356,7 +356,7 @@ async def results_view(
     if sleep.n and sleep.late * 2 >= sleep.n:
         drags.append("поздние отбои")
     weak = next((ln for ln in habits.lines if ln.id == habits.weak_id), None)
-    if weak is not None:
+    if weak is not None and not (weak.type == "bedtime" and drags):
         drags.append(weak.name.lower())
     if drags:
         lead += f" Вниз тянут {' и '.join(drags)}."

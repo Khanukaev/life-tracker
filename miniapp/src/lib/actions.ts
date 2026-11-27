@@ -10,11 +10,11 @@ import { haptic } from "./haptic";
 import { canEdit } from "./net";
 import { entry, invalidateSoon, keysWith, mutate, setData } from "./store";
 import { toast } from "./toast";
-import type { DayTask, DayView, Habit, HabitRow, Review, Schedule, Task } from "./types";
+import type { DayTask, DayView, Habit, HabitRow, Note, PlanView, Review, Schedule, Task } from "./types";
 
 export const dayKey = (date: string | null) => (date ? `/views/day?date=${date}` : "/views/day");
 export const OVERDUE_KEY = "/views/tasks?view=overdue";
-const REFRESH = ["/views/day", "/views/now", "/views/review", "/views/tasks", "/views/profile"];
+const REFRESH = ["/views/day", "/views/now", "/views/results", "/views/plan", "/views/review", "/views/tasks"];
 
 /** The user's logical today (from the cached day view), or the device date as a fallback. */
 export function today(): string {
@@ -291,6 +291,53 @@ export async function updateTask(task: Task, changes: Partial<TaskDraft>): Promi
     refresh: REFRESH,
   });
   return res !== undefined;
+}
+
+export const PLAN_KEY = "/views/plan";
+
+/** «План» → a day: the task moves at once (no «Готово»), with «Отменить». */
+export async function assignTask(task: Task, date: string): Promise<void> {
+  const from = task.date;
+  const moved = { ...task, date };
+  const res = await mutate({
+    apply: () => [
+      setData<PlanView>(PLAN_KEY, (v) => ({
+        ...v,
+        overdue: v.overdue.filter((t) => t.id !== task.id),
+        inbox: v.inbox.filter((t) => t.id !== task.id),
+        days: v.days.map((d) => ({
+          ...d,
+          tasks: d.date === date ? [...d.tasks.filter((t) => t.id !== task.id), moved] : d.tasks.filter((t) => t.id !== task.id),
+        })),
+      })),
+      ...placeTask(asDayTask(task.id, moved, task)),
+      setData<Task>(`/tasks/${task.id}`, (t) => ({ ...t, date })),
+    ],
+    request: () => patch(`/tasks/${task.id}`, { date }),
+    refresh: [...REFRESH, PLAN_KEY],
+  });
+  if (res === undefined) return;
+  haptic.success();
+  toast(`Перенесено ${dayWord(date)}`, {
+    icon: "check",
+    undo: () =>
+      void mutate({
+        request: () => patch(`/tasks/${task.id}`, { date: from }),
+        refresh: [...REFRESH, PLAN_KEY],
+      }),
+  });
+}
+
+/** «Неделя словами»: one text per week or month; an empty text deletes it. */
+export async function saveNote(kind: "week" | "month", anchor: string, text: string): Promise<boolean> {
+  const res = await mutate<Note | null>({
+    request: () => put(`/notes/${kind}?anchor=${anchor}`, { text }),
+    refresh: ["/views/results", `/notes/${kind}`],
+  });
+  if (res === undefined) return false;
+  haptic.success();
+  toast(text.trim() ? "Заметка сохранена" : "Заметка удалена", { icon: "check" });
+  return true;
 }
 
 /** «Перенести на завтра»: one tap, no form. */

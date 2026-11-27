@@ -1,10 +1,8 @@
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
 import "./styles/tokens.css";
-import "./styles/base.css";
-import "./styles/glass.css";
-import "./styles/motion.css";
 import "./styles/keel.css";
+import "./styles/motion.css";
 
 import { render } from "preact";
 import { App } from "./App";
@@ -35,10 +33,12 @@ void (async () => {
     setUserKey(me.id);
     hapticsEnabled.value = me.haptics;
     void refresh("/me");
-    if (deepLinkSheet() === "sleep") {
-      await refresh("/views/day"); // the sheet needs the user's logical "today"
+    const link = deepLinkSheet();
+    if (link) {
+      await refresh("/views/day"); // the sheets need the user's logical "today"
       const today = (entry("/views/day").value.data as DayView | undefined)?.today;
-      if (today) openSheet("sleep", { date: today });
+      // «Как спал?» from the morning message; «Неделя словами» from the Sunday one.
+      if (today) openSheet(link, link === "note" ? { kind: "week", anchor: today } : { date: today });
     }
   } catch {
     /* App shows its own error state */

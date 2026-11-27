@@ -45,3 +45,16 @@ export function Markdown({ text }: { text: string }) {
   flush();
   return <div class="md">{blocks}</div>;
 }
+
+/** A review's first plain paragraph is its summary; the rest (headings, lists) are blocks. */
+export function splitSummary(text: string): [string, string] {
+  const lines = text.trim().split("\n");
+  const isItem = (l: string) => /^\s*(?:[-•*]|\d+[.)])\s+/.test(l);
+  const start = lines.findIndex((l) => l.trim() && !l.trim().startsWith("#") && !isItem(l));
+  if (start < 0) return ["", text.trim()];
+  let end = start;
+  while (end + 1 < lines.length && lines[end + 1]!.trim() && !isItem(lines[end + 1]!) && !lines[end + 1]!.trim().startsWith("#")) end++;
+  const head = lines.slice(start, end + 1).join(" ").replace(/\*\*/g, "").trim();
+  const rest = [...lines.slice(0, start), ...lines.slice(end + 1)].join("\n").trim();
+  return [head, rest];
+}

@@ -3,14 +3,16 @@ import { useLayoutEffect } from "preact/hooks";
 import { animateScreen } from "./motion/screen";
 import { TabBar } from "./components/TabBar";
 import { Toast } from "./components/Toast";
-import { current, dayDate, dayMode, sheet, tab } from "./lib/router";
+import { current, dayDate, dayMode, period, sheet, tab } from "./lib/router";
 import { resource } from "./lib/store";
 import type { DayView, Me } from "./lib/types";
-import { ClaudeScreen, ReviewsScreen } from "./screens/Claude";
+import { ClaudeReviewScreen, ClaudeScreen, ClaudeTokenScreen } from "./screens/Claude";
+import { DataScreen } from "./screens/Data";
 import { HabitDetail, TaskDetail } from "./screens/Detail";
-import { ImportScreen } from "./screens/Import";
-import { Onboarding, ProfileScreen, Stub } from "./screens/Misc";
-import { NormsScreen, SettingsScreen } from "./screens/Settings";
+import { Onboarding } from "./screens/Onboarding";
+import { PlanScreen } from "./screens/Plan";
+import { AboutScreen, ProfileScreen } from "./screens/Profile";
+import { ResultsHabits, ResultsScreen, ResultsSleep, ResultsTasks } from "./screens/Results";
 import { TodayScreen } from "./screens/Today";
 
 // Sheets are split into their own chunk: not needed for the first paint.
@@ -19,7 +21,7 @@ const Sheets = lazy(() => import("./sheets"));
 export function App() {
   const me = resource<Me>("/me").value.data;
   const scr = current.value;
-  const screenKey = `${tab.value}|${scr?.name ?? ""}|${scr?.params?.id ?? ""}|${dayDate.value ?? ""}|${dayMode.value}|${me?.onboarded}`;
+  const screenKey = `${tab.value}|${scr?.name ?? ""}|${scr?.params?.id ?? ""}|${dayDate.value ?? ""}|${dayMode.value}|${period.value}|${me?.onboarded}`;
   // Before the new screen is painted (layout effect, not rAF): mark which cards stagger in.
   useLayoutEffect(() => {
     animateScreen();
@@ -36,20 +38,21 @@ export function App() {
 
   let body;
   if (scr) {
+    const id = scr.params?.id ?? "";
     body =
-      scr.name === "task" ? <TaskDetail id={scr.params!.id!} /> :
-      scr.name === "habit" ? <HabitDetail id={scr.params!.id!} /> :
+      scr.name === "task" ? <TaskDetail id={id} /> :
+      scr.name === "habit" ? <HabitDetail id={id} /> :
       scr.name === "profile" ? <ProfileScreen /> :
-      scr.name === "settings" ? <SettingsScreen /> :
-      scr.name === "norms" ? <NormsScreen /> :
+      scr.name === "data" ? <DataScreen /> :
+      scr.name === "about" ? <AboutScreen /> :
       scr.name === "claude" ? <ClaudeScreen /> :
-      scr.name === "reviews" ? <ReviewsScreen /> :
-      <ImportScreen />;
+      scr.name === "claude-token" ? <ClaudeTokenScreen /> :
+      scr.name === "review" ? <ClaudeReviewScreen id={id} /> :
+      scr.name === "res-habits" ? <ResultsHabits /> :
+      scr.name === "res-tasks" ? <ResultsTasks /> :
+      <ResultsSleep />;
   } else {
-    body =
-      tab.value === "today" ? <TodayScreen /> :
-      tab.value === "plan" ? <Stub title="План" text="Здесь будет то, что впереди: просроченное, ближайшие дни и дела без даты." /> :
-      <Stub title="Итоги" text="Здесь будут итоги недели и месяца: привычки, задачи и сон." />;
+    body = tab.value === "today" ? <TodayScreen /> : tab.value === "plan" ? <PlanScreen /> : <ResultsScreen />;
   }
 
   // «Добавь первое дело»: on the first, still empty «Сегодня».

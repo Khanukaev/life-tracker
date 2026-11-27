@@ -1,6 +1,5 @@
-/* Liquid Glass motion. Everything is scoped to .motion-ok, which is set only in Glass,
-   on capable devices and without prefers-reduced-motion. The base theme has no
-   entrance/draw animations at all — only instant pressed states.
+/* Motion. Everything is scoped to .motion-ok, which is set only on capable devices and
+   without prefers-reduced-motion.
    Animated properties: transform, opacity, SVG stroke-dashoffset. */
 
 :root {
@@ -53,16 +52,6 @@
 @keyframes lt-sheet-scrim {
   from {
     opacity: 0;
-  }
-}
-@keyframes lt-breathe-a {
-  to {
-    transform: translate3d(0, -2%, 0) scale(1.06);
-  }
-}
-@keyframes lt-breathe-b {
-  to {
-    transform: translate3d(1.5%, 1.5%, 0) scale(1.04);
   }
 }
 
@@ -120,26 +109,11 @@
 }
 
 /* ---- micro-interactions ---- */
-.motion-ok .chk.on .ic path {
-  stroke-dasharray: 1 1.1;
-  stroke-dashoffset: 1;
-  animation: lt-draw var(--dur-base) var(--ease-out) forwards;
-}
-.motion-ok .gdot.on {
-  animation: lt-pop-in var(--dur-base) var(--ease-out);
-}
-.motion-ok :is(.btn, .step, .chip, .fab, .save, .seg button, .tab, .energy-pill) {
+.motion-ok :is(.k-btn, .k-chip, .k-pillbtn, .k-save, .k-seg button, .k-pchip) {
   transition: transform var(--dur-fast) var(--ease-out);
 }
-.motion-ok :is(.btn, .step, .chip, .fab, .save, .seg button, .tab, .energy-pill):active {
-  opacity: 1;
-  transform: scale(0.95);
-}
-.motion-ok .plain.row:active,
-.motion-ok .plain.card:active {
-  opacity: 1;
-  transform: scale(0.985);
-  transition: transform var(--dur-fast) var(--ease-out);
+.motion-ok :is(.k-btn, .k-chip, .k-pillbtn, .k-save, .k-seg button, .k-pchip):active {
+  transform: scale(0.96);
 }
 
 /* ---- sheets: the spring itself is in motion/spring.ts ---- */
@@ -151,25 +125,11 @@
   transition: opacity var(--dur-base) var(--ease-out);
 }
 
-/* ---- Glass background slowly "breathes" (two layers, non-syncing periods) ---- */
-.motion-ok .glass-bg {
-  animation: lt-breathe-a 13s ease-in-out infinite alternate;
-}
-.motion-ok .glass-bg::after {
-  content: "";
-  position: absolute;
-  inset: -10%;
-  background:
-    radial-gradient(300px 300px at 70% 30%, rgba(255, 45, 85, 0.1), transparent 70%),
-    radial-gradient(320px 320px at 25% 80%, rgba(47, 86, 176, 0.14), transparent 70%);
-  animation: lt-breathe-b 17s ease-in-out infinite alternate;
-}
-
 /* ---- tab and screen changes: a light crossfade of the new page only ----
    (View Transitions were dropped: they keep a snapshot of the old screen on top and
    block input until the animation has played, which on slow frames hid the new screen
    for seconds. This fade never hides content.) */
-.motion-ok .page {
+.motion-ok :is(.page, .k-page) {
   animation: lt-page-in var(--dur-fast) var(--ease-out);
 }
 

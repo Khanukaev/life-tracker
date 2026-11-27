@@ -1,11 +1,10 @@
-/** First run (Onboard0), the «План» and «Итоги» placeholders, and the Profile hub. */
+/** First run (Onboard0): one screen and «Начать». */
 
 import type { ComponentChildren } from "preact";
-import { Chevron, ClaudeLogo } from "../components/icons";
+import { ClaudeLogo } from "../components/icons";
 import { patch } from "../lib/api";
 import { haptic } from "../lib/haptic";
-import { push, type ScreenName } from "../lib/router";
-import { mutate, resource, setData } from "../lib/store";
+import { mutate, setData } from "../lib/store";
 import type { Me } from "../lib/types";
 
 function Feature({ icon, title, text }: { icon: ComponentChildren; title: string; text: string }) {
@@ -90,51 +89,3 @@ export function Onboarding() {
   );
 }
 
-/** «План» and «Итоги» are built in part 3 of the redesign. */
-export function Stub({ title, text }: { title: string; text: string }) {
-  return (
-    <div class="k-page">
-      <div class="k-bg" aria-hidden="true" />
-      <header class="k-head">
-        <h1 class="k-h1">{title}</h1>
-      </header>
-      <main class="k-main">
-        <section class="k-sum">
-          <p class="k-motto">{text}</p>
-        </section>
-      </main>
-    </div>
-  );
-}
-
-/** Profile hub until ProfileGlass is built: leads to the screens that already exist. */
-export function ProfileScreen() {
-  const me = resource<Me>("/me").value.data;
-  const row = (name: ScreenName, title: string, sub?: string, icon?: ComponentChildren) => (
-    <button class="k-btnreset k-lr" onClick={() => push(name)}>
-      {icon}
-      <span class="t">
-        <span>{title}</span>
-        {sub && <span class="k-cap">{sub}</span>}
-      </span>
-      <Chevron color="#636366" />
-    </button>
-  );
-  return (
-    <div class="k-page">
-      <div class="k-bg" aria-hidden="true" />
-      <header class="k-head">
-        <h1 class="k-h1 detail">{me?.first_name ?? "Профиль"}</h1>
-        <p class="k-sub">Профиль и настройки</p>
-      </header>
-      <main class="k-main">
-        <section class="k-card clip">{row("claude", "Claude", "Коннектор, ключ доступа и разборы", <ClaudeLogo />)}</section>
-        <section class="k-card clip">
-          {row("settings", "Напоминания и отклик", "Сообщения бота, вибрация, часовой пояс")}
-          {row("norms", "Сон", "Цель отбоя и сколько нужно спать")}
-          {row("import", "Импорт и экспорт", "Перенос данных и копия в JSON")}
-        </section>
-      </main>
-    </div>
-  );
-}
