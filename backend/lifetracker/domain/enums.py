@@ -35,13 +35,6 @@ class Importance(StrEnum):
     CRITICAL = "critical"
 
 
-class GoalKind(StrEnum):
-    SUBTASKS = "subtasks"
-    STREAK = "streak"
-    COUNT = "count"
-    MANUAL = "manual"
-
-
 class Actor(StrEnum):
     """Who made a change: the user in the app or their Claude via MCP."""
 

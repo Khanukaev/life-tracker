@@ -1,44 +1,14 @@
-import uuid
-
 from httpx import AsyncClient
 
 
-async def test_sphere_crud(alice: AsyncClient) -> None:
-    r = await alice.post("/spheres", json={"name": "Health"})
-    assert r.status_code == 201
-    sid = r.json()["id"]
-    await alice.post("/spheres", json={"name": "Work"})
-    names = [s["name"] for s in (await alice.get("/spheres")).json()]
-    assert names == ["Health", "Work"]  # appended in order
-
-    r = await alice.patch(f"/spheres/{sid}", json={"name": "Body"})
-    assert r.json()["name"] == "Body"
-    assert (await alice.delete(f"/spheres/{sid}")).status_code == 204
-    assert len((await alice.get("/spheres")).json()) == 1
-
-
-async def test_sphere_names_are_unique_case_insensitive(alice: AsyncClient) -> None:
-    await alice.post("/spheres", json={"name": "Health"})
-    r = await alice.post("/spheres", json={"name": "health"})
-    assert r.status_code == 409
-
-
 async def test_create_with_client_id_is_idempotent(alice: AsyncClient) -> None:
-    cid = str(uuid.uuid4())
-    a = await alice.post("/spheres", json={"id": cid, "name": "Health"})
-    b = await alice.post("/spheres", json={"id": cid, "name": "Health"})  # network retry
-    assert a.json()["id"] == b.json()["id"] == cid
-    assert len((await alice.get("/spheres")).json()) == 1
-
-
-async def test_deleting_sphere_keeps_habits(alice: AsyncClient) -> None:
-    sid = (await alice.post("/spheres", json={"name": "Health"})).json()["id"]
-    hid = (
-        await alice.post("/habits", json={"name": "Stretch", "type": "check", "sphere_id": sid})
-    ).json()["id"]
-    await alice.delete(f"/spheres/{sid}")
-    habit = (await alice.get(f"/habits/{hid}")).json()
-    assert habit["sphere_id"] is None
+    cid = "0192b3c4-0000-7000-8000-000000000001"
+    body = {"id": cid, "name": "Stretch", "type": "check"}
+    a = await alice.post("/habits", json=body)
+    b = await alice.post("/habits", json=body)  # network retry
+    assert a.status_code == 201, a.text
+    assert b.status_code in (200, 201), b.text
+    assert len((await alice.get("/habits")).json()) == 1
 
 
 async def test_habit_types_and_configs(alice: AsyncClient) -> None:

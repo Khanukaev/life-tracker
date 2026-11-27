@@ -19,17 +19,15 @@ from datetime import date, datetime
 from typing import Any
 
 from lifetracker.domain.dates import hm, js_round, logical_now, task_min
-from lifetracker.domain.enums import EnergyZone, GoalKind, HabitType, Importance, ScheduleKind
+from lifetracker.domain.enums import EnergyZone, HabitType, Importance, ScheduleKind
 from lifetracker.domain.model import (
     Ctx,
     DayRec,
     FeelRec,
-    Goal,
     Habit,
     HabitId,
     Settings,
     SleepRec,
-    Subtask,
     Task,
 )
 
@@ -38,40 +36,35 @@ LEGACY_DEFAULT_TARGETS: dict[str, Any] = {
 }  # fmt: skip
 LEGACY_DEFAULT_USUAL = {"bed": "03:00", "wake": "12:30"}
 
-# `DEFAULT_SETTINGS` of the old app: used only when an export has no habits/spheres.
-DEFAULT_SPHERES = ["Сон", "Учёба", "Бизнес", "Спорт", "Здоровье", "Английский", "Личное"]
+# `DEFAULT_SETTINGS` of the old app: used only when an export has no habits.
 DEFAULT_HABITS: list[dict[str, Any]] = [
-    {"key": "bedtime", "name": "Отбой до {bed}", "type": "sleep", "sphere": "Сон"},
-    {"key": "orders", "name": "Все заказы отправлены вовремя", "type": "check", "sphere": "Бизнес"},
+    {"key": "bedtime", "name": "Отбой до {bed}", "type": "sleep"},
+    {"key": "orders", "name": "Все заказы отправлены вовремя", "type": "check"},
     {
         "key": "study",
         "name": "Подготовка к сессии ≥ {studyH} ч",
         "type": "check",
-        "sphere": "Учёба",
     },
-    {"key": "creatine", "name": "Креатин", "type": "check", "sphere": "Спорт"},
-    {"key": "water", "name": "Вода {waterL} л", "type": "water", "sphere": "Здоровье"},
-    {"key": "kbju", "name": "КБЖУ + белок {proteinG} г", "type": "protein", "sphere": "Спорт"},
+    {"key": "creatine", "name": "Креатин", "type": "check"},
+    {"key": "water", "name": "Вода {waterL} л", "type": "water"},
+    {"key": "kbju", "name": "КБЖУ + белок {proteinG} г", "type": "protein"},
     {
         "key": "training",
         "name": "Тренировка по плану",
         "type": "check",
-        "sphere": "Спорт",
         "sched": {"t": "cycle", "p": "11010", "a": None},
     },
-    {"key": "skin", "name": "Уход за кожей", "type": "check", "sphere": "Здоровье"},
+    {"key": "skin", "name": "Уход за кожей", "type": "check"},
     {
         "key": "expander",
         "name": "Эспандер 5 мин",
         "type": "check",
-        "sphere": "Спорт",
         "sched": {"t": "every", "n": 2},
     },
     {
         "key": "english",
         "name": "Английский",
         "type": "check",
-        "sphere": "Английский",
         "sched": {"t": "every", "n": 2},
     },
 ]
@@ -81,8 +74,6 @@ DEFAULT_HABITS: list[dict[str, Any]] = [
 class LegacyData:
     ctx: Ctx
     tasks: list[Task]
-    goals: list[Goal]
-    spheres: list[str]
 
 
 def _d(s: str | None) -> date | None:
@@ -121,7 +112,6 @@ def convert_habit(h: dict[str, Any], targets: dict[str, Any], start: date) -> Ha
         id=h["key"],
         type=HabitType.CHECK,
         name=habit_name(h.get("name", ""), targets),
-        sphere=h.get("sphere"),
         active=h.get("active") is not False,
         sched=kind,
         sched_n=(sched.get("n") or 2) if kind == ScheduleKind.EVERY else None,
@@ -241,35 +231,10 @@ def convert(export: dict[str, Any], *, today: date, now_min: int) -> LegacyData:
             energy=EnergyZone(t.get("energy") or "steady"),
             importance=Importance(t.get("importance") or "normal"),
             done=bool(t.get("done")),
-            sphere=t.get("sphere"),
         )
         for tid, t in (export.get("tasks") or {}).items()
     ]
-    goals = [
-        Goal(
-            id=g.get("id") or gid,
-            title=g.get("title", ""),
-            kind=GoalKind(g.get("kind") or "subtasks"),
-            habits=list(g.get("habits") or []),
-            target=g.get("target"),
-            window=g.get("window"),
-            manual_pct=g.get("value"),
-            subtasks=[
-                Subtask(
-                    title=s.get("title", ""),
-                    done=bool(s.get("done")),
-                    deadline=_d(s.get("deadline")),
-                )
-                for s in g.get("subtasks") or []
-            ],
-            deadline=_d(g.get("deadline")),
-            archived=bool(g.get("archived")),
-        )
-        for gid, g in (export.get("goals") or {}).items()
-    ]
-    return LegacyData(
-        ctx=ctx, tasks=tasks, goals=goals, spheres=list(raw.get("spheres") or DEFAULT_SPHERES)
-    )
+    return LegacyData(ctx=ctx, tasks=tasks)
 
 
 def parse_now(now_iso: str) -> tuple[date, int]:

@@ -9,9 +9,7 @@ import pytest
 from lifetracker.domain.dates import add_days, fmt_dur
 from lifetracker.domain.energy import EnergyDay, energy_day
 from lifetracker.domain.feel import ASLEEP_MSG, feel_update
-from lifetracker.domain.goals import goal_overdue, goal_progress
 from lifetracker.domain.habits import (
-    active_habits,
     best_streak,
     habit_due,
     habit_rate,
@@ -25,6 +23,8 @@ from lifetracker.domain.slots import energy_left, is_overdue, suggest_slot
 from tests.golden.conftest import Case, equal_weights, r6
 
 pytestmark = pytest.mark.nodb
+
+GOAL_ALERTS = ("Цель «", "Просроченные шаги в целях")
 
 
 def test_habit_statuses_streaks_rates(case: Case) -> None:
@@ -41,23 +41,6 @@ def test_habit_statuses_streaks_rates(case: Case) -> None:
         assert asdict(habit_rate(h, ctx, 7)) == exp["rate7"], h.id
         assert asdict(habit_rate(h, ctx, 30)) == exp["rate30"], h.id
         assert miss_run(h, ctx) == exp["missRun"], h.id
-
-
-def test_sphere_streaks(case: Case) -> None:
-    ctx = case.data.ctx
-    for sphere, exp in case.expected["spheres"].items():
-        keys = [h.id for h in active_habits(ctx) if h.sphere == sphere]
-        assert keys == exp["keys"]
-        assert streak_of(keys, ctx) == exp["streak"], sphere
-        assert best_streak(keys, ctx) == exp["best"], sphere
-
-
-def test_goals(case: Case) -> None:
-    for g in case.data.goals:
-        exp = case.expected["goals"][g.id]
-        p = {k: v for k, v in asdict(goal_progress(g, case.data.ctx)).items() if v is not None}
-        assert p == exp["progress"], g.id
-        assert goal_overdue(g, case.data.ctx) == exp["overdue"], g.id
 
 
 def test_day_score_matches_where_rules_coincide(case: Case) -> None:
@@ -113,8 +96,11 @@ def test_weak_spots(case: Case) -> None:
     ctx = case.data.ctx
     e = energy_day(ctx.today, ctx)
     for n in (7, 30):
-        got = [a.text for a in weak_spots_last(ctx, case.data.tasks, case.data.goals, e, n)]
-        assert got == case.expected["weakSpots"][str(n)], n
+        got = [a.text for a in weak_spots_last(ctx, case.data.tasks, e, n)]
+        # The original's goal alerts are gone with goals; the rest keep order and text.
+        # Its list was cut at 7, so a freed slot may now hold one more of ours at the end.
+        want = [t for t in case.expected["weakSpots"][str(n)] if not t.startswith(GOAL_ALERTS)]
+        assert got[: len(want)] == want, n
 
 
 def test_energy_left(case: Case) -> None:

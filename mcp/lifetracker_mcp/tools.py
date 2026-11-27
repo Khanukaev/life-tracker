@@ -23,11 +23,9 @@ from pydantic import Field, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import lifetracker.services.days as days
-import lifetracker.services.goals as goals
 import lifetracker.services.habits as habits
 import lifetracker.services.reviews as reviews
 import lifetracker.services.screens as screens
-import lifetracker.services.spheres as spheres
 import lifetracker.services.tasks as tasks
 import lifetracker.services.users as users
 import lifetracker.services.views as screen_views
@@ -36,7 +34,6 @@ from lifetracker.db.session import get_sessionmaker
 from lifetracker.domain.enums import (
     Actor,
     EnergyZone,
-    GoalKind,
     HabitType,
     Importance,
     ReviewKind,
@@ -44,7 +41,6 @@ from lifetracker.domain.enums import (
 )
 from lifetracker.schemas.claude import REVIEW_MAX
 from lifetracker.schemas.days import SleepIn
-from lifetracker.schemas.goals import GoalCreate, GoalUpdate, SubtaskIn, SubtaskUpdate
 from lifetracker.schemas.habits import HabitCreate, HabitOut, HabitUpdate
 from lifetracker.schemas.tasks import TaskCreate, TaskOut, TaskUpdate, TaskView
 from lifetracker.services.clock import user_now
@@ -60,7 +56,7 @@ def utc_now() -> datetime:
 clock: Callable[[], datetime] = utc_now  # tests freeze it
 
 INSTRUCTIONS = """\
-Life Tracker: the user's personal tracker of habits, sleep, energy, tasks and goals.
+Life Tracker: the user's personal tracker of habits, sleep, energy and tasks.
 All data belongs to the user who connected this server; you only ever see their data.
 
 Model:
@@ -76,8 +72,6 @@ Model:
 - Tasks have a date (or none = inbox), optional start time and duration, energy zone,
   importance (normal, important, critical). Critical tasks weigh most in the score.
 - Day score ("рейтинг", 0–100 %) = weighted share of what was done: sleep, habits, tasks.
-- Goals: stage 1 = base, stage 2 = next stage; kinds: subtasks (steps), streak (N days
-  in a row of linked habits), count (N times within a window), manual (percent).
 
 Etiquette: answer in the user's language (usually Russian). Prefer reading before
 writing. When you change something, say what you changed. Save written analyses with
@@ -145,7 +139,6 @@ def _task(t: Any) -> dict[str, Any]:
         "energy",
         "importance",
         "done",
-        "sphere_id",
         "created_by",
     )
     return {k: d[k] for k in keep if d.get(k) not in (None, "")} | {"done": d["done"]}
@@ -153,7 +146,7 @@ def _task(t: Any) -> dict[str, Any]:
 
 def _habit(h: Any) -> dict[str, Any]:
     d = HabitOut.model_validate(h).model_dump(mode="json")
-    keep = ("id", "name", "type", "config", "schedule", "active", "sphere_id")
+    keep = ("id", "name", "type", "config", "schedule", "active")
     return {k: d[k] for k in keep}
 
 
@@ -163,14 +156,12 @@ def _habit(h: Any) -> dict[str, Any]:
 @server.tool(annotations=READ)
 async def get_profile() -> dict[str, Any]:
     """The user's profile: name, time zone, today's logical date, sleep norms
-    (bedtime target, sleep need, usual bed/wake), reminder settings, spheres
-    (life areas used to group habits, tasks and goals) and task counters."""
+    (bedtime target, sleep need, usual bed/wake), reminder settings and task counters."""
     async with _Call() as (s, uid, now):
         me = await users.get_me(s, uid)
         st = await users.get_settings(s, uid)
         ln = await user_now(s, uid, now)
         counts = await screens.task_counts(s, uid, ln.day)
-        sph = await spheres.list_spheres(s, uid)
         return {
             "name": me.first_name,
             "motto": me.motto,
@@ -184,7 +175,6 @@ async def get_profile() -> dict[str, Any]:
             "usual_wake": st.usual_wake.strftime("%H:%M"),
             "evening_reminder": me.reminder_time.strftime("%H:%M") if me.reminder_time else None,
             "morning_ping": me.morning_ping,
-            "spheres": [{"id": str(x.id), "name": x.name} for x in sph],
             "tasks": counts.model_dump(),
         }
 
@@ -266,7 +256,7 @@ async def get_progress(
     ] = None,
 ) -> dict[str, Any]:
     """Results of a calendar week or month: daily scores, average, days ≥ 70 %, best run,
-    habit completion per habit and per sphere, task completion, bedtime regularity and
+    habit completion per habit, task completion, bedtime regularity and
     alerts (weak spots worth attention)."""
     async with _Call() as (s, uid, now):
         v = await screen_views.review_view(s, uid, now, period, anchor)
@@ -283,7 +273,6 @@ async def get_progress(
         "habits": [
             {"name": h.name, "pct": h.pct, "streak": h.streak, "best": h.best} for h in v.habits
         ],
-        "spheres": [{"name": x.name, "pct": x.pct} for x in v.spheres],
         "bedtime_target": _hhmm(v.bed_goal),
         "nights_on_time": sum(1 for n in v.nights if n.on_time),
         "nights_logged": sum(1 for n in v.nights if n.on_time is not None),
@@ -300,7 +289,7 @@ async def get_week_summary() -> dict[str, Any]:
 
 @server.tool(annotations=READ)
 async def get_streaks() -> dict[str, Any]:
-    """Current and best streaks: per habit and per sphere. A streak counts consecutive days
+    """Current and best streaks per habit. A streak counts consecutive days
     on which a habit was done when due (rest days of a schedule don't break it)."""
     async with _Call() as (s, uid, now):
         v = await screen_views.review_view(s, uid, now, "month", None)
@@ -308,7 +297,6 @@ async def get_streaks() -> dict[str, Any]:
         "habits": [
             {"id": str(h.id), "name": h.name, "current": h.streak, "best": h.best} for h in v.habits
         ],
-        "spheres": [{"name": x.name, "current": x.streak, "best": x.best} for x in v.spheres],
     }
 
 
@@ -354,7 +342,7 @@ async def get_energy(
 async def list_habits(
     include_inactive: Annotated[bool, Field(description="Also paused habits")] = False,
 ) -> list[dict[str, Any]]:
-    """All habits with type, norm (config), schedule and sphere. Use the ids with
+    """All habits with type, norm (config) and schedule. Use the ids with
     log_habit and update_habit."""
     async with _Call() as (s, uid, _):
         rows = await habits.list_habits(s, uid, active=None if include_inactive else True)
@@ -379,36 +367,6 @@ async def list_tasks(
         else:
             rows = await tasks.list_tasks(s, uid, now, view=TaskView(filter))
         return [_task(t) for t in rows]
-
-
-@server.tool(annotations=READ)
-async def list_goals(
-    include_archived: Annotated[bool, Field(description="Also archived goals")] = False,
-) -> dict[str, Any]:
-    """Goals grouped by stage (base / next) with progress, deadline, steps and linked
-    habits' progress, plus recent goal history (who changed what: me or claude)."""
-    async with _Call() as (s, uid, now):
-        v = await screens.goals_view(s, uid, now)
-
-    def card(g: Any) -> dict[str, Any]:
-        d: dict[str, Any] = g.model_dump(mode="json", exclude={"cells", "sphere_id"})
-        d["steps"] = [
-            {k: st[k] for k in ("id", "title", "done", "deadline") if k in st} for st in d["steps"]
-        ]
-        return d
-
-    out = {
-        "base": [card(g) for g in v.base],
-        "next": [card(g) for g in v.next],
-        "base_holds_70_for_14_days": v.base_holds,
-        "history": [h.model_dump(mode="json") for h in v.history[:20]],
-    }
-    if include_archived:
-        out["archived"] = [card(g) for g in v.archived]
-    return out
-
-
-# ---- write ----
 
 
 @server.tool(annotations=UPDATE)
@@ -475,7 +433,6 @@ async def create_task(
     ] = EnergyZone.STEADY,
     importance: Importance = Importance.NORMAL,
     description: Annotated[str, Field(max_length=2000)] = "",
-    sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Create a task. It is marked as created by Claude in the app. Keep critical tasks
     rare: more than 3 per day dilutes them. Place focus tasks into focus zones
@@ -490,7 +447,6 @@ async def create_task(
                 "energy": energy,
                 "importance": importance,
                 "description": description,
-                "sphere_id": sphere_id,
             }
         )
         return _task(await tasks.create_task(s, uid, data, by=Actor.CLAUDE))
@@ -570,14 +526,12 @@ async def create_habit(
             )
         ),
     ] = None,
-    sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Create a habit. Suggest only a few at a time: new habits stick better one by one."""
     body: dict[str, Any] = {
         "name": name,
         "type": type,
         "config": config or {},
-        "sphere_id": sphere_id,
     }
     if schedule:
         body["schedule"] = schedule
@@ -594,7 +548,6 @@ async def update_habit(
     ] = None,
     schedule: Annotated[dict[str, Any] | None, Field(description="Same as create_habit")] = None,
     active: Annotated[bool | None, Field(description="false pauses the habit")] = None,
-    sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Change a habit's name, norm, schedule or pause it. The type can't change."""
     patch = {
@@ -604,100 +557,12 @@ async def update_habit(
             "config": config,
             "schedule": schedule,
             "active": active,
-            "sphere_id": sphere_id,
         }.items()
         if v is not None
     }
     async with _Call() as (s, uid, now):
         h = await habits.update_habit(s, uid, habit_id, HabitUpdate.model_validate(patch), now)
         return _habit(h)
-
-
-@server.tool(annotations=WRITE)
-async def create_goal(
-    title: Annotated[str, Field(min_length=1, max_length=200)],
-    kind: Annotated[
-        GoalKind,
-        Field(
-            description="subtasks = steps; streak = N days in a row of linked habits; "
-            "count = N times within window_days; manual = percent set by hand"
-        ),
-    ] = GoalKind.SUBTASKS,
-    criterion: Annotated[str, Field(description="How we know it's achieved")] = "",
-    deadline: date | None = None,
-    stage: Annotated[Literal[1, 2], Field(description="1 = base, 2 = next stage")] = 1,
-    habit_ids: Annotated[
-        list[uuid.UUID] | None, Field(description="Linked habits (streak / count goals)")
-    ] = None,
-    target: Annotated[int | None, Field(description="Days in a row or number of times")] = None,
-    window_days: Annotated[int | None, Field(description="count goals: the window")] = None,
-    steps: Annotated[list[str] | None, Field(description="subtasks goals: step titles")] = None,
-    sphere_id: uuid.UUID | None = None,
-) -> dict[str, Any]:
-    """Create a goal; its history records that Claude created it. Keep the base stage to
-    about 3 goals: focus beats breadth."""
-    body = {
-        "title": title,
-        "kind": kind,
-        "criterion": criterion,
-        "deadline": deadline,
-        "stage": stage,
-        "habit_ids": habit_ids or [],
-        "target": target,
-        "window_days": window_days,
-        "sphere_id": sphere_id,
-        "subtasks": [SubtaskIn(title=t) for t in steps or []],
-    }
-    async with _Call() as (s, uid, _):
-        g = await goals.create_goal(s, uid, GoalCreate.model_validate(body), by=Actor.CLAUDE)
-        return g.model_dump(mode="json")
-
-
-@server.tool(annotations=UPDATE)
-async def update_goal(
-    goal_id: uuid.UUID,
-    title: Annotated[str | None, Field(min_length=1, max_length=200)] = None,
-    criterion: str | None = None,
-    deadline: date | None = None,
-    stage: Literal[1, 2] | None = None,
-    habit_ids: list[uuid.UUID] | None = None,
-    target: int | None = None,
-    window_days: int | None = None,
-    manual_pct: Annotated[int | None, Field(ge=0, le=100, description="manual goals")] = None,
-    archived: Annotated[bool | None, Field(description="true = achieved / dropped")] = None,
-    add_steps: Annotated[list[str] | None, Field(description="New step titles")] = None,
-    complete_step_ids: Annotated[list[uuid.UUID] | None, Field(description="Steps done")] = None,
-) -> dict[str, Any]:
-    """Change a goal, add or complete steps. Every change is written to the goal's
-    history as made by Claude, so the user can see it."""
-    patch = {
-        k: v
-        for k, v in {
-            "title": title,
-            "criterion": criterion,
-            "deadline": deadline,
-            "stage": stage,
-            "habit_ids": habit_ids,
-            "target": target,
-            "window_days": window_days,
-            "manual_pct": manual_pct,
-            "archived": archived,
-        }.items()
-        if v is not None
-    }
-    async with _Call() as (s, uid, now):
-        if patch:
-            await goals.update_goal(
-                s, uid, goal_id, GoalUpdate.model_validate(patch), by=Actor.CLAUDE
-            )
-        for t in add_steps or []:
-            await goals.add_subtask(s, uid, goal_id, SubtaskIn(title=t), by=Actor.CLAUDE)
-        for sid in complete_step_ids or []:
-            await goals.update_subtask(
-                s, uid, goal_id, sid, SubtaskUpdate(done=True), now, by=Actor.CLAUDE
-            )
-        g = await goals.get_goal(s, uid, goal_id)
-        return g.model_dump(mode="json")
 
 
 @server.tool(annotations=WRITE)

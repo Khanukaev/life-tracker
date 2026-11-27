@@ -16,4 +16,3 @@ async def test_seed_is_idempotent_and_users_differ(login: Login) -> None:
     ilya_habits = {h["type"] for h in (await ilya.get("/habits")).json()}
     assert anna_habits == {"bedtime", "water", "minutes", "check"}
     assert ilya_habits == {"check", "dual", "minutes"}
-    assert len((await anna.get("/goals")).json()) == 1

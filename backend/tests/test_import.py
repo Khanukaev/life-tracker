@@ -41,7 +41,7 @@ async def test_dry_run_reports_and_changes_nothing(alice: AsyncClient) -> None:
     assert rep["sleep_nights"] > 30
     assert len(rep["habits_created"]) == 9
     assert rep["tasks_created"] == 24
-    assert rep["goals_created"] == 7
+    assert rep["goals_skipped"] == 7  # this app has no goals
     assert rep["period"][1] == "2026-11-22"
     assert (await alice.get("/habits")).json() == []
     assert (await alice.get("/tasks?view=inbox")).json() == []
@@ -84,8 +84,6 @@ async def test_reimport_is_idempotent(alice: AsyncClient) -> None:
     assert len(second["habits_reused"]) == len(first["habits_created"])
     assert second["tasks_created"] == 0
     assert second["tasks_updated"] == first["tasks_created"]
-    assert second["goals_created"] == 0
-    assert second["spheres_created"] == []
     assert len((await alice.get("/habits")).json()) == len(first["habits_created"])
 
 
@@ -105,19 +103,6 @@ async def test_merge_keeps_what_the_user_already_has(alice: AsyncClient) -> None
     assert "Креатин" in rep["habits_reused"]
     day = (await alice.get("/days/2026-11-22")).json()
     assert day["sleep"]["bed"] == "22:00"  # the user's own log wins over the file
-
-
-async def test_goals_keep_history_steps_and_habits(alice: AsyncClient) -> None:
-    await alice.post("/import", json=fixture("regular"))
-    goals = (await alice.get("/goals")).json()
-    exp = expected("regular")["goals"]
-    assert len(goals) == len(exp)
-    steps = next(g for g in goals if g["kind"] == "subtasks" and g["subtasks"])
-    assert any(s["done"] for s in steps["subtasks"])
-    streak = next(g for g in goals if g["kind"] == "streak")
-    assert streak["habit_ids"]
-    detail = (await alice.get(f"/goals/{steps['id']}")).json()
-    assert detail["history"][0]["what"] == "Перенесена из старого трекера"
 
 
 async def test_isolated_per_user(alice: AsyncClient, bob: AsyncClient) -> None:
@@ -153,7 +138,7 @@ async def test_garbage_is_rejected_with_a_clear_message(alice: AsyncClient, body
 
 
 async def _rich_account(c: AsyncClient) -> None:
-    """Every habit type, a schedule, sleep, an explicit ❌, a task, a goal and a review."""
+    """Every habit type, a schedule, sleep, an explicit ❌, a task and a review."""
     await c.post("/import", json=fixture("regular"))
     read = (
         await c.post(
@@ -186,9 +171,8 @@ async def test_export_has_everything(alice: AsyncClient) -> None:
     assert {"bedtime", "water", "dual", "minutes", "check"} <= types
     assert ex["days"]["2026-11-21"]["sleep"]["bed"]
     assert len(ex["tasks"]) == 24
-    assert len(ex["goals"]) == 7
+    assert "goals" not in ex
     assert ex["reviews"][0]["text"] == "Разбор"
-    assert any(g["history"] for g in ex["goals"].values())
 
 
 async def test_reimporting_own_export_changes_nothing(alice: AsyncClient) -> None:
@@ -197,7 +181,6 @@ async def test_reimporting_own_export_changes_nothing(alice: AsyncClient) -> Non
     rep = (await alice.post("/import", json=before)).json()
     assert rep["habits_created"] == []
     assert rep["tasks_created"] == 0
-    assert rep["goals_created"] == 0
     assert rep["reviews"] == 0
     after = (await alice.get("/export")).json()
     for key in ("days", "tasks"):

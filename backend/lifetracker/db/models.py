@@ -4,7 +4,7 @@ Isolation is enforced twice:
 1. every query in the service layer filters by the authenticated ``user_id``;
 2. composite foreign keys ``(child.ref_id, child.user_id) -> (parent.id, parent.user_id)``
    make it impossible at the database level to attach a row to another user's
-   sphere, habit or goal, even if application code had a bug.
+   habit, even if application code had a bug.
 """
 
 import datetime as dt
@@ -21,7 +21,6 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     ForeignKeyConstraint,
-    Identity,
     Index,
     Integer,
     SmallInteger,
@@ -29,7 +28,6 @@ from sqlalchemy import (
     Text,
     Time,
     UniqueConstraint,
-    func,
     text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
@@ -40,7 +38,6 @@ from lifetracker.domain.enums import (
     Actor,
     DeliveryKind,
     EnergyZone,
-    GoalKind,
     HabitType,
     Importance,
     ReviewAuthor,
@@ -111,27 +108,11 @@ class UserSettings(Base):
     )
 
 
-class Sphere(Base):
-    __tablename__ = "spheres"
-
-    id: Mapped[uuid.UUID] = uuid_pk()
-    user_id: Mapped[uuid.UUID] = mapped_column(user_fk())
-    name: Mapped[str] = mapped_column(String(40))
-    position: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = created_at_col()
-
-    __table_args__ = (
-        UniqueConstraint("id", "user_id", name="uq_spheres_id_user"),
-        Index("uq_spheres_user_name", "user_id", func.lower(name), unique=True),
-    )
-
-
 class Habit(Base):
     __tablename__ = "habits"
 
     id: Mapped[uuid.UUID] = uuid_pk()
     user_id: Mapped[uuid.UUID] = mapped_column(user_fk())
-    sphere_id: Mapped[uuid.UUID | None] = mapped_column()
     name: Mapped[str] = mapped_column(String(80))
     type: Mapped[HabitType] = mapped_column(str_enum(HabitType, "habit_type"))
     # water: {target_l, glass_l}; minutes: {target_min, step_min}; dual: {labels: [a, b]}
@@ -149,12 +130,6 @@ class Habit(Base):
 
     __table_args__ = (
         UniqueConstraint("id", "user_id", name="uq_habits_id_user"),
-        ForeignKeyConstraint(
-            ["sphere_id", "user_id"],
-            ["spheres.id", "spheres.user_id"],
-            ondelete="SET NULL (sphere_id)",
-            name="fk_habits_sphere_owner",
-        ),
         CheckConstraint(
             "(sched_kind = 'daily')"
             " OR (sched_kind = 'every' AND sched_n BETWEEN 2 AND 365)"
@@ -233,7 +208,6 @@ class Task(Base):
     energy: Mapped[EnergyZone] = mapped_column(
         str_enum(EnergyZone, "energy_zone"), default=EnergyZone.STEADY
     )
-    sphere_id: Mapped[uuid.UUID | None] = mapped_column()
     importance: Mapped[Importance] = mapped_column(
         str_enum(Importance, "importance"), default=Importance.NORMAL
     )
@@ -244,12 +218,6 @@ class Task(Base):
     updated_at: Mapped[datetime] = updated_at_col()
 
     __table_args__ = (
-        ForeignKeyConstraint(
-            ["sphere_id", "user_id"],
-            ["spheres.id", "spheres.user_id"],
-            ondelete="SET NULL (sphere_id)",
-            name="fk_tasks_sphere_owner",
-        ),
         CheckConstraint("duration_min BETWEEN 5 AND 1440", name="duration_range"),
         CheckConstraint("start_time IS NULL OR date IS NOT NULL", name="time_needs_date"),
         Index("ix_tasks_user_date", "user_id", "date", postgresql_where=text("date IS NOT NULL")),
@@ -266,99 +234,6 @@ class Task(Base):
             postgresql_where=text("done"),
         ),
     )
-
-
-class Goal(Base):
-    __tablename__ = "goals"
-
-    id: Mapped[uuid.UUID] = uuid_pk()
-    user_id: Mapped[uuid.UUID] = mapped_column(user_fk())
-    title: Mapped[str] = mapped_column(String(200))
-    criterion: Mapped[str] = mapped_column(Text, default="")
-    deadline: Mapped[date | None] = mapped_column(Date)
-    stage: Mapped[int] = mapped_column(SmallInteger, default=1)
-    kind: Mapped[GoalKind] = mapped_column(str_enum(GoalKind, "goal_kind"))
-    target: Mapped[int | None] = mapped_column(Integer)
-    window_days: Mapped[int | None] = mapped_column(Integer)
-    manual_pct: Mapped[int | None] = mapped_column(SmallInteger)
-    sphere_id: Mapped[uuid.UUID | None] = mapped_column()
-    archived: Mapped[bool] = mapped_column(Boolean, default=False)
-    position: Mapped[int] = mapped_column(Integer, default=0)
-    created_at: Mapped[datetime] = created_at_col()
-    updated_at: Mapped[datetime] = updated_at_col()
-
-    subtasks: Mapped[list["GoalSubtask"]] = relationship(
-        order_by="GoalSubtask.position", cascade="all, delete-orphan", lazy="raise"
-    )
-    habit_links: Mapped[list["GoalHabit"]] = relationship(
-        cascade="all, delete-orphan", lazy="raise"
-    )
-
-    @property
-    def habit_ids(self) -> list[uuid.UUID]:
-        return [link.habit_id for link in self.habit_links]
-
-    __table_args__ = (
-        UniqueConstraint("id", "user_id", name="uq_goals_id_user"),
-        ForeignKeyConstraint(
-            ["sphere_id", "user_id"],
-            ["spheres.id", "spheres.user_id"],
-            ondelete="SET NULL (sphere_id)",
-            name="fk_goals_sphere_owner",
-        ),
-        CheckConstraint("stage IN (1, 2)", name="stage_valid"),
-        CheckConstraint("manual_pct IS NULL OR manual_pct BETWEEN 0 AND 100", name="pct_range"),
-        Index("ix_goals_user_list", "user_id", "archived", "position"),
-    )
-
-
-class GoalHabit(Base):
-    __tablename__ = "goal_habits"
-
-    goal_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    habit_id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(user_fk())
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["goal_id", "user_id"],
-            ["goals.id", "goals.user_id"],
-            ondelete="CASCADE",
-            name="fk_goal_habits_goal_owner",
-        ),
-        ForeignKeyConstraint(
-            ["habit_id", "user_id"],
-            ["habits.id", "habits.user_id"],
-            ondelete="CASCADE",
-            name="fk_goal_habits_habit_owner",
-        ),
-    )
-
-
-class GoalSubtask(Base):
-    __tablename__ = "goal_subtasks"
-
-    id: Mapped[uuid.UUID] = uuid_pk()
-    goal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("goals.id", ondelete="CASCADE"))
-    title: Mapped[str] = mapped_column(String(200))
-    deadline: Mapped[date | None] = mapped_column(Date)
-    done: Mapped[bool] = mapped_column(Boolean, default=False)
-    done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    position: Mapped[int] = mapped_column(Integer, default=0)
-
-    __table_args__ = (Index("ix_goal_subtasks_goal_position", "goal_id", "position"),)
-
-
-class GoalHistory(Base):
-    __tablename__ = "goal_history"
-
-    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
-    goal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("goals.id", ondelete="CASCADE"))
-    at: Mapped[datetime] = created_at_col()
-    by: Mapped[Actor] = mapped_column(str_enum(Actor, "actor"))
-    what: Mapped[str] = mapped_column(Text)
-
-    __table_args__ = (Index("ix_goal_history_goal_at", "goal_id", text("at DESC")),)
 
 
 class Review(Base):

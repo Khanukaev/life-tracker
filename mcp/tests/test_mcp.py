@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from mcp.server.mcpserver.exceptions import ToolError
 from sqlalchemy import select
 
-from lifetracker.db.models import GoalHistory, Task
+from lifetracker.db.models import Task
 from lifetracker.db.session import get_sessionmaker
 from lifetracker.services import mcp_tokens
 from lifetracker_mcp import tools
@@ -84,7 +84,8 @@ async def test_http_requires_a_valid_token(mcp_app: Any, alice: AsyncClient) -> 
 
         listed = await rpc(c, "tools/list", {}, token)
         names = {t["name"] for t in listed.json()["result"]["tools"]}
-        assert {"get_today", "log_habit", "save_review", "update_goal"} <= names
+        assert {"get_today", "log_habit", "save_review", "create_task"} <= names
+        assert not {n for n in names if "goal" in n}
 
         r = await rpc(c, "tools/call", {"name": "get_profile", "arguments": {}}, token)
         assert r.status_code == 200, r.text
@@ -129,8 +130,7 @@ async def setup(c: AsyncClient) -> dict[str, str]:
     task = (
         await c.post("/tasks", json={"title": "Report", "date": TODAY, "importance": "critical"})
     ).json()["id"]
-    goal = (await c.post("/goals", json={"title": "Read more"})).json()["id"]
-    return {"vit": vit, "read": read, "task": task, "goal": goal}
+    return {"vit": vit, "read": read, "task": task}
 
 
 async def test_read_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Call]) -> None:
@@ -155,7 +155,6 @@ async def test_read_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Cal
     assert await call("list_tasks", filter="inbox") == []
     with pytest.raises(ToolError, match="date is required"):
         await call("list_tasks", filter="date")
-    assert "base" in await call("list_goals")
 
 
 # ---- write tools ----
@@ -206,12 +205,6 @@ async def test_write_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Ca
     with pytest.raises(ToolError, match="Invalid input"):
         await call("create_habit", name="Bad", type="water", config={})
 
-    g = await call("create_goal", title="Ship v0.1", steps=["Bot", "MCP"])
-    step = g["subtasks"][0]["id"]
-    g = await call("update_goal", goal_id=g["id"], add_steps=["Deploy"], complete_step_ids=[step])
-    assert [s["done"] for s in g["subtasks"]] == [True, False, False]
-    assert {x["by"] for x in g["history"]} == {"claude"}
-
     r = await call("save_review", kind="day", text="Хороший день: отчёт сдан.")
     assert r["date"] == TODAY
     reviews = (await alice.get("/reviews")).json()
@@ -221,10 +214,7 @@ async def test_write_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Ca
     async with get_sessionmaker()() as session:
         mine = (await session.scalars(select(Task).where(Task.user_id == a))).all()
         assert {t.title for t in mine} == {"Report", "Plan week"}
-        q = select(GoalHistory).where(GoalHistory.goal_id == uuid.UUID(g["id"]))
-        hist = (await session.scalars(q)).all()
-        assert len(hist) >= 3
-        assert all(x.by.value == "claude" for x in hist)
+        assert {t.created_by.value for t in mine if t.title == "Plan week"} == {"claude"}
 
 
 # ---- isolation ----
@@ -240,8 +230,6 @@ async def test_cannot_touch_another_users_data(
         ("update_habit", {"habit_id": ids["vit"], "name": "pwned"}),
         ("update_task", {"task_id": ids["task"], "title": "pwned"}),
         ("complete_task", {"task_id": ids["task"]}),
-        ("update_goal", {"goal_id": ids["goal"], "title": "pwned"}),
-        ("create_goal", {"title": "x", "kind": "streak", "habit_ids": [ids["vit"]]}),
     ]
     for name, args in attempts:
         with pytest.raises(ToolError, match="not found"):

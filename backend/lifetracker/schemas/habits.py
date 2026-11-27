@@ -77,7 +77,6 @@ class HabitOut(ApiModel):
     id: uuid.UUID
     name: str
     type: HabitType
-    sphere_id: uuid.UUID | None
     config: dict[str, Any]
     schedule: ScheduleOut
     active: bool
@@ -91,7 +90,6 @@ class HabitOut(ApiModel):
                 "id": obj.id,
                 "name": obj.name,
                 "type": obj.type,
-                "sphere_id": obj.sphere_id,
                 "config": obj.config,
                 "schedule": ScheduleOut(
                     kind=obj.sched_kind,
@@ -109,7 +107,6 @@ class HabitCreate(InputModel):
     id: uuid.UUID | None = None
     name: str = Field(min_length=1, max_length=80)
     type: HabitType
-    sphere_id: uuid.UUID | None = None
     config: dict[str, Any] = Field(default_factory=dict)
     schedule: Schedule = Field(default_factory=DailySchedule)
     active: bool = True
@@ -128,7 +125,6 @@ class HabitUpdate(InputModel):
     """The type cannot change: existing logs would lose their meaning."""
 
     name: str | None = Field(default=None, min_length=1, max_length=80)
-    sphere_id: uuid.UUID | None = None
     config: dict[str, Any] | None = None
     schedule: Schedule | None = None
     active: bool | None = None

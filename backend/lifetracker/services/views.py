@@ -44,7 +44,6 @@ from lifetracker.schemas.views import (
     NowCard,
     NowView,
     ReviewHabit,
-    ReviewSphere,
     ReviewView,
     ScoreItemOut,
     ScoreOut,
@@ -131,7 +130,6 @@ def _habit_rows(snap: Snapshot, k: date) -> list[HabitRow]:
                 id=hid,
                 name=h.name,
                 type=h.type,
-                sphere_id=h.sphere,
                 config=h.config,
                 schedule=HabitOut.model_validate(by_id[cast(uuid.UUID, hid)]).schedule,
                 status=habit_status(h, k, ctx),
@@ -356,14 +354,14 @@ def _month_name(d: date) -> str:
 async def review_view(
     session: AsyncSession, user_id: uuid.UUID, now: datetime, period: str, anchor: date | None
 ) -> ReviewView:
-    snap = await load_snapshot(session, user_id, now, with_spheres=True)
+    snap = await load_snapshot(session, user_id, now)
     ctx = snap.ctx
     anchor = anchor or ctx.today
     start, end, prev_a, next_a = period_bounds(period, anchor)
     if start > ctx.today:
         start, end, prev_a, next_a = period_bounds(period, ctx.today)
     if start < ctx.today - timedelta(days=31):  # older periods need older tasks
-        snap = await load_snapshot(session, user_id, now, tasks_from=start, with_spheres=True)
+        snap = await load_snapshot(session, user_id, now, tasks_from=start)
         ctx = snap.ctx
     upto = min(end, ctx.today)
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
@@ -384,7 +382,6 @@ async def review_view(
     alerts = weak_spots(
         ctx,
         snap.tasks,
-        snap.goals,
         snap.energy(ctx.today),
         start,
         upto,
@@ -408,26 +405,6 @@ async def review_view(
         )
     period_tasks: list[Task] = [t for t in snap.tasks if t.date and start <= t.date <= upto]
     t_done = sum(1 for t in period_tasks if t.done)
-
-    spheres = []
-    for sp in snap.spheres:
-        ids = [h.id for h in habits if h.sphere == sp.id]
-        if not ids:
-            continue
-        d_ = m_ = 0
-        for h in habits:
-            if h.sphere == sp.id:
-                r = habit_rate_range(h, ctx, start, upto)
-                d_, m_ = d_ + r.done, m_ + r.miss
-        spheres.append(
-            ReviewSphere(
-                id=sp.id,
-                name=sp.name,
-                streak=streak_of(ids, ctx),
-                best=best_streak(ids, ctx),
-                pct=js_round(d_ / (d_ + m_) * 100) if d_ + m_ else None,
-            )
-        )
 
     goal = planned_night(ctx.settings).bed
     nights = []
@@ -460,7 +437,6 @@ async def review_view(
         tasks_done=t_done,
         tasks_total=len(period_tasks),
         habits=hab_rows,
-        spheres=spheres,
         bed_goal=goal,
         nights=nights,
     )

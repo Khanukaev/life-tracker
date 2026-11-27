@@ -8,12 +8,13 @@ rejects cross-user references.
 
 import uuid
 from dataclasses import dataclass
+from datetime import date
 
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.exc import IntegrityError
 
-from lifetracker.db.models import Task
+from lifetracker.db.models import HabitLog
 from lifetracker.db.session import get_sessionmaker
 
 TODAY = "2026-11-22"
@@ -21,44 +22,23 @@ TODAY = "2026-11-22"
 
 @dataclass
 class AliceData:
-    sphere: str
     habit: str
     task: str
-    goal: str
-    subtask: str
 
 
 @pytest.fixture
 async def alice_data(alice: AsyncClient) -> AliceData:
-    sphere = (await alice.post("/spheres", json={"name": "Private"})).json()["id"]
     habit = (await alice.post("/habits", json={"name": "Secret habit", "type": "check"})).json()[
         "id"
     ]
-    task = (
-        await alice.post(
-            "/tasks", json={"title": "Secret task", "date": TODAY, "sphere_id": sphere}
-        )
-    ).json()["id"]
-    goal = (
-        await alice.post(
-            "/goals",
-            json={
-                "title": "Secret goal",
-                "kind": "streak",
-                "habit_ids": [habit],
-                "subtasks": [{"title": "Secret step"}],
-            },
-        )
-    ).json()
+    task = (await alice.post("/tasks", json={"title": "Secret task", "date": TODAY})).json()["id"]
     await alice.put(f"/days/{TODAY}/habits/{habit}", json={"value": True})
     await alice.put(f"/days/{TODAY}/sleep", json={"bed": "23:00", "wake": "07:00"})
-    return AliceData(sphere, habit, task, goal["id"], goal["subtasks"][0]["id"])
+    return AliceData(habit, task)
 
 
 def foreign_requests(a: AliceData) -> list[tuple[str, str, dict[str, object] | None]]:
     return [
-        ("PATCH", f"/spheres/{a.sphere}", {"name": "pwned"}),
-        ("DELETE", f"/spheres/{a.sphere}", None),
         ("GET", f"/habits/{a.habit}", None),
         ("PATCH", f"/habits/{a.habit}", {"name": "pwned"}),
         ("DELETE", f"/habits/{a.habit}", None),
@@ -67,12 +47,6 @@ def foreign_requests(a: AliceData) -> list[tuple[str, str, dict[str, object] | N
         ("GET", f"/tasks/{a.task}", None),
         ("PATCH", f"/tasks/{a.task}", {"done": True}),
         ("DELETE", f"/tasks/{a.task}", None),
-        ("GET", f"/goals/{a.goal}", None),
-        ("PATCH", f"/goals/{a.goal}", {"title": "pwned"}),
-        ("DELETE", f"/goals/{a.goal}", None),
-        ("POST", f"/goals/{a.goal}/subtasks", {"title": "pwned"}),
-        ("PATCH", f"/goals/{a.goal}/subtasks/{a.subtask}", {"done": True}),
-        ("DELETE", f"/goals/{a.goal}/subtasks/{a.subtask}", None),
     ]
 
 
@@ -85,18 +59,12 @@ async def test_cannot_touch_foreign_objects(
 
     # Alice's data is intact.
     assert (await alice.get(f"/tasks/{alice_data.task}")).json()["done"] is False
-    goal = (await alice.get(f"/goals/{alice_data.goal}")).json()
-    assert goal["title"] == "Secret goal"
-    assert goal["subtasks"][0]["done"] is False
     assert (await alice.get(f"/habits/{alice_data.habit}")).json()["name"] == "Secret habit"
     assert (await alice.get(f"/days/{TODAY}")).json()["habits"] == {alice_data.habit: True}
-    assert [s["name"] for s in (await alice.get("/spheres")).json()] == ["Private"]
 
 
 async def test_lists_only_show_own_data(bob: AsyncClient, alice_data: AliceData) -> None:
-    assert (await bob.get("/spheres")).json() == []
     assert (await bob.get("/habits")).json() == []
-    assert (await bob.get("/goals")).json() == []
     for view in ("inbox", "today", "overdue", "upcoming", "done"):
         assert (await bob.get("/tasks", params={"view": view})).json() == []
     assert (await bob.get("/tasks", params={"date": TODAY})).json() == []
@@ -104,26 +72,6 @@ async def test_lists_only_show_own_data(bob: AsyncClient, alice_data: AliceData)
     assert day["habits"] == {}
     assert day["sleep"] is None
     assert (await bob.get("/days", params={"from": TODAY, "to": TODAY})).json() == []
-
-
-async def test_cannot_reference_foreign_objects(bob: AsyncClient, alice_data: AliceData) -> None:
-    a = alice_data
-    attempts = [
-        ("/habits", {"name": "x", "type": "check", "sphere_id": a.sphere}),
-        ("/tasks", {"title": "x", "sphere_id": a.sphere}),
-        ("/goals", {"title": "x", "sphere_id": a.sphere}),
-        ("/goals", {"title": "x", "kind": "streak", "habit_ids": [a.habit]}),
-    ]
-    for url, body in attempts:
-        r = await bob.post(url, json=body)
-        assert r.status_code == 404, (url, body, r.text)
-
-    own_task = (await bob.post("/tasks", json={"title": "mine"})).json()["id"]
-    r = await bob.patch(f"/tasks/{own_task}", json={"sphere_id": a.sphere})
-    assert r.status_code == 404
-    own_goal = (await bob.post("/goals", json={"title": "mine"})).json()["id"]
-    r = await bob.patch(f"/goals/{own_goal}", json={"habit_ids": [a.habit]})
-    assert r.status_code == 404
 
 
 async def test_reusing_foreign_client_id_is_conflict(
@@ -141,6 +89,9 @@ async def test_database_rejects_cross_user_reference(
     """Even if service code forgot a check, the composite FK would stop it."""
     bob_id = uuid.UUID((await bob.get("/me")).json()["id"])
     async with get_sessionmaker()() as session:
-        session.add(Task(user_id=bob_id, title="sneaky", sphere_id=uuid.UUID(alice_data.sphere)))
+        session.add(
+            HabitLog(user_id=bob_id, habit_id=uuid.UUID(alice_data.habit), date=date(2026, 11, 22),
+                     value=True)
+        )  # fmt: skip
         with pytest.raises(IntegrityError):
             await session.commit()

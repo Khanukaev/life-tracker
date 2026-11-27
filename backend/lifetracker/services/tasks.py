@@ -14,7 +14,6 @@ from lifetracker.domain.enums import Actor, Importance
 from lifetracker.schemas.tasks import TaskCreate, TaskUpdate, TaskView
 from lifetracker.services.clock import user_now
 from lifetracker.services.common import apply_patch, get_owned, resolve_client_id
-from lifetracker.services.spheres import ensure_sphere
 
 UPCOMING_DAYS = 14
 DONE_LIMIT = 60
@@ -74,7 +73,6 @@ async def create_task(
     existing = await resolve_client_id(session, Task, data.id, user_id)
     if existing is not None:
         return existing
-    await ensure_sphere(session, user_id, data.sphere_id)
     task = Task(user_id=user_id, created_by=by, done=False, **data.model_dump(exclude={"id"}))
     if data.id is not None:
         task.id = data.id
@@ -88,9 +86,7 @@ async def update_task(
 ) -> Task:
     task = await get_task(session, user_id, task_id)
     fields = data.model_dump(exclude_unset=True)
-    if "sphere_id" in fields:
-        await ensure_sphere(session, user_id, fields["sphere_id"])
-    changed = apply_patch(task, fields, nullable={"date", "start_time", "sphere_id"})
+    changed = apply_patch(task, fields, nullable={"date", "start_time"})
     if task.start_time is not None and task.date is None:
         if "date" in changed:  # moved to the inbox: the time no longer means anything
             task.start_time = None

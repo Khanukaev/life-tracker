@@ -17,11 +17,9 @@ from lifetracker.api.routes import (
     auth,
     claude,
     days,
-    goals,
     habits,
     imports,
     me,
-    spheres,
     tasks,
     views,
 )
@@ -108,7 +106,7 @@ def create_app() -> FastAPI:
     )
 
     api = APIRouter(prefix="/api/v1")
-    for module in (auth, me, spheres, habits, days, tasks, goals, views, claude, imports):
+    for module in (auth, me, habits, days, tasks, views, claude, imports):
         api.include_router(module.router)
     app.include_router(api)
     return app

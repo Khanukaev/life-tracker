@@ -53,7 +53,6 @@ class HabitRow(BaseModel):
     id: uuid.UUID
     name: str
     type: str
-    sphere_id: uuid.UUID | None
     config: dict[str, Any]
     schedule: ScheduleOut
     status: str  # done | missed | rest | pending | nodata | future
@@ -187,14 +186,6 @@ class ReviewHabit(BaseModel):
     best: int
 
 
-class ReviewSphere(BaseModel):
-    id: uuid.UUID
-    name: str
-    streak: int
-    best: int
-    pct: int | None
-
-
 class NightDot(BaseModel):
     date: dt.date
     bed: float | None  # minutes relative to 00:00 of the wake-up day (23:00 = -60)
@@ -219,7 +210,6 @@ class ReviewView(BaseModel):
     tasks_done: int
     tasks_total: int
     habits: list[ReviewHabit]
-    spheres: list[ReviewSphere]
     bed_goal: float
     nights: list[NightDot]
 
@@ -247,51 +237,6 @@ class FeelResultOut(BaseModel):
     message: str
     bias: list[float]
     model_n: int
-
-
-class GoalProgressOut(BaseModel):
-    pct: int
-    label: str
-    cur: int | None = None
-    t: int | None = None
-
-
-class DayCell(BaseModel):
-    date: dt.date
-    ok: str  # ok | pending | missed | nodata
-
-
-class GoalCard(BaseModel):
-    id: uuid.UUID
-    title: str
-    criterion: str
-    kind: str
-    stage: int
-    deadline: dt.date | None
-    sphere_id: uuid.UUID | None
-    sphere_name: str | None
-    archived: bool
-    progress: GoalProgressOut
-    overdue: bool
-    overdue_steps: int
-    steps: list[dict[str, Any]]  # {id, title, done, deadline, overdue}
-    cells: list[DayCell]  # count goals: the window; streak goals: last `target` days
-
-
-class HistoryItem(BaseModel):
-    goal_id: uuid.UUID
-    goal_title: str
-    by: str
-    what: str
-    at: str
-
-
-class GoalsView(BaseModel):
-    base: list[GoalCard]
-    next: list[GoalCard]
-    archived: list[GoalCard]
-    history: list[HistoryItem]
-    base_holds: bool  # base held > 70% for the last 14 days (hint to start the next stage)
 
 
 class TaskCounts(BaseModel):
@@ -327,20 +272,10 @@ class ProfileHabit(BaseModel):
     name: str
     type: str
     active: bool
-    sphere_name: str | None
     schedule_label: str
     streak: int
 
 
-class ProfileSphere(BaseModel):
-    id: uuid.UUID
-    name: str
-    count: int  # habits + open tasks in the sphere
-
-
 class ProfileView(BaseModel):
-    goals: list[GoalCard]
-    goals_total: int
     tasks: TaskCounts
     habits: list[ProfileHabit]
-    spheres: list[ProfileSphere]

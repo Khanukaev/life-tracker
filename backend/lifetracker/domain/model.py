@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from lifetracker.domain.enums import EnergyZone, GoalKind, HabitType, Importance, ScheduleKind
+from lifetracker.domain.enums import EnergyZone, HabitType, Importance, ScheduleKind
 
 HabitId = Hashable
 
@@ -53,7 +53,6 @@ class Habit:
     id: HabitId
     type: HabitType
     name: str = ""
-    sphere: Hashable | None = None
     active: bool = True
     config: dict[str, Any] = field(default_factory=dict)
     sched: ScheduleKind = ScheduleKind.DAILY
@@ -72,28 +71,6 @@ class Task:
     energy: EnergyZone = EnergyZone.STEADY
     importance: Importance = Importance.NORMAL
     done: bool = False
-    sphere: Hashable | None = None
-
-
-@dataclass(slots=True)
-class Subtask:
-    title: str
-    done: bool = False
-    deadline: date | None = None
-
-
-@dataclass(slots=True)
-class Goal:
-    id: Hashable
-    title: str
-    kind: GoalKind = GoalKind.SUBTASKS
-    habits: list[HabitId] = field(default_factory=list)
-    target: int | None = None
-    window: int | None = None
-    manual_pct: int | None = None
-    subtasks: list[Subtask] = field(default_factory=list)
-    deadline: date | None = None
-    archived: bool = False
 
 
 @dataclass(slots=True)

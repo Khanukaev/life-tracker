@@ -25,7 +25,6 @@ class TaskOut(ApiModel):
     start_time: HHMM | None
     duration_min: int
     energy: EnergyZone
-    sphere_id: uuid.UUID | None
     importance: Importance
     done: bool
     done_at: datetime | None
@@ -44,7 +43,6 @@ class TaskCreate(InputModel):
     )
     duration_min: int = Field(default=30, ge=5, le=1440)
     energy: EnergyZone = EnergyZone.STEADY
-    sphere_id: uuid.UUID | None = None
     importance: Importance = Importance.NORMAL
 
     @model_validator(mode="after")
@@ -61,7 +59,6 @@ class TaskUpdate(InputModel):
     start_time: HHMM | None = None
     duration_min: int | None = Field(default=None, ge=5, le=1440)
     energy: EnergyZone | None = None
-    sphere_id: uuid.UUID | None = None
     importance: Importance | None = None
     done: bool | None = None
 
