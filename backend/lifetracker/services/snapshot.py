@@ -1,8 +1,8 @@
 """Load everything the domain formulas need for one user in a fixed number of queries.
 
 A snapshot is the bridge between the database and the pure domain functions:
-ORM rows -> domain dataclasses (`Ctx`, `Task`, `Goal`). Seven queries no matter how
-many habits, days or goals the user has — no N+1.
+ORM rows -> domain dataclasses (`Ctx`, `Task`). A fixed number of queries no matter how
+many habits or days the user has — no N+1.
 """
 
 import uuid
@@ -11,22 +11,20 @@ from datetime import date, datetime, time, timedelta
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from lifetracker.core.errors import NotFoundError
 from lifetracker.db import models as m
 from lifetracker.domain.dates import logical_now, time_to_task_min
 from lifetracker.domain.energy import EnergyDay, energy_day
+from lifetracker.domain.enums import EnergyZone
 from lifetracker.domain.habits import STREAK_LOOKBACK
 from lifetracker.domain.model import (
     Ctx,
     DayRec,
     FeelRec,
-    Goal,
     Habit,
     Settings,
     SleepRec,
-    Subtask,
     Task,
 )
 
@@ -43,9 +41,6 @@ class Snapshot:
     habit_rows: list[m.Habit]
     task_rows: dict[uuid.UUID, m.Task]
     tasks: list[Task]
-    goals: list[Goal]
-    goal_rows: list[m.Goal]
-    spheres: list[m.Sphere]
     _energy: dict[date, EnergyDay] = field(default_factory=dict)
 
     def energy(self, k: date) -> EnergyDay:
@@ -57,8 +52,8 @@ class Snapshot:
 
 def to_domain_habit(h: m.Habit) -> Habit:
     return Habit(
-        id=h.id, type=h.type, name=h.name, sphere=h.sphere_id, active=h.active,
-        config=h.config, sched=h.sched_kind, sched_n=h.sched_n, sched_pattern=h.sched_pattern,
+        id=h.id, type=h.type, name=h.name, active=h.active,
+        config=h.config, sched=h.sched_kind, sched_pattern=h.sched_pattern,
         sched_anchor=h.sched_anchor,
     )  # fmt: skip
 
@@ -67,16 +62,8 @@ def to_domain_task(t: m.Task) -> Task:
     return Task(
         id=t.id, title=t.title, date=t.date,
         start=time_to_task_min(_min(t.start_time)) if t.start_time else None,
-        dur=t.duration_min, energy=t.energy, importance=t.importance, done=t.done,
-        sphere=t.sphere_id,
-    )  # fmt: skip
-
-
-def to_domain_goal(g: m.Goal) -> Goal:
-    return Goal(
-        id=g.id, title=g.title, kind=g.kind, habits=list(g.habit_ids), target=g.target,
-        window=g.window_days, manual_pct=g.manual_pct, deadline=g.deadline, archived=g.archived,
-        subtasks=[Subtask(s.title, s.done, s.deadline) for s in g.subtasks],
+        dur=t.duration_min, energy=EnergyZone.FOCUS if t.fresh else EnergyZone.STEADY,
+        important=t.important, done=t.done,
     )  # fmt: skip
 
 
@@ -87,7 +74,6 @@ async def load_snapshot(
     *,
     until: date | None = None,
     tasks_from: date | None = None,
-    with_spheres: bool = False,
 ) -> Snapshot:
     """Data from the start of history (capped at ~400 days) up to `until` + 1 day."""
     row = (
@@ -146,23 +132,6 @@ async def load_snapshot(
             )
         )
     }
-    goal_rows = list(
-        await session.scalars(
-            select(m.Goal)
-            .where(m.Goal.user_id == user_id)
-            .options(selectinload(m.Goal.subtasks), selectinload(m.Goal.habit_links))
-            .order_by(m.Goal.position, m.Goal.created_at)
-        )
-    )
-    spheres = (
-        list(
-            await session.scalars(
-                select(m.Sphere).where(m.Sphere.user_id == user_id).order_by(m.Sphere.position)
-            )
-        )
-        if with_spheres
-        else []
-    )
     ctx = Ctx(
         today=today,
         start_date=user.start_date,
@@ -178,5 +147,4 @@ async def load_snapshot(
     return Snapshot(
         user=user, settings_row=st, ctx=ctx, habit_rows=habit_rows, task_rows=task_rows,
         tasks=[to_domain_task(t) for t in task_rows.values()],
-        goals=[to_domain_goal(g) for g in goal_rows], goal_rows=goal_rows, spheres=spheres,
     )  # fmt: skip

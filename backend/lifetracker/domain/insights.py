@@ -1,7 +1,8 @@
 """ "Где проседаешь" — weak spots over a period (port of `weakSpots`).
 
 Each alert keeps the original weight and text (checked by the golden tests) and adds
-a title/subtitle pair for the redesigned card.
+a title/subtitle pair for the redesigned card. The original's goal alerts are gone with
+goals.
 """
 
 from collections.abc import Sequence
@@ -10,9 +11,8 @@ from datetime import date
 
 from lifetracker.domain.dates import add_days, fmt_date_short, fmt_dur, fmt_hm
 from lifetracker.domain.energy import EnergyDay
-from lifetracker.domain.goals import goal_overdue
 from lifetracker.domain.habits import active_habits, habit_rate_range, habit_status, miss_run
-from lifetracker.domain.model import Ctx, Goal, Task
+from lifetracker.domain.model import Ctx, Task
 from lifetracker.domain.sleep import parse_night, planned_night
 
 MAX_ALERTS = 7
@@ -55,7 +55,6 @@ def _last_done(ctx: Ctx, h_index: int) -> date | None:
 def weak_spots(
     ctx: Ctx,
     tasks: Sequence[Task],
-    goals: Sequence[Goal],
     energy_today: EnergyDay,
     start: date,
     end: date,
@@ -92,7 +91,7 @@ def weak_spots(
     overdue = [t for t in tasks if not t.done and t.date is not None and t.date < ctx.today]
     if overdue:
         oldest = min(t.date for t in overdue if t.date is not None)
-        crit = sum(1 for t in overdue if t.importance == "critical")
+        crit = sum(1 for t in overdue if t.important)
         n = len(overdue)
         out.append(
             Alert(
@@ -100,36 +99,9 @@ def weak_spots(
                 f"Просрочено задач: {n}, самая старая с {fmt_date_short(oldest)}.",
                 f"{n} {plural(n, 'просроченная', 'просроченные', 'просроченных')} "
                 f"{plural(n, 'задача', 'задачи', 'задач')}",
-                (f"Из них {crit} {plural(crit, 'критичная', 'критичные', 'критичных')}"
+                (f"Из них {crit} {plural(crit, 'важная', 'важные', 'важных')}"
                  if crit else f"Самая старая — с {fmt_date_short(oldest)}"),
-                {"count": n, "critical": crit, "oldest": oldest.isoformat()},
-            )
-        )  # fmt: skip
-
-    for g in goals:
-        if not g.archived and goal_overdue(g, ctx) and g.deadline:
-            dl = fmt_date_short(g.deadline)
-            out.append(
-                Alert(
-                    "goal_overdue", 12, f"Цель «{g.title}» просрочена (дедлайн {dl}).",
-                    f"Цель «{g.title}» просрочена", f"Дедлайн был {dl}", {"goal": g.id},
-                )
-            )  # fmt: skip
-
-    steps = [
-        s.title
-        for g in goals
-        if not g.archived
-        for s in g.subtasks
-        if not s.done and s.deadline and s.deadline < ctx.today
-    ]
-    if steps:
-        more = f" и ещё {len(steps) - 3}" if len(steps) > 3 else ""
-        listed = "; ".join(steps[:3]) + more
-        out.append(
-            Alert(
-                "overdue_steps", 8, f"Просроченные шаги в целях: {listed}.",
-                "Просроченные шаги в целях", listed, {"count": len(steps)},
+                {"count": n, "important": crit, "oldest": oldest.isoformat()},
             )
         )  # fmt: skip
 
@@ -181,10 +153,10 @@ def weak_spots(
 
 
 def weak_spots_last(
-    ctx: Ctx, tasks: Sequence[Task], goals: Sequence[Goal], energy_today: EnergyDay, n: int
+    ctx: Ctx, tasks: Sequence[Task], energy_today: EnergyDay, n: int
 ) -> list[Alert]:
     """Original signature: the last `n` days (7 = week, 30 = month)."""
     return weak_spots(
-        ctx, tasks, goals, energy_today, add_days(ctx.today, -(n - 1)), ctx.today,
+        ctx, tasks, energy_today, add_days(ctx.today, -(n - 1)), ctx.today,
         "неделю" if n == 7 else "месяц",
     )  # fmt: skip

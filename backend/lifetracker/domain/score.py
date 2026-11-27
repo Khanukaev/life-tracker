@@ -3,8 +3,8 @@
 Rules (agreed in stage 0, generalising the reference app):
 * every habit weighs ×1 (importance is a task notion); the bedtime item is the night
   that ended this morning: full points at the target, zero when 2 h late;
-* every task of the day is its own item: critical ×3, others ×2;
-* water, minute counters and dual habits count partially;
+* every task of the day is its own item: important ×3, others ×2;
+* count habits (water, minutes, pages…) count partially toward their norm;
 * habits resting by schedule are not counted.
 
 The original `dayScore` weighted sleep/study/orders ×3. The golden tests check that
@@ -17,19 +17,18 @@ from datetime import date
 
 from lifetracker.domain.dates import add_days, fmt_hm, js_round
 from lifetracker.domain.energy import clamp
-from lifetracker.domain.enums import HabitType, Importance
+from lifetracker.domain.enums import HabitType
 from lifetracker.domain.habits import (
     active_habits,
-    glasses_need,
+    count_norm,
     habit_status,
-    minutes_need,
     value_of,
 )
 from lifetracker.domain.model import Ctx, Task
 from lifetracker.domain.sleep import parse_night, planned_night
 
 HABIT_WEIGHT = 1
-CRITICAL_TASK_WEIGHT, TASK_WEIGHT = 3, 2
+IMPORTANT_TASK_WEIGHT, TASK_WEIGHT = 3, 2
 
 
 @dataclass(slots=True)
@@ -88,17 +87,13 @@ def day_score(k: date, ctx: Ctx, tasks: Sequence[Task]) -> DayScore | None:
         val: float = 1 if s == "done" else 0
         note = ""
         raw = value_of(h, k, ctx)
-        if h.type == HabitType.WATER:
-            need, g = glasses_need(h), raw or 0
-            val, note = min(1, g / need), f"{g}/{need} стак."
-        elif h.type == HabitType.DUAL:
-            val = (0.5 if raw and raw.get("a") else 0) + (0.5 if raw and raw.get("b") else 0)
-        elif h.type == HabitType.MINUTES and raw is not None:
-            val, note = min(1, raw / minutes_need(h)), f"{raw} мин"
+        if h.type == HabitType.COUNT:
+            need, got_n = count_norm(h), raw or 0
+            val, note = min(1, got_n / need), f"{got_n}/{need}"
         items.append(ScoreItem("habit", h.id, h.name, HABIT_WEIGHT, val, note))
 
     for t in tasks_on(tasks, k):
-        w = CRITICAL_TASK_WEIGHT if t.importance == Importance.CRITICAL else TASK_WEIGHT
+        w = IMPORTANT_TASK_WEIGHT if t.important else TASK_WEIGHT
         items.append(ScoreItem("task", t.id, t.title, w, 1 if t.done else 0))
 
     total_w = sum(x.w for x in items)

@@ -1,0 +1,963 @@
+{
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "AddEmptyNameGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Добавить · без названия, «Готово» неактивна",
+   "w": 390,
+   "x": 1410,
+   "y": 17040
+  },
+  "AddFullGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Добавить · задача",
+   "w": 390,
+   "x": 0,
+   "y": 17040
+  },
+  "AddHabitCycleGlass.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "title": "Добавить · привычка по циклу",
+   "w": 390,
+   "x": 940,
+   "y": 17040
+  },
+  "AddHabitGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Добавить · привычка",
+   "w": 390,
+   "x": 470,
+   "y": 17040
+  },
+  "Brand4AvatarGlass.dc.html": {
+   "h": 1060,
+   "title": "Аватарка и носители",
+   "w": 1200,
+   "x": 1300,
+   "y": 24027
+  },
+  "Brand4GuideGlass.dc.html": {
+   "h": 1040,
+   "title": "Брендинг",
+   "w": 1200,
+   "x": 2600,
+   "y": 24027
+  },
+  "Brand4LogoGlass.dc.html": {
+   "h": 900,
+   "title": "Логотип «Волна»",
+   "w": 1200,
+   "x": 0,
+   "y": 24027
+  },
+  "ClaudeConnectGlass.dc.html": {
+   "h": 940,
+   "is_interactive": true,
+   "title": "Claude · подключить",
+   "w": 390,
+   "x": 470,
+   "y": 20620
+  },
+  "ClaudeGlass.dc.html": {
+   "h": 1220,
+   "is_interactive": true,
+   "title": "Claude · экран",
+   "w": 390,
+   "x": 940,
+   "y": 10540
+  },
+  "ClaudeReviewGlass.dc.html": {
+   "h": 1070,
+   "is_interactive": true,
+   "title": "Разбор недели",
+   "w": 390,
+   "x": 1410,
+   "y": 20620
+  },
+  "ClaudeTokenGlass.dc.html": {
+   "h": 880,
+   "is_interactive": true,
+   "title": "Claude · ключ",
+   "w": 390,
+   "x": 940,
+   "y": 20620
+  },
+  "EnergySheetGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Шторка энергии",
+   "w": 390,
+   "x": 2350,
+   "y": 12460
+  },
+  "HabitDetailGlass.dc.html": {
+   "h": 1000,
+   "is_interactive": true,
+   "title": "Привычка",
+   "w": 390,
+   "x": 470,
+   "y": 18820
+  },
+  "HabitsGlass.dc.html": {
+   "h": 1210,
+   "is_interactive": true,
+   "title": "Итоги › Привычки · неделя",
+   "w": 390,
+   "x": 1580,
+   "y": 5560
+  },
+  "HabitsMonthGlass.dc.html": {
+   "h": 1250,
+   "is_interactive": true,
+   "title": "Итоги › Привычки · месяц",
+   "w": 390,
+   "x": 1580,
+   "y": 7130
+  },
+  "NoteSheetEmpty.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Заметка о неделе · пусто",
+   "w": 390,
+   "x": 0,
+   "y": 10540
+  },
+  "NoteSheetFilled.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Заметка о неделе · заполнено",
+   "w": 390,
+   "x": 470,
+   "y": 10540
+  },
+  "Onboard0Glass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Первый запуск · привет",
+   "w": 390,
+   "x": 0,
+   "y": 22320
+  },
+  "Onboard2Glass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Первый день · добавь первое дело",
+   "w": 390,
+   "x": 470,
+   "y": 22320
+  },
+  "PlanEmptyGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "План · пусто",
+   "w": 390,
+   "x": 470,
+   "y": 14480
+  },
+  "PlanGlass.dc.html": {
+   "h": 1210,
+   "is_interactive": true,
+   "title": "План",
+   "w": 390,
+   "x": 0,
+   "y": 14480
+  },
+  "ProfileGlass.dc.html": {
+   "h": 910,
+   "is_interactive": true,
+   "title": "Профиль",
+   "w": 390,
+   "x": 0,
+   "y": 20620
+  },
+  "ResultsEmptyGlass.dc.html": {
+   "h": 890,
+   "is_interactive": true,
+   "title": "Итоги · новый человек, пусто",
+   "w": 390,
+   "x": 85,
+   "y": 9032
+  },
+  "ResultsErrorGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Итоги · ошибка сети",
+   "w": 390,
+   "x": 1495,
+   "y": 9032
+  },
+  "ResultsGlass.dc.html": {
+   "h": 900,
+   "is_interactive": true,
+   "title": "Итоги · неделя",
+   "w": 390,
+   "x": 0,
+   "y": 5560
+  },
+  "ResultsLoadingGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Итоги · загрузка",
+   "w": 390,
+   "x": 1025,
+   "y": 9032
+  },
+  "ResultsMonthGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Итоги · месяц",
+   "w": 390,
+   "x": 0,
+   "y": 6840
+  },
+  "ResultsNoClaudeGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Итоги · Claude не подключён",
+   "w": 390,
+   "x": 555,
+   "y": 9032
+  },
+  "ResultsOfflineGlass.dc.html": {
+   "h": 970,
+   "is_interactive": true,
+   "title": "Итоги · нет связи",
+   "w": 390,
+   "x": 1965,
+   "y": 9032
+  },
+  "Row.dc.html": {
+   "h": 72,
+   "is_interactive": true,
+   "title": "Строка дела (компонент)",
+   "w": 390,
+   "x": 0,
+   "y": 1760
+  },
+  "SleepGlass.dc.html": {
+   "h": 920,
+   "is_interactive": true,
+   "title": "Итоги › Сон · неделя",
+   "w": 390,
+   "x": 470,
+   "y": 5560
+  },
+  "SleepMonthGlass.dc.html": {
+   "h": 920,
+   "is_interactive": true,
+   "title": "Итоги › Сон · месяц",
+   "w": 390,
+   "x": 470,
+   "y": 6850
+  },
+  "SleepSheetGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Шторка сна",
+   "w": 390,
+   "x": 1880,
+   "y": 12460
+  },
+  "TaskDetailGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Задача",
+   "w": 390,
+   "x": 0,
+   "y": 18820
+  },
+  "TasksGlass.dc.html": {
+   "h": 1300,
+   "is_interactive": true,
+   "title": "Итоги › Задачи · неделя",
+   "w": 390,
+   "x": 2050,
+   "y": 5560
+  },
+  "TasksMonthGlass.dc.html": {
+   "h": 1410,
+   "is_interactive": true,
+   "title": "Итоги › Задачи · месяц",
+   "w": 390,
+   "x": 2050,
+   "y": 7150
+  },
+  "TodayAddedGlass.dc.html": {
+   "h": 1290,
+   "is_interactive": true,
+   "title": "После «Готово» · сообщение «Добавлено»",
+   "w": 390,
+   "x": 1880,
+   "y": 17040
+  },
+  "TodayDoneGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Всё сделано",
+   "w": 390,
+   "x": 2820,
+   "y": 12460
+  },
+  "TodayEmptyGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Пусто, первый день",
+   "w": 390,
+   "x": 3760,
+   "y": 12460
+  },
+  "TodayGlass.dc.html": {
+   "h": 1290,
+   "is_interactive": true,
+   "title": "Список · сон отмечен",
+   "w": 390,
+   "x": 470,
+   "y": 12460
+  },
+  "TodayGlow100Glass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Много дел · 100%, свечение и вспышка",
+   "w": 390,
+   "x": 5340,
+   "y": 12460
+  },
+  "TodayGlow62Glass.dc.html": {
+   "h": 880,
+   "is_interactive": true,
+   "title": "Много дел · 67%, без свечения",
+   "w": 390,
+   "x": 4400,
+   "y": 12460
+  },
+  "TodayGlow87Glass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Много дел · 83%, зелёное свечение",
+   "w": 390,
+   "x": 4870,
+   "y": 12460
+  },
+  "TodayGlow87OpenGlass.dc.html": {
+   "h": 1390,
+   "is_interactive": true,
+   "title": "Много дел · 83%, отмеченные раскрыты",
+   "w": 390,
+   "x": 5810,
+   "y": 12460
+  },
+  "TodayHoursGlass.dc.html": {
+   "h": 1180,
+   "is_interactive": true,
+   "title": "По часам · сон не отмечен",
+   "w": 390,
+   "x": 940,
+   "y": 12460
+  },
+  "TodayHoursSleptGlass.dc.html": {
+   "h": 1160,
+   "is_interactive": true,
+   "title": "По часам · сон отмечен",
+   "w": 390,
+   "x": 1410,
+   "y": 12460
+  },
+  "TodayNoSleepGlass.dc.html": {
+   "h": 1350,
+   "is_interactive": true,
+   "title": "Список · сон не отмечен",
+   "w": 390,
+   "x": 0,
+   "y": 12460
+  },
+  "TodayPastGlass.dc.html": {
+   "h": 880,
+   "is_interactive": true,
+   "title": "Прошлый день",
+   "w": 390,
+   "x": 3290,
+   "y": 12460
+  },
+  "Brand4WelcomeGlass.dc.html": {
+   "h": 860,
+   "title": "Приветствие в боте",
+   "w": 1200,
+   "x": 3900,
+   "y": 24027
+  },
+  "TodayDeletedGlass.dc.html": {
+   "h": 1290,
+   "is_interactive": true,
+   "title": "После «Удалить» · сообщение с отменой",
+   "w": 390,
+   "x": 6280,
+   "y": 12460
+  },
+  "TodayLoadingGlass.dc.html": {
+   "h": 1020,
+   "is_interactive": true,
+   "title": "Загрузка",
+   "w": 390,
+   "x": 6750,
+   "y": 12460
+  },
+  "TodayOfflineGlass.dc.html": {
+   "h": 1360,
+   "is_interactive": true,
+   "title": "Нет связи",
+   "w": 390,
+   "x": 7220,
+   "y": 12460
+  },
+  "PlanAssignGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "План · выбрать день («Назначить», «На сегодня»)",
+   "w": 390,
+   "x": 940,
+   "y": 14480
+  },
+  "EditTaskGlass.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "Изменить задачу",
+   "w": 390,
+   "x": 2350,
+   "y": 17040
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-11-23T15:10:00Z",
+  "v": 1
+ },
+ "designSystems": [],
+ "launch": {
+  "view": "canvas"
+ },
+ "noteOrder": [
+  "tRow",
+  "nRow",
+  "tG",
+  "nG",
+  "tStates",
+  "tClaude",
+  "nClaude",
+  "gToday",
+  "gPlan",
+  "gAdd",
+  "gDet",
+  "gProf",
+  "gOnb",
+  "nFold",
+  "nAdd",
+  "gBrand4",
+  "nCycle",
+  "nHabRem",
+  "nBack",
+  "p_SleepGlass",
+  "p_HabitsGlass",
+  "p_TasksGlass",
+  "p_ResultsEmptyGlass",
+  "p_ResultsNoClaudeGlass",
+  "p_ResultsOfflineGlass",
+  "p_NoteSheetEmpty",
+  "p_TodayNoSleepGlass",
+  "p_TodayGlass",
+  "p_TodayHoursGlass",
+  "p_TodayHoursSleptGlass",
+  "p_SleepSheetGlass",
+  "p_EnergySheetGlass",
+  "p_TodayDoneGlass",
+  "p_TodayPastGlass",
+  "p_TodayEmptyGlass",
+  "p_TodayDeletedGlass",
+  "p_TodayLoadingGlass",
+  "p_TodayOfflineGlass",
+  "p_PlanGlass",
+  "p_PlanAssignGlass",
+  "p_AddHabitGlass",
+  "p_TodayAddedGlass",
+  "p_EditTaskGlass",
+  "p_TaskDetailGlass",
+  "p_HabitDetailGlass",
+  "p_ProfileGlass",
+  "p_ClaudeConnectGlass",
+  "p_ClaudeTokenGlass",
+  "p_ClaudeReviewGlass",
+  "p_Onboard0Glass",
+  "p_Onboard2Glass"
+ ],
+ "notes": {
+  "gAdd": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Добавить",
+   "w": 240,
+   "x": 0,
+   "y": 16780
+  },
+  "gBrand4": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Бренд Keel · вариант 4",
+   "w": 240,
+   "x": 0,
+   "y": 23767
+  },
+  "gDet": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Подробности",
+   "w": 240,
+   "x": 0,
+   "y": 18560
+  },
+  "gOnb": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Первый запуск",
+   "w": 240,
+   "x": 0,
+   "y": 22060
+  },
+  "gPlan": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "План",
+   "w": 240,
+   "x": 0,
+   "y": 14220
+  },
+  "gProf": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Профиль и Claude",
+   "w": 240,
+   "x": 0,
+   "y": 20360
+  },
+  "gToday": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Сегодня: варианты",
+   "w": 240,
+   "x": 0,
+   "y": 12200
+  },
+  "nAdd": {
+   "fill": "gray",
+   "size": 24,
+   "text": "При открытии формы курсор сразу стоит в поле названия и открыта клавиатура (на макетах её не рисуем, чтобы было видно поля). «Готово» неактивна, пока нет названия. Время по умолчанию «Без времени» — приложение само поставит дело в подходящую зону энергии.",
+   "w": 2000,
+   "x": 0,
+   "y": 16890
+  },
+  "nClaude": {
+   "fill": "gray",
+   "size": 24,
+   "text": "Кто что делает:\nПриложение считает само: проценты, сравнения, что проседает.\nЧеловек пишет «Неделю словами»: одно поле и серый пример внутри. В воскресенье вечером бот напоминает.\nClaude всегда читает цифры и заметки и даёт личное: разбор с учётом заметки, план дня на «Сегодня», ответ на свой вопрос в claude.ai.\nЛоготип Claude стоит везде, где действие или текст от Claude.\nНа сервере нужно: заметки (неделя/месяц, один текст), пометка «учёл заметку» у разбора, тип «план дня от Claude».",
+   "w": 560,
+   "x": 1880,
+   "y": 10540
+  },
+  "nFold": {
+   "fill": "gray",
+   "size": 24,
+   "text": "Отмеченные дела сворачиваются в строку «Отмечено · N» внизу карточки, «Показать» раскрывает их. Так работают все экраны «Сегодня» в режиме «Список».\nПри разработке: только что отмеченное дело не прыгает вниз мгновенно. Оно секунду остаётся на месте с зелёной галочкой, а потом плавно уезжает в свёрнутую группу. Иначе строка исчезает из-под пальца, и непонятно, что произошло. В макете этого нет: если отметить дело прямо на холсте, оно останется на месте.",
+   "w": 1800,
+   "x": 4400,
+   "y": 12180
+  },
+  "nG": {
+   "fill": "gray",
+   "size": 24,
+   "text": "«Итоги» отвечают на три вопроса: как с привычками, с задачами и со сном.\nСверху общий итог прямо на фоне и тренд. Под ним одна карточка «Неделя»: если есть свежий разбор Claude — только он (коралловая подсветка), если нет — короткий итог по данным и мотивационная фраза (фиолетовая подсветка). Внизу карточки — строка заметки.\nНиже Привычки, Задачи, Сон: цифра и мини-график, нажатие открывает подробности.\nНеделя календарная, с понедельника по воскресенье. Месяц — с 1-го числа по сегодня.\nПериод выбирается один раз на главной «Итогов», подробности открываются в том же периоде.\nПривычка либо сделана, либо нет: зелёный — сделал, серый — нет.\nТема одна — тёмная.",
+   "w": 560,
+   "x": 940,
+   "y": 5560
+  },
+  "nRow": {
+   "fill": "teal",
+   "size": 24,
+   "text": "Правило: кружок — отметка, строка — подробности.\nГалочка — одно касание. У количества каждое касание +1, кружок становится зелёным, когда норма набрана.\nОтбой — пунктирный кружок с луной, не нажимается, отмечается по сну.\nСделано — зелёная заливка с галочкой.",
+   "w": 640,
+   "x": 470,
+   "y": 1760
+  },
+  "tClaude": {
+   "kind": "title1",
+   "maxW": 2440,
+   "text": "Claude: заметки, разборы, план дня",
+   "w": 240,
+   "x": 0,
+   "y": 10280
+  },
+  "tG": {
+   "kind": "title1",
+   "maxW": 1400,
+   "text": "Итоги",
+   "w": 240,
+   "x": 0,
+   "y": 5300
+  },
+  "tRow": {
+   "kind": "title1",
+   "maxW": 1400,
+   "text": "Строка дела — одна на все пять типов",
+   "w": 240,
+   "x": 0,
+   "y": 1500
+  },
+  "tStates": {
+   "kind": "title1",
+   "maxW": 2270,
+   "text": "Итоги · состояния",
+   "w": 240,
+   "x": 85,
+   "y": 8772
+  },
+  "nCycle": {
+   "fill": "gray",
+   "size": 24,
+   "text": "Привычка по циклу в день отдыха вообще не показывается в «Сегодня» — ни строкой, ни в счёте дел. Она появится снова в следующий рабочий день цикла.",
+   "w": 640,
+   "x": 2860,
+   "y": 17040
+  },
+  "nHabRem": {
+   "fill": "gray",
+   "size": 24,
+   "text": "Напоминание для отдельной привычки пока не поддерживается сервером — строку «Напоминание» в подробностях привычки надо доделать на бэкенде.",
+   "w": 640,
+   "x": 940,
+   "y": 18820
+  },
+  "nBack": {
+   "fill": "gray",
+   "size": 24,
+   "text": "Своей кнопки «Назад» нет: на вложенных экранах (задача, привычка, профиль, Claude, разделы итогов) используется системная кнопка «Назад» Телеграма — BackButton в шапке мини-приложения.",
+   "w": 640,
+   "x": 940,
+   "y": 19060
+  },
+  "p_SleepGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Сон берётся из отметки «Как ты спал?» на «Сегодня»: время отбоя, подъёма и оценка. Если день не отмечен — его нет в графике, а не «0 часов».",
+   "w": 390,
+   "x": 470,
+   "y": 6520
+  },
+  "p_HabitsGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Привычка засчитывается за день, только если норма добрана полностью. Привычки по циклу в дни отдыха не считаются пропуском.",
+   "w": 390,
+   "x": 1580,
+   "y": 6810
+  },
+  "p_TasksGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Считаются задачи с датой в этом периоде. «Просрочены» — те, что так и не отмечены к концу своего дня. Задачи без даты в итоги не попадают.",
+   "w": 390,
+   "x": 2050,
+   "y": 6900
+  },
+  "p_ResultsEmptyGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Итоги появляются после первых дней с отметками. До этого — пустое состояние без нулевых графиков.",
+   "w": 390,
+   "x": 85,
+   "y": 9962
+  },
+  "p_ResultsNoClaudeGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Без Claude итоги считаются так же. Нет только разбора словами — вместо него короткий итог по данным и предложение подключить Claude.",
+   "w": 390,
+   "x": 555,
+   "y": 9916
+  },
+  "p_ResultsOfflineGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Без сети показываются итоги из последней загрузки, с временем, когда они сохранены.",
+   "w": 390,
+   "x": 1965,
+   "y": 10042
+  },
+  "p_NoteSheetEmpty": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Заметка о неделе — твой текст своими словами. Claude читает её, когда пишет разбор, и учитывает в выводах.",
+   "w": 390,
+   "x": 0,
+   "y": 11424
+  },
+  "p_TodayNoSleepGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Пока сон не отмечен, балл энергии примерный — «≈84». Плашка «Как ты спал?» открывает шторку сна. Привычка «Отбой» отметится сама, как только отметишь сон.",
+   "w": 390,
+   "x": 0,
+   "y": 13850
+  },
+  "p_TodayGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "⚡ 84 — энергия сейчас, нажатие открывает её график на день.\n«План на сегодня» — предложение Claude: «Добавить в день» ставит пункты в день.\nКрасный кружок — важная задача.\n«Просрочено» ведёт в «План».\nСтрелки у даты листают дни.",
+   "w": 390,
+   "x": 470,
+   "y": 13790
+  },
+  "p_TodayHoursGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Волна слева — прогноз энергии по зонам: Пик, Нейтрально, Восстановление. Строится по сну и времени суток.\nДела без времени приложение само ставит в подходящую зону, с «Нужна свежая голова» — в пик.\nБелая точка — сейчас.",
+   "w": 390,
+   "x": 940,
+   "y": 13680
+  },
+  "p_TodayHoursSleptGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Когда сон отмечен, лента начинается с него: серая строка с пунктиром перед первым делом. Изменить сон отсюда нельзя.",
+   "w": 390,
+   "x": 1410,
+   "y": 13660
+  },
+  "p_SleepSheetGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Тянешь за луну (отбой) и солнце (подъём) по кругу, длительность считается сама. Оценка «Плохо / Нормально / Хорошо» влияет на балл энергии.",
+   "w": 390,
+   "x": 1880,
+   "y": 13344
+  },
+  "p_EnergySheetGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Это прогноз, а не измерение: график строится по сну, времени суток и самочувствию. Отметка «как себя чувствуешь» уточняет прогноз на остаток дня.",
+   "w": 390,
+   "x": 2350,
+   "y": 13344
+  },
+  "p_TodayDoneGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Свечение прогресса: до 75% нет, 75–99% зелёное, 100% — зелёно-голубое и одна короткая вспышка. С системной настройкой «Уменьшить движение» вспышки нет.",
+   "w": 390,
+   "x": 2820,
+   "y": 13344
+  },
+  "p_TodayPastGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Прошлый день можно доотметить: если забыл отметить вечером, отметка засчитается в тот день. «К сегодня» возвращает в текущий день.",
+   "w": 390,
+   "x": 3290,
+   "y": 13380
+  },
+  "p_TodayEmptyGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Пустой день: энергии нет, пока не отмечен сон. Дела добавляются через «+» в навигации.",
+   "w": 390,
+   "x": 3760,
+   "y": 13344
+  },
+  "p_TodayDeletedGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Удаление без вопроса «Вы уверены?»: внизу сообщение на ~5 секунд, «Отменить» возвращает задачу на место.",
+   "w": 390,
+   "x": 6280,
+   "y": 13790
+  },
+  "p_TodayLoadingGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Заглушки показываем, только если загрузка дольше ~0,5 с — иначе экран просто мигнёт.",
+   "w": 390,
+   "x": 6750,
+   "y": 13520
+  },
+  "p_TodayOfflineGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Без сети всё работает: отметки, добавление и удаление сохраняются на телефоне и отправляются, когда появится связь.",
+   "w": 390,
+   "x": 7220,
+   "y": 13860
+  },
+  "p_PlanGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "В «Плане» только то, что впереди: просроченное, ближайшие дни и дела без даты. Привычки не перечисляются — только счётчик у дня.\n«На сегодня» и «Назначить» открывают выбор дня.",
+   "w": 390,
+   "x": 0,
+   "y": 15730
+  },
+  "p_PlanAssignGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Нажатие на день сразу переносит дело, кнопки «Готово» нет. «Выбрать…» открывает календарь.",
+   "w": 390,
+   "x": 940,
+   "y": 15364
+  },
+  "p_AddHabitGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "«Галочка» — привычка отмечается одним касанием. «Количество» — есть норма в день, каждое касание +1, сделано, когда норма набрана.",
+   "w": 390,
+   "x": 470,
+   "y": 17924
+  },
+  "p_TodayAddedGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "После «Готово» форма закрывается, внизу на несколько секунд сообщение «Добавлено» с «Отменить».",
+   "w": 390,
+   "x": 1880,
+   "y": 18370
+  },
+  "p_EditTaskGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Та же форма, что при добавлении, только заполненная. Открывается из подробностей задачи, «Сохранить» возвращает туда же.",
+   "w": 390,
+   "x": 2350,
+   "y": 17924
+  },
+  "p_TaskDetailGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Видно, кто создал дело: если Claude — подпись с его логотипом.\n«Перенести на завтра» — перенос в одно касание, без формы.",
+   "w": 390,
+   "x": 0,
+   "y": 19704
+  },
+  "p_HabitDetailGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "+1 / −1 для привычки с количеством. Квадратик дня зелёный, когда норма добрана. Серия — сколько дней подряд норма добрана.",
+   "w": 390,
+   "x": 470,
+   "y": 19860
+  },
+  "p_ProfileGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Напоминания приходят сообщением от бота в Телеграме. Отдельное разрешение не нужно: человек уже запустил бота через /start.",
+   "w": 390,
+   "x": 0,
+   "y": 21570
+  },
+  "p_ClaudeConnectGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Keel подключается к Claude как коннектор. После этого Claude видит дни и итоги, может добавлять дела, писать план дня и разбор недели.",
+   "w": 390,
+   "x": 470,
+   "y": 21600
+  },
+  "p_ClaudeTokenGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Ключ доступа показывается один раз. Если потерял — создаёшь новый, старый перестаёт работать.",
+   "w": 390,
+   "x": 940,
+   "y": 21540
+  },
+  "p_ClaudeReviewGlass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Разбор пишет Claude. Всё, что он поменял (добавил, перенёс), показано списком — чтобы ничего не менялось незаметно.",
+   "w": 390,
+   "x": 1410,
+   "y": 21730
+  },
+  "p_Onboard0Glass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Мини-приложение открывается только из бота после /start, поэтому имя и разрешение писать в личку уже есть — спрашивать их не нужно.",
+   "w": 390,
+   "x": 0,
+   "y": 23204
+  },
+  "p_Onboard2Glass": {
+   "fill": "gray",
+   "size": 20,
+   "text": "Первый день — обычный пустой «Сегодня» с подсказкой у «+». Подсказка пропадает после первого добавленного дела.",
+   "w": 390,
+   "x": 470,
+   "y": 23204
+  }
+ },
+ "order": [
+  "Row.dc.html",
+  "ResultsGlass.dc.html",
+  "ResultsMonthGlass.dc.html",
+  "SleepGlass.dc.html",
+  "SleepMonthGlass.dc.html",
+  "HabitsGlass.dc.html",
+  "HabitsMonthGlass.dc.html",
+  "TasksGlass.dc.html",
+  "TasksMonthGlass.dc.html",
+  "ResultsEmptyGlass.dc.html",
+  "ResultsNoClaudeGlass.dc.html",
+  "ResultsLoadingGlass.dc.html",
+  "ResultsErrorGlass.dc.html",
+  "ResultsOfflineGlass.dc.html",
+  "NoteSheetEmpty.dc.html",
+  "NoteSheetFilled.dc.html",
+  "ClaudeGlass.dc.html",
+  "TodayGlass.dc.html",
+  "TodayHoursGlass.dc.html",
+  "TodayEmptyGlass.dc.html",
+  "TodayDoneGlass.dc.html",
+  "TodayPastGlass.dc.html",
+  "EnergySheetGlass.dc.html",
+  "PlanGlass.dc.html",
+  "PlanEmptyGlass.dc.html",
+  "AddFullGlass.dc.html",
+  "TaskDetailGlass.dc.html",
+  "HabitDetailGlass.dc.html",
+  "ProfileGlass.dc.html",
+  "ClaudeConnectGlass.dc.html",
+  "ClaudeTokenGlass.dc.html",
+  "ClaudeReviewGlass.dc.html",
+  "Onboard2Glass.dc.html",
+  "TodayNoSleepGlass.dc.html",
+  "TodayHoursSleptGlass.dc.html",
+  "SleepSheetGlass.dc.html",
+  "TodayGlow62Glass.dc.html",
+  "TodayGlow87Glass.dc.html",
+  "TodayGlow100Glass.dc.html",
+  "TodayGlow87OpenGlass.dc.html",
+  "AddHabitGlass.dc.html",
+  "AddEmptyNameGlass.dc.html",
+  "TodayAddedGlass.dc.html",
+  "AddHabitCycleGlass.dc.html",
+  "Onboard0Glass.dc.html",
+  "Brand4LogoGlass.dc.html",
+  "Brand4AvatarGlass.dc.html",
+  "Brand4GuideGlass.dc.html",
+  "Brand4WelcomeGlass.dc.html",
+  "TodayDeletedGlass.dc.html",
+  "TodayLoadingGlass.dc.html",
+  "TodayOfflineGlass.dc.html",
+  "PlanAssignGlass.dc.html",
+  "EditTaskGlass.dc.html"
+ ],
+ "pages": [],
+ "title": "Трекер жизни — варианты структуры"
+}

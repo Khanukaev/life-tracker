@@ -116,3 +116,99 @@ async def test_login_is_limited_by_ip(anon: AsyncClient, strict_limits: None) ->
         for _ in range(3)
     ]
     assert codes == [401, 401, 429]
+
+
+# ---- «Неделя словами»: notes about a week or a month ----
+
+
+async def test_notes_per_week_and_month(alice: AsyncClient, bob: AsyncClient) -> None:
+    assert (await alice.get("/notes/week")).json() is None
+    r = await alice.put("/notes/week", json={"text": "  Пятница самая тяжёлая: пары до вечера  "})
+    assert r.status_code == 200, r.text
+    note = r.json()
+    assert note["start"] == "2026-11-16"  # the Monday of the week of 2026-11-22
+    assert note["text"] == "Пятница самая тяжёлая: пары до вечера"
+
+    # Any day of the week finds it; another week has its own.
+    assert (await alice.get("/notes/week?anchor=2026-11-18")).json()["text"].startswith("Пятница")
+    assert (await alice.get("/notes/week?anchor=2026-11-09")).json() is None
+    await alice.put("/notes/month", json={"text": "Сессия"})
+    assert (await alice.get("/notes/month?anchor=2026-11-03")).json()["start"] == "2026-11-01"
+
+    await alice.put("/notes/week", json={"text": "Новый текст"})  # one note per week
+    assert (await alice.get("/notes/week")).json()["text"] == "Новый текст"
+    assert (await alice.put("/notes/week", json={"text": "   "})).json() is None  # cleared
+    assert (await alice.get("/notes/week")).json() is None
+
+    assert (await bob.get("/notes/month")).json() is None
+    assert (await alice.put("/notes/year", json={"text": "x"})).status_code == 422
+
+
+# ---- plans and «Что Claude изменил» ----
+
+
+async def test_plan_is_added_to_the_day_once(alice: AsyncClient, bob: AsyncClient) -> None:
+    a = await uid(alice)
+    async with get_sessionmaker()() as s:
+        plan = await reviews.save_plan(
+            s, a,
+            [{"title": "Лаба по физике", "start": "10:00", "dur": 180, "note": "твой пик"},
+             {"title": "Вода", "start": None, "dur": 5, "note": ""}],
+            NOW,
+        )  # fmt: skip
+    assert (await bob.post(f"/reviews/{plan.id}/apply")).status_code == 404
+
+    r = await alice.post(f"/reviews/{plan.id}/apply")
+    assert r.status_code == 201, r.text
+    assert [(t["title"], t["start_time"], t["created_by"]) for t in r.json()] == [
+        ("Лаба по физике", "10:00", "claude"),
+        ("Вода", None, "claude"),
+    ]
+    assert (await alice.post(f"/reviews/{plan.id}/apply")).status_code == 409
+    got = (await alice.get(f"/reviews/{plan.id}")).json()
+    assert got["kind"] == "plan"
+    assert got["applied_at"] is not None
+    assert len((await alice.get("/tasks?view=today")).json()) == 2
+
+
+async def test_day_view_shows_the_latest_plan_until_it_is_added(
+    alice: AsyncClient, bob: AsyncClient
+) -> None:
+    a = await uid(alice)
+    assert (await alice.get("/views/day")).json()["plan"] is None
+    async with get_sessionmaker()() as s:
+        await reviews.save_plan(s, a, [{"title": "Старый", "dur": 30}], NOW)
+        plan = await reviews.save_plan(
+            s, a, [{"title": "Лаба", "start": "10:00", "dur": 180, "note": "пик"}],
+            NOW.replace(minute=5), text="Утро для лабы",
+        )  # fmt: skip
+    got = (await alice.get("/views/day")).json()["plan"]
+    assert got["id"] == str(plan.id)
+    assert got["kind"] == "plan"
+    assert got["text"] == "Утро для лабы"
+    assert got["items"][0]["title"] == "Лаба"
+    assert (await bob.get("/views/day")).json()["plan"] is None
+    assert (await alice.get("/views/day?date=2026-11-21")).json()["plan"] is None
+
+    assert (await alice.post(f"/reviews/{plan.id}/apply")).status_code == 201
+    assert (await alice.get("/views/day")).json()["plan"] is None
+
+
+async def test_review_lists_what_claude_changed_since_the_last_one(alice: AsyncClient) -> None:
+    from lifetracker.services import journal
+
+    a = await uid(alice)
+    async with get_sessionmaker()() as s:
+        journal.record(s, a, "Добавил задачу «Отчёт» на 23 ноя", NOW)
+        await s.commit()
+        first = await reviews.save_review(s, a, ReviewKind.DAY, "День", NOW, used_note=True)
+        later = datetime(2026, 11, 22, 18, tzinfo=UTC)
+        journal.record(s, a, "Записал сон за 22 ноя: 23:30–07:30", later)
+        await s.commit()
+        second = await reviews.save_review(s, a, ReviewKind.WEEK, "Неделя", later)
+    r1 = (await alice.get(f"/reviews/{first.id}")).json()
+    assert r1["changes"] == ["Добавил задачу «Отчёт» на 23 ноя"]
+    assert r1["used_note"] is True
+    r2 = (await alice.get(f"/reviews/{second.id}")).json()
+    assert r2["changes"] == ["Записал сон за 22 ноя: 23:30–07:30"]  # only the newer line
+    assert r2["used_note"] is False

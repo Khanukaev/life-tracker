@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from lifetracker.domain.enums import EnergyZone, GoalKind, HabitType, Importance, ScheduleKind
+from lifetracker.domain.enums import EnergyZone, HabitType, ScheduleKind
 
 HabitId = Hashable
 
@@ -53,11 +53,9 @@ class Habit:
     id: HabitId
     type: HabitType
     name: str = ""
-    sphere: Hashable | None = None
     active: bool = True
     config: dict[str, Any] = field(default_factory=dict)
     sched: ScheduleKind = ScheduleKind.DAILY
-    sched_n: int | None = None
     sched_pattern: str | None = None
     sched_anchor: date | None = None
 
@@ -69,31 +67,9 @@ class Task:
     date: date | None
     start: int | None = None  # task minute of the logical day (00:00–04:59 -> 1440+)
     dur: int = 30
-    energy: EnergyZone = EnergyZone.STEADY
-    importance: Importance = Importance.NORMAL
+    energy: EnergyZone = EnergyZone.STEADY  # focus = "needs a fresh head"
+    important: bool = False
     done: bool = False
-    sphere: Hashable | None = None
-
-
-@dataclass(slots=True)
-class Subtask:
-    title: str
-    done: bool = False
-    deadline: date | None = None
-
-
-@dataclass(slots=True)
-class Goal:
-    id: Hashable
-    title: str
-    kind: GoalKind = GoalKind.SUBTASKS
-    habits: list[HabitId] = field(default_factory=list)
-    target: int | None = None
-    window: int | None = None
-    manual_pct: int | None = None
-    subtasks: list[Subtask] = field(default_factory=list)
-    deadline: date | None = None
-    archived: bool = False
 
 
 @dataclass(slots=True)

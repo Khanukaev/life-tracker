@@ -71,16 +71,22 @@ async def test_no_reminder_when_off_or_blocked(alice: AsyncClient, session: Asyn
     assert await due_ids(session, EVENING, at(21)) == {uuid.UUID(me["id"])}
 
 
-async def test_morning_ping_after_usual_wake_unless_sleep_logged(
+async def test_morning_at_the_chosen_time_and_week_note_on_sundays(
     alice: AsyncClient, session: AsyncSession
 ) -> None:
     a = await uid(alice)
     assert await due_ids(session, MORNING, at(8)) == set()  # opt-in
-    await alice.patch("/me", json={"morning_ping": True})
-    assert await due_ids(session, MORNING, at(7, 59)) == set()  # usual wake 07:30 + 30 min
-    assert await due_ids(session, MORNING, at(8)) == {a}
+    await alice.patch("/me", json={"morning_time": "08:30"})
+    assert await due_ids(session, MORNING, at(8, 29)) == set()
+    assert await due_ids(session, MORNING, at(8, 30)) == {a}
+    # The morning message carries the day's plan, so it goes out even if sleep is logged.
     await alice.put("/days/2026-11-22/sleep", json={"bed": "23:30", "wake": "07:30"})
-    assert await due_ids(session, MORNING, at(8)) == set()
+    assert await due_ids(session, MORNING, at(8, 30)) == {a}
+
+    await alice.patch("/me", json={"week_note_time": "20:00"})
+    assert await due_ids(session, DeliveryKind.WEEK_NOTE, at(20)) == {a}  # 2026-11-22 is a Sunday
+    saturday = datetime(2026, 11, 21, 20, tzinfo=UTC)
+    assert await due_ids(session, DeliveryKind.WEEK_NOTE, saturday) == set()
 
 
 # ---- exactly once ----
@@ -104,15 +110,15 @@ async def setup_habits(c: AsyncClient) -> dict[str, str]:
     ids = {}
     for name, body in {
         "vit": {"name": "Vitamins", "type": "check"},
-        "read": {"name": "Read", "type": "minutes", "config": {"target_min": 30}},
-        "water": {"name": "Water", "type": "water", "config": {"target_l": 2, "glass_l": 0.25}},
-        "food": {"name": "Food", "type": "dual", "config": {"labels": ["Kcal", "Protein"]}},
+        "read": {"name": "Read", "type": "count", "config": {"norm": 30, "step": 10}},
+        "water": {"name": "Water", "type": "count", "config": {"norm": 8}},
+        "food": {"name": "Food", "type": "check"},
         "bed": {"name": "Bed", "type": "bedtime"},
     }.items():
         r = await c.post("/habits", json=body)
         assert r.status_code in (200, 201), r.text
         ids[name] = r.json()["id"]
-    await c.post("/tasks", json={"title": "Report", "date": "2026-11-22", "importance": "critical"})
+    await c.post("/tasks", json={"title": "Report", "date": "2026-11-22", "important": True})
     await c.post("/tasks", json={"title": "Chill", "date": "2026-11-22"})
     return ids
 
@@ -124,7 +130,7 @@ async def test_evening_content(alice: AsyncClient, session: AsyncSession) -> Non
     assert e.score is not None
     assert {h.name for h in e.habits} == {"Read", "Water", "Food"}  # bedtime is never here
     assert (e.done_habits, e.total_habits) == (1, 4)
-    assert e.critical == ["Report"]
+    assert e.important == ["Report"]
 
 
 async def test_mark_buttons_per_habit_type(alice: AsyncClient, session: AsyncSession) -> None:
@@ -134,7 +140,7 @@ async def test_mark_buttons_per_habit_type(alice: AsyncClient, session: AsyncSes
         await reminders.mark_habit(session, a, uuid.UUID(ids[key]), day, True, at(21))
     habits = {h["id"]: h for h in (await alice.get("/views/day")).json()["habits"]}
     assert all(habits[ids[k]]["status"] == "done" for k in ("vit", "read", "water", "food"))
-    assert habits[ids["water"]]["value"] == 8  # 2 l / 0.25 l glasses
+    assert habits[ids["water"]]["value"] == 8  # ✅ fills the norm
 
     await reminders.mark_habit(session, a, uuid.UUID(ids["vit"]), day, False, at(21))
     e = await reminders.evening_content(session, a, day, at(21))

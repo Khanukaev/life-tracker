@@ -14,7 +14,6 @@ from lifetracker.schemas.views import (
     FeelIn,
     FeelOut,
     FeelResultOut,
-    GoalsView,
     NowView,
     ProfileView,
     ReviewView,
@@ -85,7 +84,7 @@ async def record_feel(
 
 @router.get("/views/profile", response_model=ProfileView)
 async def profile_view(session: SessionDep, user_id: UserId, now: Now) -> ProfileView:
-    """Goals preview, task counters, habits and spheres for the Profile tab."""
+    """Task counters and habits for the Profile tab."""
     return await screens.profile_view(session, user_id, now)
 
 
@@ -98,12 +97,6 @@ async def tasks_view(
 ) -> TasksView:
     """A task tab with counters for all tabs; `energy` adds tasks-vs-windows loads."""
     return await screens.tasks_view(session, user_id, now, view)
-
-
-@router.get("/views/goals", response_model=GoalsView)
-async def goals_view(session: SessionDep, user_id: UserId, now: Now) -> GoalsView:
-    """Goal cards with progress, recent history across goals and the archive."""
-    return await screens.goals_view(session, user_id, now)
 
 
 @router.get("/habit-templates")

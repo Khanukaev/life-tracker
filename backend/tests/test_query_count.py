@@ -34,10 +34,6 @@ async def add_data(c: AsyncClient, habits: int, days: int) -> None:
         day = f"2026-11-{22 - d:02d}"
         for hid in ids:
             await c.put(f"/days/{day}/habits/{hid}", json={"value": True})
-    for g in range(3):
-        await c.post(
-            "/goals", json={"title": f"G{g}", "subtasks": [{"title": "a"}, {"title": "b"}]}
-        )
     for t in range(5):
         await c.post("/tasks", json={"title": f"T{t}", "date": "2026-11-22"})
 
@@ -48,7 +44,7 @@ async def measure(c: AsyncClient) -> dict[str, int]:
         ("day", "/views/day"),
         ("now", "/views/now"),
         ("review", "/views/review?period=month"),
-        ("goals", "/goals"),
+        ("tasks", "/views/tasks"),
     ]:
         with count_queries() as q:
             assert (await c.get(url)).status_code == 200
@@ -62,4 +58,4 @@ async def test_query_count_is_constant(alice: AsyncClient, bob: AsyncClient) -> 
     small, big = await measure(alice), await measure(bob)
     assert small == big, (small, big)
     assert small["day"] <= 8
-    assert small["goals"] <= 3
+    assert small["tasks"] <= 8

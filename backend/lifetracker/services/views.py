@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.domain.dates import MONTHS, add_days, fmt_date, fmt_date_short, js_round
 from lifetracker.domain.energy import Window, bucket_of
-from lifetracker.domain.enums import EnergyZone, Importance
+from lifetracker.domain.enums import EnergyZone
 from lifetracker.domain.habits import (
     active_habits,
     best_streak,
@@ -27,6 +27,7 @@ from lifetracker.domain.score import bed_gain, day_score, gains, week_scores
 from lifetracker.domain.sleep import parse_night, planned_night
 from lifetracker.domain.slots import Slot, is_overdue, suggest_with_fallback
 from lifetracker.domain.timeline import free_gaps, next_window, window_at
+from lifetracker.schemas.claude import ReviewOut
 from lifetracker.schemas.days import SleepOut
 from lifetracker.schemas.habits import HabitOut
 from lifetracker.schemas.tasks import TaskOut
@@ -44,7 +45,6 @@ from lifetracker.schemas.views import (
     NowCard,
     NowView,
     ReviewHabit,
-    ReviewSphere,
     ReviewView,
     ScoreItemOut,
     ScoreOut,
@@ -54,10 +54,8 @@ from lifetracker.schemas.views import (
     WeekBar,
     ZoneSpan,
 )
+from lifetracker.services.reviews import latest_plan
 from lifetracker.services.snapshot import Snapshot, load_snapshot
-
-CRITICAL_LIMIT = 3  # "Когда всё важно — ничего не важно"
-RANK = {Importance.CRITICAL: 0, Importance.IMPORTANT: 1, Importance.NORMAL: 2}
 
 
 def _hhmm(minutes: int) -> str:
@@ -69,7 +67,7 @@ def _day_tasks(snap: Snapshot, k: date) -> list[DayTask]:
     e = snap.energy(k)
     ts = sorted(
         (t for t in snap.tasks if t.date == k),
-        key=lambda t: (t.done, RANK[t.importance], t.start if t.start is not None else 9999),
+        key=lambda t: (t.done, not t.important, t.start if t.start is not None else 9999),
     )
     out = []
     for t in ts:
@@ -131,7 +129,6 @@ def _habit_rows(snap: Snapshot, k: date) -> list[HabitRow]:
                 id=hid,
                 name=h.name,
                 type=h.type,
-                sphere_id=h.sphere,
                 config=h.config,
                 schedule=HabitOut.model_validate(by_id[cast(uuid.UUID, hid)]).schedule,
                 status=habit_status(h, k, ctx),
@@ -212,7 +209,9 @@ async def day_view(
         planned = {"bed": _hhmm(ctx.settings.bed_target), "need_h": ctx.settings.sleep_need_h}
 
     tasks = _day_tasks(snap, k)
-    critical = [t for t in tasks if t.importance == Importance.CRITICAL]
+    # «План на сегодня»: the newest plan replaces older ones; once added, it disappears.
+    plan_row = await latest_plan(session, user_id, k) if relation != "past" else None
+    plan = ReviewOut.model_validate(plan_row) if plan_row and plan_row.applied_at is None else None
     return DayView(
         date=k,
         today=ctx.today,
@@ -226,11 +225,10 @@ async def day_view(
         phrases=phrases,
         sleep=sleep,
         sleep_planned=planned,
-        critical=critical,
-        critical_overload=len(critical) > CRITICAL_LIMIT,
         habits=_habit_rows(snap, k) if relation != "future" else [],
         tasks=tasks,
         timeline=_timeline(snap, k),
+        plan=plan,
     )
 
 
@@ -356,14 +354,14 @@ def _month_name(d: date) -> str:
 async def review_view(
     session: AsyncSession, user_id: uuid.UUID, now: datetime, period: str, anchor: date | None
 ) -> ReviewView:
-    snap = await load_snapshot(session, user_id, now, with_spheres=True)
+    snap = await load_snapshot(session, user_id, now)
     ctx = snap.ctx
     anchor = anchor or ctx.today
     start, end, prev_a, next_a = period_bounds(period, anchor)
     if start > ctx.today:
         start, end, prev_a, next_a = period_bounds(period, ctx.today)
     if start < ctx.today - timedelta(days=31):  # older periods need older tasks
-        snap = await load_snapshot(session, user_id, now, tasks_from=start, with_spheres=True)
+        snap = await load_snapshot(session, user_id, now, tasks_from=start)
         ctx = snap.ctx
     upto = min(end, ctx.today)
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
@@ -384,7 +382,6 @@ async def review_view(
     alerts = weak_spots(
         ctx,
         snap.tasks,
-        snap.goals,
         snap.energy(ctx.today),
         start,
         upto,
@@ -408,26 +405,6 @@ async def review_view(
         )
     period_tasks: list[Task] = [t for t in snap.tasks if t.date and start <= t.date <= upto]
     t_done = sum(1 for t in period_tasks if t.done)
-
-    spheres = []
-    for sp in snap.spheres:
-        ids = [h.id for h in habits if h.sphere == sp.id]
-        if not ids:
-            continue
-        d_ = m_ = 0
-        for h in habits:
-            if h.sphere == sp.id:
-                r = habit_rate_range(h, ctx, start, upto)
-                d_, m_ = d_ + r.done, m_ + r.miss
-        spheres.append(
-            ReviewSphere(
-                id=sp.id,
-                name=sp.name,
-                streak=streak_of(ids, ctx),
-                best=best_streak(ids, ctx),
-                pct=js_round(d_ / (d_ + m_) * 100) if d_ + m_ else None,
-            )
-        )
 
     goal = planned_night(ctx.settings).bed
     nights = []
@@ -460,7 +437,6 @@ async def review_view(
         tasks_done=t_done,
         tasks_total=len(period_tasks),
         habits=hab_rows,
-        spheres=spheres,
         bed_goal=goal,
         nights=nights,
     )

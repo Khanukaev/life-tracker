@@ -24,13 +24,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lifetracker.core.errors import DomainValidationError
 from lifetracker.db import models as m
-from lifetracker.domain.enums import Actor, HabitType, ReviewAuthor, ReviewKind, SleepQuality
+from lifetracker.domain.enums import (
+    Actor,
+    EnergyZone,
+    HabitType,
+    NoteKind,
+    ReviewAuthor,
+    ReviewKind,
+    SleepQuality,
+)
 from lifetracker.domain.legacy import convert
 from lifetracker.services.clock import user_now
+from lifetracker.services.notes import period_start
 
 MAX_DAYS = 3660
 MAX_TASKS = 20_000
-MAX_GOALS = 500
 
 
 @dataclass
@@ -41,11 +49,9 @@ class ImportReport:
     habit_marks: int = 0
     habits_created: list[str] = field(default_factory=list)
     habits_reused: list[str] = field(default_factory=list)
-    spheres_created: list[str] = field(default_factory=list)
     tasks_created: int = 0
     tasks_updated: int = 0
-    goals_created: int = 0
-    goals_updated: int = 0
+    goals_skipped: int = 0  # the old app's goals: this app has none
     reviews: int = 0
     period: tuple[str, str] | None = None
     warnings: list[str] = field(default_factory=list)
@@ -76,17 +82,15 @@ def _check_shape(export: Any) -> dict[str, Any]:
         k in export for k in ("settings", "days", "tasks", "goals")
     ):
         raise DomainValidationError(
-            "Это не экспорт трекера: ожидается JSON с полями settings, days, tasks, goals"
+            "Это не экспорт трекера: ожидается JSON с полями settings, days и tasks"
         )
-    for key, kind in (("settings", dict), ("days", dict), ("tasks", dict), ("goals", dict)):
+    for key, kind in (("settings", dict), ("days", dict), ("tasks", dict)):
         if key in export and export[key] is not None and not isinstance(export[key], kind):
             raise DomainValidationError(f"Поле {key} должно быть объектом")
     if len(export.get("days") or {}) > MAX_DAYS:
         raise DomainValidationError(f"Слишком много дней (больше {MAX_DAYS})")
     if len(export.get("tasks") or {}) > MAX_TASKS:
         raise DomainValidationError(f"Слишком много задач (больше {MAX_TASKS})")
-    if len(export.get("goals") or {}) > MAX_GOALS:
-        raise DomainValidationError(f"Слишком много целей (больше {MAX_GOALS})")
     return export
 
 
@@ -138,33 +142,6 @@ async def import_export(
         if data.ctx.start_date < user.start_date:
             user.start_date = data.ctx.start_date
 
-        # ---- spheres by name ----
-        existing_sph = {
-            x.name.lower(): x
-            for x in await session.scalars(select(m.Sphere).where(m.Sphere.user_id == user_id))
-        }
-        pos = len(existing_sph)
-        names = list(data.spheres) + [str(h.sphere) for h in data.ctx.habits if h.sphere]
-        names += [str(t.sphere) for t in data.tasks if t.sphere]
-        sphere_id: dict[str, uuid.UUID] = {}
-        for name in names:
-            clean = name.strip()[:40]
-            if not clean or clean.lower() in sphere_id:
-                continue
-            sph = existing_sph.get(clean.lower())
-            if sph is None:
-                sph = m.Sphere(
-                    id=nid("sphere", clean.lower()), user_id=user_id, name=clean, position=pos
-                )
-                pos += 1
-                session.add(sph)
-                existing_sph[clean.lower()] = sph
-                report.spheres_created.append(clean)
-            sphere_id[clean.lower()] = sph.id
-
-        def sphere_of(name: Any) -> uuid.UUID | None:
-            return sphere_id.get(str(name).strip().lower()) if name else None
-
         # ---- habits: reuse by id, then by (name, type); one bedtime at most ----
         existing_h = list(await session.scalars(select(m.Habit).where(m.Habit.user_id == user_id)))
         by_id = {h.id: h for h in existing_h}
@@ -189,12 +166,10 @@ async def import_export(
                 type=h.type,
                 config=dict(h.config or {}),
                 sched_kind=h.sched,
-                sched_n=h.sched_n,
                 sched_pattern=h.sched_pattern,
                 sched_anchor=h.sched_anchor,
                 active=h.active,
                 position=hpos,
-                sphere_id=sphere_of(h.sphere),
             )
             hpos += 1
             session.add(hrow)
@@ -284,11 +259,10 @@ async def import_export(
                 "date": t.date,
                 "start_time": _hhmm(t.start) if t.date else None,
                 "duration_min": max(5, min(1440, int(t.dur or 30))),
-                "energy": t.energy,
-                "importance": t.importance,
+                "important": t.important,
+                "fresh": t.energy == EnergyZone.FOCUS,
                 "done": t.done,
                 "done_at": _ts(raw_t.get("doneAt")) if t.done else None,
-                "sphere_id": sphere_of(t.sphere),
                 "created_by": Actor.CLAUDE if raw_t.get("by") == "claude" else Actor.ME,
             }
             task_row = await session.get(m.Task, tid) if tid in known_tasks else None
@@ -300,76 +274,8 @@ async def import_export(
                 session.add(m.Task(id=tid, user_id=user_id, **fields))
                 report.tasks_created += 1
 
-        # ---- goals with steps, linked habits and history ----
-        raw_goals = export.get("goals") or {}
-        known_goals = set(await session.scalars(select(m.Goal.id).where(m.Goal.user_id == user_id)))
-        gpos = await session.scalar(
-            select(func.coalesce(func.max(m.Goal.position), -1)).where(m.Goal.user_id == user_id)
-        )
-        gpos = int(gpos or -1) + 1
-        for g in data.goals:
-            raw_g: dict[str, Any] = raw_goals.get(str(g.id)) or {}
-            gid = nid("goal", str(g.id), known_goals)
-            existing_goal = await session.get(m.Goal, gid)
-            stage = raw_g.get("stage") if raw_g.get("stage") in (1, 2) else 1
-            goal_fields: dict[str, Any] = {
-                "title": (g.title or "Цель")[:200],
-                "criterion": str(raw_g.get("criterion") or "")[:2000],
-                "deadline": g.deadline,
-                "stage": stage,
-                "kind": g.kind,
-                "target": g.target,
-                "window_days": g.window,
-                "manual_pct": max(0, min(100, int(g.manual_pct)))
-                if g.manual_pct is not None
-                else None,
-                "sphere_id": sphere_of(raw_g.get("sphere")),
-                "archived": g.archived,
-            }
-            if existing_goal is not None:
-                for k2, v2 in goal_fields.items():
-                    setattr(existing_goal, k2, v2)
-                report.goals_updated += 1
-                continue
-            session.add(m.Goal(id=gid, user_id=user_id, position=gpos, **goal_fields))
-            gpos += 1
-            await session.flush()
-            for i, st in enumerate(g.subtasks):
-                session.add(
-                    m.GoalSubtask(
-                        id=nid("step", f"{g.id}:{i}"),
-                        goal_id=gid,
-                        title=(st.title or "Шаг")[:200],
-                        deadline=st.deadline,
-                        done=st.done,
-                        position=i,
-                        done_at=now if st.done else None,
-                    )
-                )
-            linked = {habit_id[str(h)] for h in g.habits if str(h) in habit_id}
-            for hid in linked:
-                session.add(m.GoalHabit(goal_id=gid, habit_id=hid, user_id=user_id))
-            missing = [str(h) for h in g.habits if str(h) not in habit_id]
-            if missing:
-                report.warnings.append(
-                    f"Цель «{g.title}»: не нашлись привычки {', '.join(missing)}"
-                )
-            history = [x for x in raw_g.get("history") or [] if isinstance(x, dict)][:60]
-            for item in reversed(history):
-                session.add(
-                    m.GoalHistory(
-                        goal_id=gid,
-                        at=_ts(item.get("at")) or now,
-                        by=Actor.CLAUDE if item.get("by") == "claude" else Actor.ME,
-                        what=str(item.get("what") or "")[:500],
-                    )
-                )
-            session.add(
-                m.GoalHistory(
-                    goal_id=gid, at=now, by=Actor.ME, what="Перенесена из старого трекера"
-                )
-            )
-            report.goals_created += 1
+        if isinstance(export.get("goals"), dict):
+            report.goals_skipped = len(export["goals"])
 
         # ---- reviews (this app's export only) ----
         raw_reviews = export.get("reviews")
@@ -383,7 +289,14 @@ async def import_export(
                 rid = nid("review", str(rv.get("id")), known_reviews)
                 if rid in known_reviews:
                     continue
-                kind = ReviewKind.WEEK if rv.get("kind") == "week" else ReviewKind.DAY
+                kind = (
+                    ReviewKind(rv["kind"])
+                    if rv.get("kind") in {k.value for k in ReviewKind}
+                    else ReviewKind.DAY
+                )
+                items = rv.get("items") if isinstance(rv.get("items"), list) else None
+                if kind == ReviewKind.PLAN and not items:
+                    continue
                 by = (
                     ReviewAuthor(rv["by"])
                     if rv.get("by") in ("claude", "me", "schedule")
@@ -398,10 +311,30 @@ async def import_export(
                         date=date.fromisoformat(str(rv["date"])),
                         body=str(rv["text"])[:20_000],
                         at=_ts(rv.get("at")) or now,
+                        used_note=bool(rv.get("used_note")),
+                        changes=[str(c)[:300] for c in rv.get("changes") or [] if c][:30],
+                        items=items[:8] if items else None,
                     )
                 )
                 known_reviews.add(rid)
                 report.reviews += 1
+
+        # ---- notes about a week or a month (this app's export only) ----
+        raw_notes = export.get("notes")
+        if isinstance(raw_notes, list):
+            for nt in raw_notes[:500]:
+                if not isinstance(nt, dict) or nt.get("kind") not in ("week", "month"):
+                    continue
+                if not nt.get("text") or not nt.get("start"):
+                    continue
+                kind_n = NoteKind(nt["kind"])
+                start = period_start(kind_n, date.fromisoformat(str(nt["start"])))
+                if await session.get(m.Note, (user_id, kind_n, start)) is None:
+                    session.add(
+                        m.Note(
+                            user_id=user_id, kind=kind_n, start=start, body=str(nt["text"])[:4000]
+                        )
+                    )
 
         await session.flush()
     except Exception:

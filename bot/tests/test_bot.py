@@ -14,11 +14,11 @@ from sqlalchemy import select
 from tests.conftest import Clock
 
 from lifetracker.core.config import get_settings
-from lifetracker.db.models import Delivery, McpToken, User
+from lifetracker.db.models import Delivery, HabitLog, McpToken, Task, User
 from lifetracker.db.session import get_sessionmaker
 from lifetracker.domain.enums import DeliveryKind
 from lifetracker.services import mcp_tokens, reminders
-from lifetracker.services.reminders import Evening, PendingHabit
+from lifetracker.services.reminders import Evening, Morning, PendingHabit
 from lifetracker_bot import texts
 from lifetracker_bot.scheduler import RateLimiter, Reminders
 
@@ -182,7 +182,7 @@ def test_evening_text_and_keyboard() -> None:
         score=72,
         delta=-5,
         habits=[PendingHabit(hid, "Очень длинное название привычки")],
-        critical=["Отчёт <срочно>"],
+        important=["Отчёт <срочно>"],
         done_habits=2,
         total_habits=3,
     )
@@ -200,9 +200,20 @@ def test_evening_text_and_keyboard() -> None:
     assert kb.inline_keyboard[-1][0].web_app is not None
 
 
-def test_morning_button_opens_sleep_sheet() -> None:
-    kb = texts.morning_kb("https://t.example/")
+def test_morning_text_has_the_plan_and_asks_for_sleep() -> None:
+    m = Morning(
+        day=date(2026, 11, 22), first_name="Лёша", sleep_logged=False, tasks=3,
+        important=["Лаба"], plan=["10:00 Лаба по физике", "Вода"],
+    )  # fmt: skip
+    text = texts.morning_text(m)
+    assert "План на сегодня" in text
+    assert "• 10:00 Лаба по физике" in text
+    assert "На сегодня 3 дела." in text
+    assert "Как спал?" in text
+    kb = texts.morning_kb(m, "https://t.example/")
     assert kb.inline_keyboard[0][0].web_app.url == "https://t.example/?open=sleep"  # type: ignore[union-attr]
+    slept = texts.morning_kb(Morning(m.day, "Лёша", True, 0, [], []), "https://t.example/")
+    assert slept.inline_keyboard[0][0].web_app.url == "https://t.example/"  # type: ignore[union-attr]
 
 
 # ---- scheduler ----
@@ -211,7 +222,7 @@ def test_morning_button_opens_sleep_sheet() -> None:
 async def test_scheduler_sends_once_and_marks_delivery(
     bot: Bot, tg: FakeTelegram, alice: AsyncClient, clock: Clock
 ) -> None:
-    await alice.patch("/me", json={"reminder_time": "21:00", "morning_ping": True})
+    await alice.patch("/me", json={"reminder_time": "21:00", "morning_time": "08:00"})
     await alice.post("/habits", json={"name": "Vitamins", "type": "check"})
     worker = Reminders(bot, get_sessionmaker(), get_settings(), now=clock)
 
@@ -232,6 +243,77 @@ async def test_scheduler_sends_once_and_marks_delivery(
         rows = (await s.scalars(select(Delivery))).all()
         assert len(rows) == 2
         assert all(r.sent_at is not None for r in rows)
+
+
+async def test_item_reminders_and_their_done_buttons(
+    dp: Dispatcher, bot: Bot, tg: FakeTelegram, alice: AsyncClient, clock: Clock
+) -> None:
+    task = (
+        await alice.post(
+            "/tasks",
+            json={"title": "Дз по матану", "date": "2026-11-22", "start_time": "18:00",
+                  "remind_at": "17:30"},
+        )
+    ).json()  # fmt: skip
+    water = (
+        await alice.post(
+            "/habits",
+            json={"name": "Вода", "type": "count", "config": {"norm": 8}, "remind_at": "15:00"},
+        )
+    ).json()
+    rest = (
+        await alice.post(
+            "/habits",
+            json={"name": "Зал", "type": "check", "remind_at": "15:00",
+                  "schedule": {"kind": "weekdays"}},
+        )
+    ).json()  # fmt: skip
+    await alice.put(f"/days/2026-11-22/habits/{water['id']}", json={"value": 3})
+    await alice.post("/tasks", json={"title": "Поздно", "date": "2026-11-22", "remind_at": "17:45"})
+    worker = Reminders(bot, get_sessionmaker(), get_settings(), now=clock)
+
+    clock.now = datetime(2026, 11, 22, 15, 5, tzinfo=UTC)  # a Sunday: «Зал» rests
+    assert await worker.tick() == 1
+    msg = tg.sent()[-1]
+    assert isinstance(msg, SendMessage)
+    assert "Вода</b> — 3 из 8" in msg.text
+    assert rest["name"] not in msg.text
+    assert await worker.tick() == 0  # once a day
+
+    await dp.feed_update(bot, press(1001, msg.reply_markup.inline_keyboard[0][0].callback_data))  # type: ignore[union-attr,arg-type]
+    # The clock moved past the app session's lifetime: check in the database.
+    async with get_sessionmaker()() as s:
+        log = await s.get(HabitLog, (uuid.UUID(water["id"]), date(2026, 11, 22)))
+        assert log is not None
+        assert log.value == 8  # «Сделано» fills the norm
+
+    clock.now = datetime(2026, 11, 22, 17, 31, tzinfo=UTC)
+    assert await worker.tick() == 1
+    msg = tg.sent()[-1]
+    assert "Дз по матану</b> · 18:00" in msg.text  # type: ignore[union-attr]
+    await dp.feed_update(bot, press(1001, msg.reply_markup.inline_keyboard[0][0].callback_data))  # type: ignore[union-attr,arg-type]
+    async with get_sessionmaker()() as s:
+        row = await s.get(Task, uuid.UUID(task["id"]))
+        assert row is not None
+        assert row.done is True
+    assert any(isinstance(c, EditMessageText) and "✅ Дз по матану" in c.text for c in tg.calls)
+
+    clock.now = datetime(2026, 11, 22, 18, 46, tzinfo=UTC)  # over an hour late: dropped
+    assert await worker.tick() == 0
+
+
+async def test_week_note_nudge_only_on_sunday(
+    bot: Bot, tg: FakeTelegram, alice: AsyncClient, clock: Clock
+) -> None:
+    await alice.patch("/me", json={"week_note_time": "20:00"})
+    worker = Reminders(bot, get_sessionmaker(), get_settings(), now=clock)
+    clock.now = datetime(2026, 11, 21, 20, 1, tzinfo=UTC)  # Saturday
+    assert await worker.tick() == 0
+    clock.now = datetime(2026, 11, 22, 20, 1, tzinfo=UTC)  # Sunday
+    assert await worker.tick() == 1
+    msg = tg.sent()[-1]
+    assert "Claude учтёт" in msg.text  # type: ignore[union-attr]
+    assert msg.reply_markup.inline_keyboard[0][0].web_app.url.endswith("?open=note")  # type: ignore[union-attr]
 
 
 async def test_blocked_user_is_marked_and_skipped(

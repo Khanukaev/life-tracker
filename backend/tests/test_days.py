@@ -69,12 +69,11 @@ async def test_backfill_flag_and_start_date(alice: AsyncClient) -> None:
 
 async def test_habit_values_are_validated_by_type(alice: AsyncClient) -> None:
     check = await _habit(alice, name="Vitamins", type="check")
-    water = await _habit(alice, name="Water", type="water", config={"target_l": 2})
-    minutes = await _habit(alice, name="Read", type="minutes", config={"target_min": 30})
-    dual = await _habit(alice, name="Food", type="dual", config={"labels": ["kcal", "protein"]})
+    water = await _habit(alice, name="Water", type="count", config={"norm": 8})
+    minutes = await _habit(alice, name="Read", type="count", config={"norm": 30, "step": 10})
     bedtime = await _habit(alice, name="Bed", type="bedtime")
 
-    ok = {check: True, water: 5, minutes: 40, dual: {"a": True, "b": False}}
+    ok = {check: True, water: 5, minutes: 40}
     for hid, value in ok.items():
         r = await alice.put(f"/days/2026-11-22/habits/{hid}", json={"value": value})
         assert r.status_code == 200, (hid, r.text)
@@ -84,9 +83,8 @@ async def test_habit_values_are_validated_by_type(alice: AsyncClient) -> None:
         (water, True),  # bool is not a glass count
         (water, -1),
         (minutes, "30"),
-        (minutes, 2000),
-        (dual, {"a": True}),
-        (dual, {"a": True, "b": 1}),
+        (minutes, 20_000),
+        (minutes, {"a": True, "b": True}),  # the old two-flag shape is gone
         (bedtime, True),  # derived from sleep
     ]
     for hid, value in bad:

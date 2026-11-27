@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Glass · Добавить, задача</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#000}
+*{box-sizing:border-box}
+.n{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.card{position:relative;border-radius:24px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);box-shadow:inset 0 1px 0 rgba(255,255,255,0.12)}
+.tile{display:flex;flex-direction:column;justify-content:space-between;height:148px;padding:14px 16px 16px;text-decoration:none;color:#f5f5f7}
+.tl{display:flex;justify-content:space-between;align-items:center;font-size:15px;line-height:20px;color:#d1d1d6}
+.tv{font-size:30px;line-height:34px;font-weight:600;letter-spacing:-0.03em}
+.tv small{font-size:15px;font-weight:500;color:#8e8e93;letter-spacing:0;margin-left:2px}
+.lab{font-size:15px;line-height:20px;color:#d1d1d6}
+.lead{margin:0;font-size:17px;line-height:24px;color:#d1d1d6;max-width:340px}
+.lead b{color:#f5f5f7;font-weight:600}
+.cap{font-size:13px;line-height:18px;color:#8e8e93}
+.h2{margin:0;font-size:17px;line-height:22px;font-weight:600}
+.stat{flex:1;display:flex;flex-direction:column;gap:2px;padding:14px 18px}
+.stat+.stat{border-left:1px solid rgba(255,255,255,0.09)}
+.stat b{font-size:20px;line-height:24px;font-weight:600;letter-spacing:-0.02em}
+.lr{display:flex;align-items:center;gap:12px;min-height:56px;padding:8px 16px 8px 18px;text-decoration:none;color:#f5f5f7}
+.lr+.lr{border-top:1px solid rgba(255,255,255,0.09)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:2px;border-radius:999px;background:rgba(255,255,255,0.08);height:44px;width:168px}
+.seg button{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;border-radius:999px;background:transparent;color:#aeaeb2;cursor:pointer}
+.seg button.on{background:rgba(255,255,255,0.18);color:#f5f5f7}
+.clogo{display:inline-block;flex:none;width:20px;height:20px;border-radius:6px;border:1.5px dashed rgba(255,255,255,0.45)}
+.pill{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:rgba(47,86,176,0.35);color:#d7e0f7;font-size:12px;font-weight:500}
+.sum{display:flex;flex-direction:column;gap:10px;padding:18px 18px;border-radius:24px;border:1px solid transparent;background:linear-gradient(#0a0a0d,#0a0a0d) padding-box,linear-gradient(120deg,rgba(160,130,255,0.95) 0%,rgba(160,130,255,0.25) 35%,rgba(110,140,255,0.25) 65%,rgba(110,140,255,0.95) 100%) border-box;box-shadow:-34px -26px 70px -18px rgba(140,105,255,0.45),34px 30px 70px -18px rgba(84,120,255,0.55)}
+.src{display:flex;align-items:center;gap:6px;font-size:13px;line-height:18px;color:#8e8e93}
+.sum p{margin:0;font-size:16px;line-height:22px;color:#d1d1d6}
+.sum b{color:#f5f5f7;font-weight:600}
+.motto{margin:0;font-size:18px;line-height:25px;font-weight:400;color:#f5f5f7;letter-spacing:-0.015em}
+.row3{display:flex;align-items:center;gap:14px;min-height:84px;padding:12px 16px 12px 18px;text-decoration:none;color:#f5f5f7}
+.chip{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;height:36px;padding:0 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.ta{width:100%;min-height:84px;resize:none;border-radius:14px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.05);color:#f5f5f7;font:inherit;font-size:16px;line-height:22px;padding:12px 14px;outline:none}
+.ta::placeholder{color:#636366}
+.qlab{display:block;font-size:17px;line-height:22px;font-weight:600;margin:0 0 10px}
+.sw{position:relative;width:51px;height:31px;border-radius:999px;flex:none;border:0;padding:0;cursor:pointer}
+.sw i{position:absolute;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+.cp{appearance:none;border:0;background:transparent;font:inherit;color:#f5f5f7;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 16px 10px 18px}
+.cp+.cp{border-top:1px solid rgba(255,255,255,0.09)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:56px;text-decoration:none;font-size:11px;font-weight:500;color:#aeaeb2}
+a:focus-visible,button:focus-visible{outline:2px solid #f5f5f7;outline-offset:2px}
+.todo{outline:1.5px dashed #2f56b0;outline-offset:3px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #000; color: #f5f5f7; font-family: Geist, -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -0.01em; position: relative; overflow: hidden">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 560px; pointer-events: none; background: radial-gradient(520px 360px at 50% -60px, rgba(120,140,190,0.16), transparent 72%)"></div>
+<div aria-hidden="true" style="position: relative; padding: 56px 20px 0; opacity: 0.45"><div style="font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.03em">Сегодня</div></div><div aria-hidden="true" style="position: absolute; inset: 0; z-index: 2; background: rgba(0,0,0,0.6)"></div>
+<section role="dialog" aria-label="Новое дело" style="position: absolute; left: 0; right: 0; top: 56px; bottom: 0; z-index: 3; padding: 10px 16px 40px; border-radius: 28px 28px 0 0; background: radial-gradient(520px 320px at 50% -60px, rgba(120,140,190,0.16), transparent 72%), #0a0a0d; border-top: 1px solid rgba(255,255,255,0.10); display: flex; flex-direction: column; gap: 16px">
+<div aria-hidden="true" style="width: 36px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.25); margin: 0 auto"></div>
+<div style="display: flex; align-items: center; justify-content: space-between"><a href="TodayGlass.dc.html" style="font-size: 16px; color: #aeaeb2; text-decoration: none; min-height: 44px; display: flex; align-items: center">Отмена</a><h2 style="margin: 0; font-size: 17px; font-weight: 600">Новое дело</h2><a href="{{doneHref}}" aria-disabled="{{noName}}" style="font-size: 16px; font-weight: 600; color: {{doneColor}}; text-decoration: none; min-height: 44px; display: flex; align-items: center">Готово</a></div>
+<div role="group" aria-label="Что это" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 2px; border-radius: 999px; background: rgba(255,255,255,0.08); height: 44px"><sc-for list="{{types}}" as="c" hint-placeholder-count="2"><button onClick="{{c.tap}}" aria-pressed="{{c.on}}" style="appearance: none; border: 0; font: inherit; font-size: 15px; font-weight: 500; border-radius: 999px; cursor: pointer; background: {{c.bg2}}; color: {{c.fg2}}">{{c.t}}</button></sc-for></div>
+<label for="nm" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Название</label>
+<input id="nm" autofocus placeholder="{{ph}}" value="{{name}}" style="height: 52px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); color: #f5f5f7; caret-color: #69ff79; font: inherit; font-size: 18px; padding: 0 16px; outline: none; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08)">
+<sc-if value="{{isTask}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="cap" style="margin: 0 4px">Когда</span><div role="group" aria-label="Когда" style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{whens}}" as="c" hint-placeholder-count="4"><button onClick="{{c.tap}}" aria-pressed="{{c.on}}" style="appearance: none; border: 0; font: inherit; height: 44px; padding: 0 14px; border-radius: 999px; font-size: 15px; cursor: pointer; background: {{c.bg}}; color: {{c.fg}}">{{c.t}}</button></sc-for></div></div>
+<div class="card" style="overflow: hidden"><a href="#" class="lr"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px">Время</span><span class="cap" style="font-size: 13px">подберём по энергии</span></span><span class="n" style="font-size: 15px; color: #aeaeb2">Без времени</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; color: #636366; flex: none"><path d="M9 5l7 7-7 7"></path></svg></a><a href="#" class="lr"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px">Длительность</span></span><span class="n" style="font-size: 15px; color: #aeaeb2">нет</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; color: #636366; flex: none"><path d="M9 5l7 7-7 7"></path></svg></a><a href="#" class="lr"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px">Напоминание</span></span><span class="n" style="font-size: 15px; color: #aeaeb2">нет</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; color: #636366; flex: none"><path d="M9 5l7 7-7 7"></path></svg></a></div>
+<div class="card" style="overflow: hidden"><div class="lr"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px">Важное</span><span class="cap" style="font-size: 13px">поднимется наверх списка</span></span><button onClick="{{impTap}}" role="switch" aria-checked="{{imp}}" aria-label="Важное" style="appearance: none; border: 0; padding: 0; position: relative; width: 51px; height: 31px; border-radius: 999px; flex: none; cursor: pointer; background: {{impBg}}"><i style="position: absolute; top: 2px; left: {{impX}}px; width: 27px; height: 27px; border-radius: 50%; background: {{impKnob}}; box-shadow: 0 1px 3px rgba(0,0,0,0.3)"></i></button></div><div class="lr"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px">Нужна свежая голова</span><span class="cap" style="font-size: 13px">поставим на пик энергии</span></span><button onClick="{{freshTap}}" role="switch" aria-checked="{{fresh}}" aria-label="Нужна свежая голова" style="appearance: none; border: 0; padding: 0; position: relative; width: 51px; height: 31px; border-radius: 999px; flex: none; cursor: pointer; background: {{freshBg}}"><i style="position: absolute; top: 2px; left: {{freshX}}px; width: 27px; height: 27px; border-radius: 50%; background: {{freshKnob}}; box-shadow: 0 1px 3px rgba(0,0,0,0.3)"></i></button></div></div>
+</sc-if>
+<sc-if value="{{isHabit}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="cap" style="margin: 0 4px">Как часто</span><div role="group" aria-label="Как часто" style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{freqs}}" as="c" hint-placeholder-count="4"><button onClick="{{c.tap}}" aria-pressed="{{c.on}}" style="appearance: none; border: 0; font: inherit; height: 44px; padding: 0 14px; border-radius: 999px; font-size: 15px; cursor: pointer; background: {{c.bg}}; color: {{c.fg}}">{{c.t}}</button></sc-for></div></div>
+<sc-if value="{{isCycle}}" hint-placeholder-val="{{ false }}"><div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 16px">Цикл</span><span class="cap">1 — делаю, 0 — отдых</span></div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{days}}" as="d" hint-placeholder-count="5"><button onClick="{{d.tap}}" aria-pressed="{{d.on}}" aria-label="{{d.label}}" style="appearance: none; border: 0; font: inherit; width: 40px; height: 44px; padding: 0; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: {{d.bg}}; color: {{d.fg}}; box-shadow: {{d.ring}}"><b class="n" style="font-size: 17px; font-weight: 600">{{d.v}}</b><span class="n" style="font-size: 11px; opacity: 0.7">{{d.i}}</span></button></sc-for><button onClick="{{cycDel}}" aria-label="Убрать последний день" style="appearance: none; border: 0; font: inherit; width: 40px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.06); color: #aeaeb2; font-size: 20px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14)">−</button><button onClick="{{cycAdd}}" aria-label="Добавить день" style="appearance: none; border: 0; font: inherit; width: 40px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.06); color: #aeaeb2; font-size: 20px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14)">+</button></div>
+<div style="display: flex; align-items: center; border-top: 1px solid rgba(255,255,255,0.09); padding-top: 12px"><span style="flex: 1; font-size: 16px">Сегодня — день цикла</span><span style="display: flex; align-items: center; gap: 4px; flex: none"><button onClick="{{todayDec}}" aria-label="Меньше: день цикла" style="appearance: none; border: 0; font: inherit; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.10); color: #f5f5f7; font-size: 20px; line-height: 1; cursor: pointer">−</button><span class="n" style="min-width: 34px; text-align: center; font-size: 17px; font-weight: 500">{{todayN}}</span><button onClick="{{todayInc}}" aria-label="Больше: день цикла" style="appearance: none; border: 0; font: inherit; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.10); color: #f5f5f7; font-size: 20px; line-height: 1; cursor: pointer">+</button></span></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><span class="cap">Ближайшие две недели</span><div style="display: flex; gap: 4px"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="14"><span style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1"><i style="display: block; width: 100%; aspect-ratio: 1; border-radius: 4px; background: {{w.bg}}; box-shadow: {{w.ring}}"></i><span style="font-size: 11px; color: #8e8e93">{{w.d}}</span></span></sc-for></div></div>
+</div></sc-if>
+<div style="display: flex; flex-direction: column; gap: 8px"><span class="cap" style="margin: 0 4px">Как отмечать</span><div role="group" aria-label="Как отмечать" style="display: flex; gap: 6px; flex-wrap: wrap"><sc-for list="{{norms}}" as="c" hint-placeholder-count="4"><button onClick="{{c.tap}}" aria-pressed="{{c.on}}" style="appearance: none; border: 0; font: inherit; height: 44px; padding: 0 14px; border-radius: 999px; font-size: 15px; cursor: pointer; background: {{c.bg}}; color: {{c.fg}}">{{c.t}}</button></sc-for></div></div>
+<div class="card" style="overflow: hidden"><sc-if value="{{isCount}}" hint-placeholder-val="{{ true }}"><div class="lr"><span style="flex: 1; font-size: 16px">Норма в день</span><span style="display: flex; align-items: center; gap: 4px; flex: none"><button onClick="{{normDec}}" aria-label="Меньше: норма" style="appearance: none; border: 0; font: inherit; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.10); color: #f5f5f7; font-size: 20px; line-height: 1; cursor: pointer">−</button><span class="n" style="min-width: 34px; text-align: center; font-size: 17px; font-weight: 500">{{norm}}</span><button onClick="{{normInc}}" aria-label="Больше: норма" style="appearance: none; border: 0; font: inherit; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.10); color: #f5f5f7; font-size: 20px; line-height: 1; cursor: pointer">+</button></span></div></sc-if><a href="#" class="lr"><span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 16px">Напоминание</span></span><span class="n" style="font-size: 15px; color: #aeaeb2">нет</span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; color: #636366; flex: none"><path d="M9 5l7 7-7 7"></path></svg></a></div>
+</sc-if>
+</section>
+<main style="position: relative; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px">
+
+</main>
+
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { type: 0, when: 1, freq: 0, norm: 1, imp: false, fresh: true, n: 8, pat: [1, 0, 1, 1, 0], today: 2 }; }
+  renderVals() {
+    const s = this.state;
+    const pill = (arr, key) => arr.map((t, i) => { const on = s[key] === i; return { t, on, bg: on ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)', fg: on ? '#f5f5f7' : '#aeaeb2', bg2: on ? 'rgba(255,255,255,0.18)' : 'transparent', fg2: on ? '#f5f5f7' : '#aeaeb2', tap: () => this.setState({ [key]: i }) }; });
+    const sw = (k) => ({ [k]: s[k], [k + 'Bg']: s[k] ? '#69ff79' : 'rgba(255,255,255,0.18)', [k + 'Knob']: s[k] ? '#000' : '#fff', [k + 'X']: s[k] ? 22 : 2, [k + 'Tap']: () => this.setState({ [k]: !s[k] }) });
+    const name = s.type === 0 ? 'Дз по матанализу' : 'Вода';
+    return {
+      types: pill(['Задача', 'Привычка'], 'type'),
+      whens: pill(['Сегодня', 'Завтра', 'Без даты', 'Выбрать…'], 'when'),
+      freqs: pill(['Каждый день', 'По будням', 'Цикл'], 'freq'),
+      norms: pill(['Галочка', 'Количество'], 'norm'),
+      isTask: s.type === 0, isHabit: s.type === 1, isCount: s.norm === 1,
+      isCycle: s.type === 1 && s.freq === 2,
+      norm: s.n === 1 ? 1 : s.n, normDec: () => this.setState({ n: Math.max(1, s.n - 1) }), normInc: () => this.setState({ n: s.n + 1 }),
+      days: s.pat.map((v, i) => ({ v, i: i + 1, on: !!v, label: 'День ' + (i + 1) + (v ? ', делаю' : ', отдых'), bg: v ? '#69ff79' : 'rgba(255,255,255,0.08)', fg: v ? '#000' : '#aeaeb2', ring: i === s.today ? '0 0 0 2px #0a0a0d, 0 0 0 3.5px #f5f5f7' : 'none', tap: () => this.setState({ pat: s.pat.map((x, j) => j === i ? 1 - x : x) }) })),
+      cycAdd: () => this.setState({ pat: s.pat.concat(0) }),
+      cycDel: () => s.pat.length > 2 && this.setState({ pat: s.pat.slice(0, -1), today: Math.min(s.today, s.pat.length - 2) }),
+      todayN: s.today + 1,
+      todayDec: () => this.setState({ today: (s.today - 1 + s.pat.length) % s.pat.length }),
+      todayInc: () => this.setState({ today: (s.today + 1) % s.pat.length }),
+      weeks: Array.from({ length: 14 }, (_, k) => { const v = s.pat[(s.today + k) % s.pat.length]; return { bg: v ? '#69ff79' : 'rgba(255,255,255,0.08)', ring: k === 0 ? '0 0 0 1.5px #f5f5f7' : 'none', d: ['ср','чт','пт','сб','вс','пн','вт'][k % 7] }; }),
+      name, ph: s.type === 0 ? 'Например, дз по матанализу' : 'Например, вода',
+      noName: !name, doneColor: name ? '#f5f5f7' : '#48484a', doneHref: name ? 'TodayAddedGlass.dc.html' : '#',
+      ...sw('imp'), ...sw('fresh')
+    };
+  }
+}
+</script>
+</body>
+</html>

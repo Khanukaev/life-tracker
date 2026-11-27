@@ -4,16 +4,14 @@ from enum import StrEnum
 
 
 class HabitType(StrEnum):
-    CHECK = "check"  # plain checkbox
+    CHECK = "check"  # one tap: done / not done
+    COUNT = "count"  # a daily norm, each tap adds `step` (water glasses, minutes, pages…)
     BEDTIME = "bedtime"  # derived from the next night's sleep, never logged directly
-    WATER = "water"  # glasses of water against a daily volume
-    MINUTES = "minutes"  # minutes counter against a daily target (reading, practice…)
-    DUAL = "dual"  # two flags that must both be set (e.g. "calories + protein")
 
 
 class ScheduleKind(StrEnum):
     DAILY = "daily"
-    EVERY = "every"  # once every N days, counted from the last time it was done
+    WEEKDAYS = "weekdays"  # Monday to Friday
     CYCLE = "cycle"  # repeating pattern such as "11010" starting from an anchor date
 
 
@@ -29,19 +27,6 @@ class EnergyZone(StrEnum):
     RECHARGE = "recharge"
 
 
-class Importance(StrEnum):
-    NORMAL = "normal"
-    IMPORTANT = "important"
-    CRITICAL = "critical"
-
-
-class GoalKind(StrEnum):
-    SUBTASKS = "subtasks"
-    STREAK = "streak"
-    COUNT = "count"
-    MANUAL = "manual"
-
-
 class Actor(StrEnum):
     """Who made a change: the user in the app or their Claude via MCP."""
 
@@ -52,6 +37,15 @@ class Actor(StrEnum):
 class ReviewKind(StrEnum):
     DAY = "day"
     WEEK = "week"
+    MONTH = "month"
+    PLAN = "plan"  # Claude's plan for a day: items the user can add to the day in one tap
+
+
+class NoteKind(StrEnum):
+    """«Неделя словами»: the user's own words about a week or a month, read by Claude."""
+
+    WEEK = "week"
+    MONTH = "month"
 
 
 class ReviewAuthor(StrEnum):
@@ -60,11 +54,9 @@ class ReviewAuthor(StrEnum):
     ME = "me"
 
 
-class Theme(StrEnum):
-    BASE = "base"
-    GLASS = "glass"
-
-
 class DeliveryKind(StrEnum):
-    EVENING = "evening"
-    MORNING = "morning"
+    EVENING = "evening"  # «что осталось на сегодня»
+    MORNING = "morning"  # the plan for the day (and «как спал?» if sleep isn't logged)
+    WEEK_NOTE = "week_note"  # Sunday: «неделя словами» for Claude's review
+    TASK = "task"  # a task's own reminder
+    HABIT = "habit"  # a habit's own reminder

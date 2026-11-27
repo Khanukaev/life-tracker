@@ -23,28 +23,26 @@ from pydantic import Field, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import lifetracker.services.days as days
-import lifetracker.services.goals as goals
 import lifetracker.services.habits as habits
+import lifetracker.services.journal as journal
+import lifetracker.services.notes as notes
 import lifetracker.services.reviews as reviews
 import lifetracker.services.screens as screens
-import lifetracker.services.spheres as spheres
 import lifetracker.services.tasks as tasks
 import lifetracker.services.users as users
 import lifetracker.services.views as screen_views
 from lifetracker.core.errors import AppError
 from lifetracker.db.session import get_sessionmaker
+from lifetracker.domain.dates import fmt_date_short
 from lifetracker.domain.enums import (
     Actor,
-    EnergyZone,
-    GoalKind,
     HabitType,
-    Importance,
+    NoteKind,
     ReviewKind,
     SleepQuality,
 )
-from lifetracker.schemas.claude import REVIEW_MAX
+from lifetracker.schemas.claude import REVIEW_MAX, PlanItem
 from lifetracker.schemas.days import SleepIn
-from lifetracker.schemas.goals import GoalCreate, GoalUpdate, SubtaskIn, SubtaskUpdate
 from lifetracker.schemas.habits import HabitCreate, HabitOut, HabitUpdate
 from lifetracker.schemas.tasks import TaskCreate, TaskOut, TaskUpdate, TaskView
 from lifetracker.services.clock import user_now
@@ -60,33 +58,32 @@ def utc_now() -> datetime:
 clock: Callable[[], datetime] = utc_now  # tests freeze it
 
 INSTRUCTIONS = """\
-Life Tracker: the user's personal tracker of habits, sleep, energy, tasks and goals.
+Keel: the user's personal tracker of habits, tasks, sleep and energy.
 All data belongs to the user who connected this server; you only ever see their data.
 
 Model:
 - A *logical day* runs 05:00–05:00 in the user's time zone: 01:30 belongs to the previous date.
-- Habits have a type: check (done/not), water (glasses toward a daily volume), minutes
-  (minutes toward a target), dual (two flags that must both be set), bedtime (derived
-  from sleep: met when they went to bed by the target time; never logged directly).
-  Schedules: daily, every N days, or a cycle pattern like "1101100" (1 = do, 0 = rest).
-  Every habit weighs the same in the day score; tasks weigh more (critical the most).
+- Habits have a type: check (done / not done), count (a daily norm such as 8 glasses of
+  water or 20 minutes of reading; each tap in the app adds `step`), bedtime (derived from
+  sleep: met when they went to bed by the target time; never logged directly).
+  Schedules: daily, weekdays (Mon–Fri), or a cycle like "1101100" (1 = do, 0 = rest).
+  Every habit weighs the same in the day score; tasks weigh more (important ones most).
 - Sleep of a date = the night that ended on that date's morning (bed, wake, quality).
 - Energy is predicted from sleep with a circadian model and split into zones:
   focus (best for hard thinking), steady (routine work), recharge (rest, admin).
-- Tasks have a date (or none = inbox), optional start time and duration, energy zone,
-  importance (normal, important, critical). Critical tasks weigh most in the score.
+- Tasks have a date (or none = inbox), optional start time and duration, `important`
+  (top of the list, ×3 in the score) and `fresh` (needs a fresh head: best in a focus zone).
 - Day score ("рейтинг", 0–100 %) = weighted share of what was done: sleep, habits, tasks.
-- Goals: stage 1 = base, stage 2 = next stage; kinds: subtasks (steps), streak (N days
-  in a row of linked habits), count (N times within a window), manual (percent).
 
 Etiquette: answer in the user's language (usually Russian). Prefer reading before
-writing. When you change something, say what you changed. Save written analyses with
-save_review so the user sees them in the app.
+writing. When you change something, say what you changed: every change is also listed
+in the app under your next review. Save written analyses with save_review and day
+plans with save_plan so the user sees them in the app.
 """
 
 server: MCPServer[Any] = MCPServer(
-    name="life-tracker",
-    title="Трекер жизни",
+    name="keel",
+    title="Keel",
     instructions=INSTRUCTIONS,
     version="0.1.0",
 )
@@ -126,6 +123,16 @@ class _Call:
             raise ToolError(f"Invalid input: {msgs}") from exc
 
 
+async def _log(s: AsyncSession, uid: uuid.UUID, what: str, now: datetime) -> None:
+    """One line in «Что Claude изменил» (shown with Claude's next review)."""
+    journal.record(s, uid, what, now)
+    await s.commit()
+
+
+def _on(d: date | None) -> str:
+    return f"на {fmt_date_short(d)}" if d else "во входящие"
+
+
 def _hhmm(minutes: float | None) -> str | None:
     if minutes is None:
         return None
@@ -142,10 +149,9 @@ def _task(t: Any) -> dict[str, Any]:
         "date",
         "start_time",
         "duration_min",
-        "energy",
-        "importance",
+        "important",
+        "fresh",
         "done",
-        "sphere_id",
         "created_by",
     )
     return {k: d[k] for k in keep if d.get(k) not in (None, "")} | {"done": d["done"]}
@@ -153,7 +159,7 @@ def _task(t: Any) -> dict[str, Any]:
 
 def _habit(h: Any) -> dict[str, Any]:
     d = HabitOut.model_validate(h).model_dump(mode="json")
-    keep = ("id", "name", "type", "config", "schedule", "active", "sphere_id")
+    keep = ("id", "name", "type", "config", "schedule", "active")
     return {k: d[k] for k in keep}
 
 
@@ -163,14 +169,12 @@ def _habit(h: Any) -> dict[str, Any]:
 @server.tool(annotations=READ)
 async def get_profile() -> dict[str, Any]:
     """The user's profile: name, time zone, today's logical date, sleep norms
-    (bedtime target, sleep need, usual bed/wake), reminder settings, spheres
-    (life areas used to group habits, tasks and goals) and task counters."""
+    (bedtime target, sleep need, usual bed/wake), reminder settings and task counters."""
     async with _Call() as (s, uid, now):
         me = await users.get_me(s, uid)
         st = await users.get_settings(s, uid)
         ln = await user_now(s, uid, now)
         counts = await screens.task_counts(s, uid, ln.day)
-        sph = await spheres.list_spheres(s, uid)
         return {
             "name": me.first_name,
             "motto": me.motto,
@@ -183,8 +187,10 @@ async def get_profile() -> dict[str, Any]:
             "usual_bed": st.usual_bed.strftime("%H:%M"),
             "usual_wake": st.usual_wake.strftime("%H:%M"),
             "evening_reminder": me.reminder_time.strftime("%H:%M") if me.reminder_time else None,
-            "morning_ping": me.morning_ping,
-            "spheres": [{"id": str(x.id), "name": x.name} for x in sph],
+            "morning_reminder": me.morning_time.strftime("%H:%M") if me.morning_time else None,
+            "week_note_reminder": (
+                me.week_note_time.strftime("%H:%M") if me.week_note_time else None
+            ),
             "tasks": counts.model_dump(),
         }
 
@@ -266,12 +272,15 @@ async def get_progress(
     ] = None,
 ) -> dict[str, Any]:
     """Results of a calendar week or month: daily scores, average, days ≥ 70 %, best run,
-    habit completion per habit and per sphere, task completion, bedtime regularity and
-    alerts (weak spots worth attention)."""
+    habit completion per habit, task completion, bedtime regularity and
+    alerts (weak spots worth attention), and the user's own note about the period
+    («Неделя словами»): take it into account and say so with save_review(used_note=true)."""
     async with _Call() as (s, uid, now):
         v = await screen_views.review_view(s, uid, now, period, anchor)
+        note = await notes.get_note(s, uid, NoteKind(period), v.start)
     return {
         "period": v.label,
+        "user_note": note.body if note else None,
         "from": v.start.isoformat(),
         "to": v.end.isoformat(),
         "scores": {b.date.isoformat(): b.pct for b in v.scores},
@@ -283,7 +292,6 @@ async def get_progress(
         "habits": [
             {"name": h.name, "pct": h.pct, "streak": h.streak, "best": h.best} for h in v.habits
         ],
-        "spheres": [{"name": x.name, "pct": x.pct} for x in v.spheres],
         "bedtime_target": _hhmm(v.bed_goal),
         "nights_on_time": sum(1 for n in v.nights if n.on_time),
         "nights_logged": sum(1 for n in v.nights if n.on_time is not None),
@@ -300,7 +308,7 @@ async def get_week_summary() -> dict[str, Any]:
 
 @server.tool(annotations=READ)
 async def get_streaks() -> dict[str, Any]:
-    """Current and best streaks: per habit and per sphere. A streak counts consecutive days
+    """Current and best streaks per habit. A streak counts consecutive days
     on which a habit was done when due (rest days of a schedule don't break it)."""
     async with _Call() as (s, uid, now):
         v = await screen_views.review_view(s, uid, now, "month", None)
@@ -308,7 +316,6 @@ async def get_streaks() -> dict[str, Any]:
         "habits": [
             {"id": str(h.id), "name": h.name, "current": h.streak, "best": h.best} for h in v.habits
         ],
-        "spheres": [{"name": x.name, "current": x.streak, "best": x.best} for x in v.spheres],
     }
 
 
@@ -354,7 +361,7 @@ async def get_energy(
 async def list_habits(
     include_inactive: Annotated[bool, Field(description="Also paused habits")] = False,
 ) -> list[dict[str, Any]]:
-    """All habits with type, norm (config), schedule and sphere. Use the ids with
+    """All habits with type, norm (config) and schedule. Use the ids with
     log_habit and update_habit."""
     async with _Call() as (s, uid, _):
         rows = await habits.list_habits(s, uid, active=None if include_inactive else True)
@@ -369,8 +376,8 @@ async def list_tasks(
     ] = "today",
     date: Annotated[date | None, Field(description="Required when filter=date")] = None,
 ) -> list[dict[str, Any]]:
-    """Tasks by view. Each task: id, title, date, start_time, duration_min, energy zone,
-    importance, done, created_by (me or claude)."""
+    """Tasks by view. Each task: id, title, date, start_time, duration_min, important,
+    fresh, done, created_by (me or claude)."""
     async with _Call() as (s, uid, now):
         if filter == "date":
             if date is None:
@@ -381,46 +388,15 @@ async def list_tasks(
         return [_task(t) for t in rows]
 
 
-@server.tool(annotations=READ)
-async def list_goals(
-    include_archived: Annotated[bool, Field(description="Also archived goals")] = False,
-) -> dict[str, Any]:
-    """Goals grouped by stage (base / next) with progress, deadline, steps and linked
-    habits' progress, plus recent goal history (who changed what: me or claude)."""
-    async with _Call() as (s, uid, now):
-        v = await screens.goals_view(s, uid, now)
-
-    def card(g: Any) -> dict[str, Any]:
-        d: dict[str, Any] = g.model_dump(mode="json", exclude={"cells", "sphere_id"})
-        d["steps"] = [
-            {k: st[k] for k in ("id", "title", "done", "deadline") if k in st} for st in d["steps"]
-        ]
-        return d
-
-    out = {
-        "base": [card(g) for g in v.base],
-        "next": [card(g) for g in v.next],
-        "base_holds_70_for_14_days": v.base_holds,
-        "history": [h.model_dump(mode="json") for h in v.history[:20]],
-    }
-    if include_archived:
-        out["archived"] = [card(g) for g in v.archived]
-    return out
-
-
-# ---- write ----
-
-
 @server.tool(annotations=UPDATE)
 async def log_habit(
     habit_id: Annotated[uuid.UUID, Field(description="From list_habits or get_today")],
     value: Annotated[
-        bool | int | dict[str, bool] | None,
+        bool | int | None,
         Field(
             description=(
-                "check: true/false; water: number of glasses; minutes: minutes done; "
-                'dual: {"a": bool, "b": bool}; null = clear the mark. '
-                "Omit together with done=true to simply mark it fully done."
+                "check: true/false; count: the amount done today (glasses, minutes…); "
+                "null = clear the mark. Omit together with done=true to mark it fully done."
             )
         ),
     ] = None,
@@ -436,11 +412,16 @@ async def log_habit(
         if habit.type == HabitType.BEDTIME:
             raise ToolError("Bedtime is derived from sleep: use log_sleep instead")
         if done is not None:
-            value = cast("bool | int | dict[str, bool]", mark_value(habit, done))
+            value = cast("bool | int", mark_value(habit, done))
         if value is None:
             await days.clear_habit_value(s, uid, day, habit_id, now)
+            what = f"Снял отметку «{habit.name}» за {fmt_date_short(day)}"
         else:
             await days.set_habit_value(s, uid, day, habit_id, value, now)
+            amount = "" if isinstance(value, bool) else f": {value}"
+            mark = "не сделано" if value is False or value == 0 else "отметил"
+            what = f"«{habit.name}» за {fmt_date_short(day)} — {mark}{amount}"
+        await _log(s, uid, what, now)
     return {"ok": True, "habit": habit.name, "date": day.isoformat(), "value": value}
 
 
@@ -459,6 +440,7 @@ async def log_sleep(
         out = await days.set_sleep(
             s, uid, day, SleepIn.model_validate({"bed": bed, "wake": wake, "quality": quality}), now
         )
+        await _log(s, uid, f"Записал сон за {fmt_date_short(day)}: {bed}–{wake}", now)
     return {"ok": True, "date": day.isoformat(), "sleep": out.model_dump(mode="json")["sleep"]}
 
 
@@ -470,30 +452,33 @@ async def create_task(
         str | None, Field(description="HH:MM; needs a date. 00:00–04:59 = the night after date")
     ] = None,
     duration_min: Annotated[int, Field(ge=5, le=1440)] = 30,
-    energy: Annotated[
-        EnergyZone, Field(description="focus = hard thinking, steady = routine, recharge = light")
-    ] = EnergyZone.STEADY,
-    importance: Importance = Importance.NORMAL,
+    important: Annotated[
+        bool, Field(description="Top of the list, weighs ×3 in the score; keep it rare")
+    ] = False,
+    fresh: Annotated[
+        bool, Field(description="Needs a fresh head: the app suggests the energy peak")
+    ] = False,
     description: Annotated[str, Field(max_length=2000)] = "",
-    sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
-    """Create a task. It is marked as created by Claude in the app. Keep critical tasks
-    rare: more than 3 per day dilutes them. Place focus tasks into focus zones
-    (see get_energy) when you pick a time."""
-    async with _Call() as (s, uid, _):
+    """Create a task. It is marked as created by Claude in the app. Keep important tasks
+    rare: when everything is important, nothing is. Place fresh-head tasks into focus
+    zones (see get_energy) when you pick a time."""
+    async with _Call() as (s, uid, now):
         data = TaskCreate.model_validate(
             {
                 "title": title,
                 "date": date,
                 "start_time": start_time,
                 "duration_min": duration_min,
-                "energy": energy,
-                "importance": importance,
+                "important": important,
+                "fresh": fresh,
                 "description": description,
-                "sphere_id": sphere_id,
             }
         )
-        return _task(await tasks.create_task(s, uid, data, by=Actor.CLAUDE))
+        t = await tasks.create_task(s, uid, data, by=Actor.CLAUDE)
+        at = f" в {start_time}" if start_time else ""
+        await _log(s, uid, f"Добавил задачу «{t.title}» {_on(t.date)}{at}", now)
+        return _task(t)
 
 
 @server.tool(annotations=UPDATE)
@@ -505,8 +490,8 @@ async def update_task(
     start_time: Annotated[str | None, Field(description="HH:MM")] = None,
     clear_time: Annotated[bool, Field(description="Keep the date, remove the time")] = False,
     duration_min: Annotated[int | None, Field(ge=5, le=1440)] = None,
-    energy: EnergyZone | None = None,
-    importance: Importance | None = None,
+    important: bool | None = None,
+    fresh: bool | None = None,
     description: Annotated[str | None, Field(max_length=2000)] = None,
     done: bool | None = None,
 ) -> dict[str, Any]:
@@ -518,8 +503,8 @@ async def update_task(
             "date": date,
             "start_time": start_time,
             "duration_min": duration_min,
-            "energy": energy,
-            "importance": importance,
+            "important": important,
+            "fresh": fresh,
             "description": description,
             "done": done,
         }.items()
@@ -530,9 +515,15 @@ async def update_task(
     if clear_time:
         patch["start_time"] = None
     async with _Call() as (s, uid, now):
-        return _task(
-            await tasks.update_task(s, uid, task_id, TaskUpdate.model_validate(patch), now)
-        )
+        t = await tasks.update_task(s, uid, task_id, TaskUpdate.model_validate(patch), now)
+        if "date" in patch:
+            what = f"Перенёс «{t.title}» {_on(t.date)}"
+        elif patch.get("done") is not None:
+            what = f"Отметил «{t.title}» {'сделанной' if t.done else 'несделанной'}"
+        else:
+            what = f"Изменил задачу «{t.title}»"
+        await _log(s, uid, what, now)
+        return _task(t)
 
 
 @server.tool(annotations=UPDATE)
@@ -542,22 +533,24 @@ async def complete_task(
 ) -> dict[str, Any]:
     """Mark a task done (or not done)."""
     async with _Call() as (s, uid, now):
-        return _task(await tasks.update_task(s, uid, task_id, TaskUpdate(done=done), now))
+        t = await tasks.update_task(s, uid, task_id, TaskUpdate(done=done), now)
+        await _log(s, uid, f"Отметил «{t.title}» {'сделанной' if done else 'несделанной'}", now)
+        return _task(t)
 
 
 @server.tool(annotations=WRITE)
 async def create_habit(
     name: Annotated[str, Field(min_length=1, max_length=80)],
     type: Annotated[
-        Literal["check", "water", "minutes", "dual", "bedtime"],
+        Literal["check", "count", "bedtime"],
         Field(description="See the server instructions for what each type means"),
     ],
     config: Annotated[
         dict[str, Any] | None,
         Field(
             description=(
-                'water: {"target_l": 2, "glass_l": 0.25}; minutes: {"target_min": 20, '
-                '"step_min": 10}; dual: {"labels": ["Калории", "Белок"]}; check/bedtime: {}'
+                'count: {"norm": 8, "step": 1} (water: 8 glasses; reading: {"norm": 20, '
+                '"step": 10} minutes); check/bedtime: {}'
             )
         ),
     ] = None,
@@ -565,24 +558,24 @@ async def create_habit(
         dict[str, Any] | None,
         Field(
             description=(
-                '{"kind": "daily"} (default); {"kind": "every", "n": 2} = every other day; '
+                '{"kind": "daily"} (default); {"kind": "weekdays"} = Monday to Friday; '
                 '{"kind": "cycle", "pattern": "1101100"} = do on 1, rest on 0'
             )
         ),
     ] = None,
-    sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Create a habit. Suggest only a few at a time: new habits stick better one by one."""
     body: dict[str, Any] = {
         "name": name,
         "type": type,
         "config": config or {},
-        "sphere_id": sphere_id,
     }
     if schedule:
         body["schedule"] = schedule
     async with _Call() as (s, uid, now):
-        return _habit(await habits.create_habit(s, uid, HabitCreate.model_validate(body), now))
+        h = await habits.create_habit(s, uid, HabitCreate.model_validate(body), now)
+        await _log(s, uid, f"Добавил привычку «{h.name}»", now)
+        return _habit(h)
 
 
 @server.tool(annotations=UPDATE)
@@ -594,7 +587,6 @@ async def update_habit(
     ] = None,
     schedule: Annotated[dict[str, Any] | None, Field(description="Same as create_habit")] = None,
     active: Annotated[bool | None, Field(description="false pauses the habit")] = None,
-    sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Change a habit's name, norm, schedule or pause it. The type can't change."""
     patch = {
@@ -604,105 +596,19 @@ async def update_habit(
             "config": config,
             "schedule": schedule,
             "active": active,
-            "sphere_id": sphere_id,
         }.items()
         if v is not None
     }
     async with _Call() as (s, uid, now):
         h = await habits.update_habit(s, uid, habit_id, HabitUpdate.model_validate(patch), now)
+        paused = "Поставил на паузу" if active is False else "Изменил"
+        await _log(s, uid, f"{paused} привычку «{h.name}»", now)
         return _habit(h)
 
 
 @server.tool(annotations=WRITE)
-async def create_goal(
-    title: Annotated[str, Field(min_length=1, max_length=200)],
-    kind: Annotated[
-        GoalKind,
-        Field(
-            description="subtasks = steps; streak = N days in a row of linked habits; "
-            "count = N times within window_days; manual = percent set by hand"
-        ),
-    ] = GoalKind.SUBTASKS,
-    criterion: Annotated[str, Field(description="How we know it's achieved")] = "",
-    deadline: date | None = None,
-    stage: Annotated[Literal[1, 2], Field(description="1 = base, 2 = next stage")] = 1,
-    habit_ids: Annotated[
-        list[uuid.UUID] | None, Field(description="Linked habits (streak / count goals)")
-    ] = None,
-    target: Annotated[int | None, Field(description="Days in a row or number of times")] = None,
-    window_days: Annotated[int | None, Field(description="count goals: the window")] = None,
-    steps: Annotated[list[str] | None, Field(description="subtasks goals: step titles")] = None,
-    sphere_id: uuid.UUID | None = None,
-) -> dict[str, Any]:
-    """Create a goal; its history records that Claude created it. Keep the base stage to
-    about 3 goals: focus beats breadth."""
-    body = {
-        "title": title,
-        "kind": kind,
-        "criterion": criterion,
-        "deadline": deadline,
-        "stage": stage,
-        "habit_ids": habit_ids or [],
-        "target": target,
-        "window_days": window_days,
-        "sphere_id": sphere_id,
-        "subtasks": [SubtaskIn(title=t) for t in steps or []],
-    }
-    async with _Call() as (s, uid, _):
-        g = await goals.create_goal(s, uid, GoalCreate.model_validate(body), by=Actor.CLAUDE)
-        return g.model_dump(mode="json")
-
-
-@server.tool(annotations=UPDATE)
-async def update_goal(
-    goal_id: uuid.UUID,
-    title: Annotated[str | None, Field(min_length=1, max_length=200)] = None,
-    criterion: str | None = None,
-    deadline: date | None = None,
-    stage: Literal[1, 2] | None = None,
-    habit_ids: list[uuid.UUID] | None = None,
-    target: int | None = None,
-    window_days: int | None = None,
-    manual_pct: Annotated[int | None, Field(ge=0, le=100, description="manual goals")] = None,
-    archived: Annotated[bool | None, Field(description="true = achieved / dropped")] = None,
-    add_steps: Annotated[list[str] | None, Field(description="New step titles")] = None,
-    complete_step_ids: Annotated[list[uuid.UUID] | None, Field(description="Steps done")] = None,
-) -> dict[str, Any]:
-    """Change a goal, add or complete steps. Every change is written to the goal's
-    history as made by Claude, so the user can see it."""
-    patch = {
-        k: v
-        for k, v in {
-            "title": title,
-            "criterion": criterion,
-            "deadline": deadline,
-            "stage": stage,
-            "habit_ids": habit_ids,
-            "target": target,
-            "window_days": window_days,
-            "manual_pct": manual_pct,
-            "archived": archived,
-        }.items()
-        if v is not None
-    }
-    async with _Call() as (s, uid, now):
-        if patch:
-            await goals.update_goal(
-                s, uid, goal_id, GoalUpdate.model_validate(patch), by=Actor.CLAUDE
-            )
-        for t in add_steps or []:
-            await goals.add_subtask(s, uid, goal_id, SubtaskIn(title=t), by=Actor.CLAUDE)
-        for sid in complete_step_ids or []:
-            await goals.update_subtask(
-                s, uid, goal_id, sid, SubtaskUpdate(done=True), now, by=Actor.CLAUDE
-            )
-        g = await goals.get_goal(s, uid, goal_id)
-        return g.model_dump(mode="json")
-
-
-@server.tool(annotations=WRITE)
 async def save_review(
-    kind: Annotated[ReviewKind, Field(description="day | week")],
+    kind: Annotated[Literal["day", "week", "month"], Field(description="day | week | month")],
     text: Annotated[
         str,
         Field(
@@ -712,12 +618,46 @@ async def save_review(
         ),
     ],
     date: Annotated[
-        date | None, Field(description="Day reviewed (or any day of the week); default today")
+        date | None, Field(description="Day reviewed (or any day of the period); default today")
     ] = None,
+    used_note: Annotated[
+        bool,
+        Field(description="true if you took the user's note for the period into account"),
+    ] = False,
 ) -> dict[str, Any]:
-    """Save a review so the user can read it in the app (Day screen → «Разбор от Claude»).
-    Write it as a short, kind and concrete note: what went well, what slipped and why
-    (sleep, energy, overload), and one or two specific suggestions for tomorrow."""
+    """Save a review so the user reads it in the app (Results → «Разбор недели»). Read the
+    period first (get_progress, which includes the user's own note about it). Write it
+    short, kind and concrete: what went well, what gets in the way and why (sleep, energy,
+    overload), and one or two specific things to do. Everything you changed in the tracker
+    since your previous review is listed under it automatically."""
     async with _Call() as (s, uid, now):
-        r = await reviews.save_review(s, uid, kind, text, now, on=date)
-    return {"ok": True, "id": str(r.id), "date": r.date.isoformat(), "kind": r.kind.value}
+        r = await reviews.save_review(
+            s, uid, ReviewKind(kind), text, now, on=date, used_note=used_note
+        )
+    return {
+        "ok": True, "id": str(r.id), "date": r.date.isoformat(), "kind": r.kind.value,
+        "changes_listed": len(r.changes),
+    }  # fmt: skip
+
+
+@server.tool(annotations=WRITE)
+async def save_plan(
+    items: Annotated[
+        list[PlanItem],
+        Field(
+            min_length=1,
+            max_length=8,
+            description="2–4 items usually. title; start HH:MM (optional); dur minutes; "
+            "note = why now, e.g. «это твой пик энергии»",
+        ),
+    ],
+    date: Annotated[date | None, Field(description="The day planned; default today")] = None,
+) -> dict[str, Any]:
+    """Suggest a plan for a day. It appears on the Today screen as «План на сегодня» with
+    «Добавить в день», which turns the items into tasks. Fit hard items into the focus
+    zones (get_energy), don't duplicate tasks the day already has (get_day)."""
+    async with _Call() as (s, uid, now):
+        plan = await reviews.save_plan(
+            s, uid, [i.model_dump(mode="json") for i in items], now, on=date
+        )
+    return {"ok": True, "id": str(plan.id), "date": plan.date.isoformat(), "items": len(items)}

@@ -5,7 +5,6 @@ Statuses of a habit on a day:
     next morning's sleep entry) | nodata (before the start of history) | future
 """
 
-import math
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
@@ -20,12 +19,9 @@ STREAK_LOOKBACK = 400
 MISS_LOOKBACK = 60
 
 
-def glasses_need(h: Habit) -> int:
-    return max(1, math.ceil(float(h.config["target_l"]) / float(h.config["glass_l"]) - 1e-9))
-
-
-def minutes_need(h: Habit) -> int:
-    return int(h.config["target_min"])
+def count_norm(h: Habit) -> int:
+    """Daily norm of a count habit (water glasses, minutes, pages…)."""
+    return max(1, int(h.config.get("norm") or 1))
 
 
 def value_of(h: Habit, k: date, ctx: Ctx) -> Any:
@@ -43,26 +39,15 @@ def habit_done_raw(h: Habit, k: date, ctx: Ctx) -> bool | None:
             if n is None:
                 return None
             return n.bed <= planned_night(ctx.settings).bed
-        case HabitType.WATER:
-            return (v or 0) >= glasses_need(h)
-        case HabitType.MINUTES:
-            return v is not None and v >= minutes_need(h)
-        case HabitType.DUAL:
-            return bool(v and v.get("a") and v.get("b"))
+        case HabitType.COUNT:
+            return (v or 0) >= count_norm(h)
         case _:
             return bool(v)
 
 
 def habit_due(h: Habit, k: date, ctx: Ctx) -> bool:
-    if h.sched == ScheduleKind.EVERY:
-        n = h.sched_n or 2
-        for i in range(1, n):
-            pk = add_days(k, -i)
-            if pk < ctx.start_date:
-                break
-            if habit_done_raw(h, pk, ctx):
-                return False
-        return True
+    if h.sched == ScheduleKind.WEEKDAYS:
+        return k.weekday() < 5
     if h.sched == ScheduleKind.CYCLE:
         p = h.sched_pattern or "1"
         anchor = h.sched_anchor or ctx.start_date

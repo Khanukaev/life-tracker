@@ -1,6 +1,7 @@
 /** HTTP client: Telegram initData -> short-lived JWT, transparent re-login on 401. */
 
 import type { Me } from "./types";
+import { markOnline } from "./net";
 import { whenTelegram } from "./telegram";
 
 const BASE = "/api/v1";
@@ -81,7 +82,16 @@ async function rawLogin(): Promise<Me> {
 }
 
 export function login(): Promise<Me> {
-  if (!loggingIn) loggingIn = rawLogin().finally(() => (loggingIn = null));
+  if (!loggingIn)
+    loggingIn = rawLogin()
+      .catch((e: unknown) => {
+        if (e instanceof TypeError) {
+          markOnline(false); // the login request never reached the server
+          throw new ApiError(0, "offline", "Нет связи");
+        }
+        throw e;
+      })
+      .finally(() => (loggingIn = null));
   return loggingIn;
 }
 
@@ -91,14 +101,22 @@ export function hasToken(): boolean {
 
 export async function api<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
   if (!token) await login();
-  const res = await fetch(BASE + path, {
-    method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(BASE + path, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // fetch rejects only when the request never reached a server: no connection.
+    markOnline(false);
+    throw new ApiError(0, "offline", "Нет связи");
+  }
+  markOnline(true);
   if (res.status === 401 && retry) {
     token = null;
     await login();

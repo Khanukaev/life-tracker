@@ -5,7 +5,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import AfterValidator, Field
 
-from lifetracker.domain.enums import Theme
 from lifetracker.schemas.common import HHMM, ApiModel, InputModel
 
 
@@ -41,8 +40,8 @@ class MeOut(ApiModel):
     language: str
     timezone: str
     reminder_time: HHMM | None
-    morning_ping: bool
-    theme: Theme | None
+    morning_time: HHMM | None
+    week_note_time: HHMM | None
     haptics: bool
     onboarded: bool
     motto: str | None
@@ -54,8 +53,8 @@ class MeUpdate(InputModel):
     language: Language | None = None
     timezone: TimeZone | None = None
     reminder_time: HHMM | None = None
-    morning_ping: bool | None = None
-    theme: Theme | None = None
+    morning_time: HHMM | None = None
+    week_note_time: HHMM | None = None
     haptics: bool | None = None
     onboarded: bool | None = None
     motto: str | None = Field(default=None, max_length=120)

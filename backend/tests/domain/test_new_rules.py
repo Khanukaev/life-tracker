@@ -5,8 +5,10 @@ from functools import cache
 
 import pytest
 
+from lifetracker.domain.dates import add_days
 from lifetracker.domain.energy import EnergyDay, energy_day
-from lifetracker.domain.enums import HabitType, Importance
+from lifetracker.domain.enums import HabitType, ScheduleKind
+from lifetracker.domain.habits import habit_status
 from lifetracker.domain.model import Ctx, DayRec, Habit, Settings, SleepRec, Task
 from lifetracker.domain.phrases import CRITICAL, pick_phrase
 from lifetracker.domain.score import bed_gain, day_score, gains
@@ -30,12 +32,12 @@ def make_ctx(
     )
 
 
-def test_each_task_is_its_own_item_and_critical_weighs_three() -> None:
+def test_each_task_is_its_own_item_and_important_weighs_three() -> None:
     ctx = make_ctx([Habit(id="vit", type=HabitType.CHECK)])
     tasks = [
-        Task(id="a", title="Critical", date=TODAY, importance=Importance.CRITICAL),
+        Task(id="a", title="Important", date=TODAY, important=True),
         Task(id="b", title="Normal", date=TODAY, done=True),
-        Task(id="c", title="Important", date=TODAY, importance=Importance.IMPORTANT),
+        Task(id="c", title="Other", date=TODAY),
     ]
     sc = day_score(TODAY, ctx, tasks)
     assert sc is not None
@@ -47,7 +49,7 @@ def test_each_task_is_its_own_item_and_critical_weighs_three() -> None:
     ]
     assert sc.W == 8
     assert sc.pct == 25  # only the normal task (2 of 8) is done
-    # The unfinished critical task is the biggest gain.
+    # The unfinished important task is the biggest gain.
     assert gains(sc)[0].item.ref == "a"
     assert gains(sc)[0].points == 38
 
@@ -87,14 +89,23 @@ def test_bedtime_item_scales_with_lateness() -> None:
 
 def test_partial_credit_for_counters() -> None:
     habits = [
-        Habit(id="w", type=HabitType.WATER, config={"target_l": 2, "glass_l": 0.25}),
-        Habit(id="m", type=HabitType.MINUTES, config={"target_min": 40, "step_min": 10}),
-        Habit(id="d", type=HabitType.DUAL, config={"labels": ["a", "b"]}),
+        Habit(id="w", type=HabitType.COUNT, config={"norm": 8}),
+        Habit(id="m", type=HabitType.COUNT, config={"norm": 40, "step": 10}),
+        Habit(id="x", type=HabitType.COUNT, config={"norm": 2}),
     ]
-    ctx = make_ctx(habits, {TODAY: DayRec(values={"w": 4, "m": 10, "d": {"a": True, "b": False}})})
+    ctx = make_ctx(habits, {TODAY: DayRec(values={"w": 4, "m": 10, "x": 5})})
     sc = day_score(TODAY, ctx, [])
     assert sc is not None
-    assert [x.v for x in sc.items] == [0.5, 0.25, 0.5]
+    assert [x.v for x in sc.items] == [0.5, 0.25, 1]  # over the norm still counts as 1
+    assert sc.items[0].note == "4/8"
+
+
+def test_weekdays_rest_on_the_weekend() -> None:
+    gym = Habit(id="g", type=HabitType.CHECK, sched=ScheduleKind.WEEKDAYS)
+    ctx = make_ctx([gym])
+    saturday = date(2026, 11, 21)
+    assert habit_status(gym, saturday, ctx) == "rest"
+    assert habit_status(gym, add_days(saturday, -1), ctx) == "missed"  # Friday
 
 
 def test_slot_falls_back_to_next_day_when_today_fits_poorly() -> None:
@@ -112,9 +123,9 @@ def test_slot_falls_back_to_next_day_when_today_fits_poorly() -> None:
     assert s.alternative.fit >= 0.6
 
 
-def test_phrase_mentions_critical_tasks_when_they_are_open() -> None:
+def test_phrase_mentions_important_tasks_when_they_are_open() -> None:
     ctx = make_ctx([Habit(id="vit", type=HabitType.CHECK)])
-    tasks = [Task(id="a", title="x", date=TODAY, importance=Importance.CRITICAL)]
+    tasks = [Task(id="a", title="x", date=TODAY, important=True)]
     sc = day_score(TODAY, ctx, tasks)
     assert sc is not None
     phrases = {pick_phrase(sc, None, ctx, tasks, bed_label="23:30", shift=i) for i in range(20)}

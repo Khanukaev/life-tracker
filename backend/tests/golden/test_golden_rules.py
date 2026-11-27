@@ -9,9 +9,7 @@ import pytest
 from lifetracker.domain.dates import add_days, fmt_dur
 from lifetracker.domain.energy import EnergyDay, energy_day
 from lifetracker.domain.feel import ASLEEP_MSG, feel_update
-from lifetracker.domain.goals import goal_overdue, goal_progress
 from lifetracker.domain.habits import (
-    active_habits,
     best_streak,
     habit_due,
     habit_rate,
@@ -26,9 +24,11 @@ from tests.golden.conftest import Case, equal_weights, r6
 
 pytestmark = pytest.mark.nodb
 
+GOAL_ALERTS = ("Цель «", "Просроченные шаги в целях")
+
 
 def test_habit_statuses_streaks_rates(case: Case) -> None:
-    ctx = case.data.ctx
+    ctx = case.exact_ctx
     for h in ctx.habits:
         exp = case.expected["habits"][h.id]
         for k, s in exp["status"].items():
@@ -43,29 +43,12 @@ def test_habit_statuses_streaks_rates(case: Case) -> None:
         assert miss_run(h, ctx) == exp["missRun"], h.id
 
 
-def test_sphere_streaks(case: Case) -> None:
-    ctx = case.data.ctx
-    for sphere, exp in case.expected["spheres"].items():
-        keys = [h.id for h in active_habits(ctx) if h.sphere == sphere]
-        assert keys == exp["keys"]
-        assert streak_of(keys, ctx) == exp["streak"], sphere
-        assert best_streak(keys, ctx) == exp["best"], sphere
-
-
-def test_goals(case: Case) -> None:
-    for g in case.data.goals:
-        exp = case.expected["goals"][g.id]
-        p = {k: v for k, v in asdict(goal_progress(g, case.data.ctx)).items() if v is not None}
-        assert p == exp["progress"], g.id
-        assert goal_overdue(g, case.data.ctx) == exp["overdue"], g.id
-
-
 def test_day_score_matches_where_rules_coincide(case: Case) -> None:
     """New rules: one item per task (critical ×3) and every habit ×1.
 
     With ≤1 task a day the items and their values equal the original's; the percentage
     is the original's items re-weighted (see ``equal_weights``)."""
-    ctx, tasks = case.data.ctx, case.data.tasks
+    ctx, tasks = case.exact_ctx, case.data.tasks
     compared = 0
     for k, exp in case.expected["dayScore"].items():
         day = date.fromisoformat(k)
@@ -78,7 +61,7 @@ def test_day_score_matches_where_rules_coincide(case: Case) -> None:
             continue
         legacy_key = {"sleep": "sleep", "task": "tasks"}
         got = [[legacy_key.get(x.kind, x.ref), x.w, r6(x.v)] for x in sc.items]
-        items, pct, total = equal_weights(exp["items"])
+        items, pct, total = equal_weights(exp["items"], case.approx)
         assert got == items, k
         assert (sc.pct, sc.W) == (pct, total), k
         compared += 1
@@ -113,8 +96,13 @@ def test_weak_spots(case: Case) -> None:
     ctx = case.data.ctx
     e = energy_day(ctx.today, ctx)
     for n in (7, 30):
-        got = [a.text for a in weak_spots_last(ctx, case.data.tasks, case.data.goals, e, n)]
-        assert got == case.expected["weakSpots"][str(n)], n
+        got = [a.text for a in weak_spots_last(case.exact_ctx, case.data.tasks, e, n)]
+        # The original's goal alerts are gone with goals, and alerts about approximated
+        # habits can't match; the rest keep order and text. Its list was cut at 7, so a
+        # freed slot may now hold one more of ours at the end.
+        skip = GOAL_ALERTS + case.approx_names
+        want = [t for t in case.expected["weakSpots"][str(n)] if not t.startswith(skip)]
+        assert got[: len(want)] == want, n
 
 
 def test_energy_left(case: Case) -> None:

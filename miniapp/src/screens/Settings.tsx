@@ -5,7 +5,6 @@ import { addDays } from "../lib/format";
 import { haptic, hapticsEnabled } from "../lib/haptic";
 import { openDay } from "../lib/router";
 import { mutate, resource, setData } from "../lib/store";
-import { applyTheme, canGlass, theme } from "../lib/theme";
 import type { DayView, Me, Settings } from "../lib/types";
 
 function saveMe(fields: Partial<Me>) {
@@ -38,26 +37,13 @@ export function SettingsScreen() {
     }
   }, []);
   if (!me) return null;
-  const glassOn = theme.value === "glass";
-  const supported = canGlass();
   return (
     <div class="page">
       <StackHead back="Профиль" title="Настройки" />
       <main class="main" style={{ paddingTop: "20px" }}>
         <section>
-          <div class="sec"><span>Оформление</span></div>
+          <div class="sec"><span>Отклик</span></div>
           <div class="card list">
-            <Row title="Liquid Glass" sub={supported ? "Стекло, размытие и живые анимации" : "Устройство не тянет эффекты — включена базовая тема"}>
-              <Switch
-                on={glassOn}
-                label="Liquid Glass"
-                onChange={(on) => {
-                  const next = on && supported ? "glass" : "base";
-                  applyTheme(next); // instant, no reload
-                  void saveMe({ theme: next });
-                }}
-              />
-            </Row>
             <Row title="Вибрация" sub="Отклик на нажатия и отметки">
               <Switch
                 on={me.haptics}
@@ -82,8 +68,13 @@ export function SettingsScreen() {
                 onChange={(e) => void saveMe({ reminder_time: (e.target as HTMLInputElement).value || null })}
               />
             </Row>
-            <Row title="Утром «Как спал?»" sub="Кнопка, чтобы отметить сон">
-              <Switch on={me.morning_ping} label="Утреннее сообщение" onChange={(on) => void saveMe({ morning_ping: on })} />
+            <Row title="Утром «Как спал?» и план" sub="Сообщение от бота в это время">
+              <input
+                type="time"
+                class="pill-input"
+                value={me.morning_time ?? ""}
+                onChange={(e) => void saveMe({ morning_time: (e.target as HTMLInputElement).value || null })}
+              />
             </Row>
           </div>
         </section>

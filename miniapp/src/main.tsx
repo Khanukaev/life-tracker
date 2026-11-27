@@ -4,6 +4,7 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/glass.css";
 import "./styles/motion.css";
+import "./styles/keel.css";
 
 import { render } from "preact";
 import { App } from "./App";
@@ -13,16 +14,16 @@ import { deepLinkSheet, openSheet, syncBackButton } from "./lib/router";
 import { entry, refresh, setUserKey, watchVisibility } from "./lib/store";
 import type { DayView } from "./lib/types";
 import { setupTelegram, whenTelegram } from "./lib/telegram";
-import { applyTheme, canGlass, resolveTheme, theme } from "./lib/theme";
-import { reducedMotion, setMotion } from "./motion/tokens";
+import { canMotion, setMotion } from "./motion/tokens";
 
-// 1) Paint immediately from the local cache (theme is already applied by index.html).
-applyTheme(theme.value);
+// One dark theme. Motion only on capable devices; the OS setting can change at any time.
+// (All motion is CSS/WAAPI on transform, opacity and SVG; GSAP is not needed here.)
+const motion = () => setMotion(canMotion());
+motion();
+matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", motion);
+
+// 1) Paint immediately from the local cache.
 render(<App />, document.getElementById("app")!);
-// The OS setting can change while the app is open: switch motion off instantly.
-matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () =>
-  setMotion(!reducedMotion() && theme.value === "glass" && canGlass()),
-);
 
 // 2) Then connect to Telegram and the backend in the background.
 void (async () => {
@@ -33,7 +34,6 @@ void (async () => {
     const me = await login();
     setUserKey(me.id);
     hapticsEnabled.value = me.haptics;
-    applyTheme(resolveTheme(me.theme));
     void refresh("/me");
     if (deepLinkSheet() === "sleep") {
       await refresh("/views/day"); // the sheet needs the user's logical "today"

@@ -7,27 +7,15 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from lifetracker.domain.enums import HabitType, ScheduleKind
-from lifetracker.schemas.common import ApiModel, InputModel
+from lifetracker.schemas.common import HHMM, ApiModel, InputModel
 
 
-class WaterConfig(BaseModel):
+class CountConfig(BaseModel):
+    """A daily norm; each tap adds `step` (1 for glasses or pages, 5–15 for minutes)."""
+
     model_config = ConfigDict(extra="forbid")
-    target_l: float = Field(ge=0.1, le=10)
-    glass_l: float = Field(default=0.25, ge=0.05, le=2)
-
-
-class MinutesConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    target_min: int = Field(ge=1, le=1440)
-    step_min: int = Field(default=10, ge=1, le=240)
-
-
-class DualConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    labels: tuple[
-        Annotated[str, Field(min_length=1, max_length=24)],
-        Annotated[str, Field(min_length=1, max_length=24)],
-    ]
+    norm: int = Field(ge=1, le=1440)
+    step: int = Field(default=1, ge=1, le=240)
 
 
 class EmptyConfig(BaseModel):
@@ -37,9 +25,7 @@ class EmptyConfig(BaseModel):
 CONFIG_MODELS: dict[HabitType, type[BaseModel]] = {
     HabitType.CHECK: EmptyConfig,
     HabitType.BEDTIME: EmptyConfig,
-    HabitType.WATER: WaterConfig,
-    HabitType.MINUTES: MinutesConfig,
-    HabitType.DUAL: DualConfig,
+    HabitType.COUNT: CountConfig,
 }
 
 
@@ -52,23 +38,23 @@ class DailySchedule(InputModel):
     kind: Literal[ScheduleKind.DAILY] = ScheduleKind.DAILY
 
 
-class EverySchedule(InputModel):
-    kind: Literal[ScheduleKind.EVERY]
-    n: int = Field(ge=2, le=365, description="2 = every other day")
+class WeekdaysSchedule(InputModel):
+    kind: Literal[ScheduleKind.WEEKDAYS]
 
 
 class CycleSchedule(InputModel):
     kind: Literal[ScheduleKind.CYCLE]
-    pattern: str = Field(pattern=r"^[01]+$", max_length=31, description="1 = do, 0 = rest")
+    pattern: str = Field(
+        pattern=r"^[01]*1[01]*$", min_length=2, max_length=31, description="1 = do, 0 = rest"
+    )
     anchor: date | None = Field(default=None, description="Day 1 of the pattern; default today")
 
 
-Schedule = Annotated[DailySchedule | EverySchedule | CycleSchedule, Field(discriminator="kind")]
+Schedule = Annotated[DailySchedule | WeekdaysSchedule | CycleSchedule, Field(discriminator="kind")]
 
 
 class ScheduleOut(ApiModel):
     kind: ScheduleKind
-    n: int | None = None
     pattern: str | None = None
     anchor: date | None = None
 
@@ -77,10 +63,10 @@ class HabitOut(ApiModel):
     id: uuid.UUID
     name: str
     type: HabitType
-    sphere_id: uuid.UUID | None
     config: dict[str, Any]
     schedule: ScheduleOut
     active: bool
+    remind_at: HHMM | None = None
     position: int
 
     @model_validator(mode="before")
@@ -91,15 +77,14 @@ class HabitOut(ApiModel):
                 "id": obj.id,
                 "name": obj.name,
                 "type": obj.type,
-                "sphere_id": obj.sphere_id,
                 "config": obj.config,
                 "schedule": ScheduleOut(
                     kind=obj.sched_kind,
-                    n=obj.sched_n,
                     pattern=obj.sched_pattern,
                     anchor=obj.sched_anchor,
                 ),
                 "active": obj.active,
+                "remind_at": obj.remind_at,
                 "position": obj.position,
             }
         return obj
@@ -109,10 +94,10 @@ class HabitCreate(InputModel):
     id: uuid.UUID | None = None
     name: str = Field(min_length=1, max_length=80)
     type: HabitType
-    sphere_id: uuid.UUID | None = None
     config: dict[str, Any] = Field(default_factory=dict)
     schedule: Schedule = Field(default_factory=DailySchedule)
     active: bool = True
+    remind_at: HHMM | None = Field(default=None, description="Bot message on its days")
     position: int | None = None
 
     @model_validator(mode="after")
@@ -128,8 +113,8 @@ class HabitUpdate(InputModel):
     """The type cannot change: existing logs would lose their meaning."""
 
     name: str | None = Field(default=None, min_length=1, max_length=80)
-    sphere_id: uuid.UUID | None = None
     config: dict[str, Any] | None = None
     schedule: Schedule | None = None
     active: bool | None = None
+    remind_at: HHMM | None = None
     position: int | None = None

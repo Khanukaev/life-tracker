@@ -47,7 +47,6 @@ async def login_telegram_user(
             username=tg.username,
             language=_language(tg.language_code),
             timezone=tz,
-            morning_ping=False,
             haptics=True,
             onboarded=False,
             bot_blocked=False,
@@ -75,7 +74,9 @@ async def get_me(session: AsyncSession, user_id: uuid.UUID) -> User:
 async def update_me(session: AsyncSession, user_id: uuid.UUID, data: MeUpdate) -> User:
     user = await get_me(session, user_id)
     apply_patch(
-        user, data.model_dump(exclude_unset=True), nullable={"reminder_time", "theme", "motto"}
+        user,
+        data.model_dump(exclude_unset=True),
+        nullable={"reminder_time", "morning_time", "week_note_time", "motto"},
     )
     await session.commit()
     return user

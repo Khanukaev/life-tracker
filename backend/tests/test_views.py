@@ -15,7 +15,7 @@ async def setup_user(c: AsyncClient) -> dict[str, str]:
     read = (
         await c.post(
             "/habits",
-            json={"name": "Read", "type": "minutes", "config": {"target_min": 30}},
+            json={"name": "Read", "type": "count", "config": {"norm": 30, "step": 10}},
         )
     ).json()["id"]
     vit = (await c.post("/habits", json={"name": "Vitamins", "type": "check"})).json()["id"]
@@ -28,7 +28,7 @@ async def setup_user(c: AsyncClient) -> dict[str, str]:
     await c.post(
         "/tasks",
         json={"title": "Report", "date": TODAY, "start_time": "15:00", "duration_min": 60,
-              "importance": "critical", "energy": "focus"},
+              "important": True, "fresh": True},
     )  # fmt: skip
     await c.post("/tasks", json={"title": "Groceries", "date": TODAY})
     return {"bed": bed, "read": read, "vit": vit}
@@ -48,7 +48,7 @@ async def test_day_view(alice: AsyncClient) -> None:
     score = v["score"]
     kinds = [i["kind"] for i in score["items"]]
     assert kinds == ["sleep", "habit", "habit", "task", "task"]
-    assert score["gains"][0]["label"] == "Report"  # critical task: the biggest gain
+    assert score["gains"][0]["label"] == "Report"  # important task: the biggest gain
     assert score["bed_gain"] > 0
     assert len(score["week"]) == 7
 
@@ -58,9 +58,7 @@ async def test_day_view(alice: AsyncClient) -> None:
     assert habits[ids["vit"]]["streak"] == 7  # today pending doesn't break the streak
     assert habits[ids["vit"]]["streak_base"] == 7
 
-    assert [t["title"] for t in v["critical"]] == ["Report"]
-    assert v["critical_overload"] is False
-    assert [t["title"] for t in v["tasks"]] == ["Report", "Groceries"]  # critical first
+    assert [t["title"] for t in v["tasks"]] == ["Report", "Groceries"]  # important first
     tl = v["timeline"]
     assert len(tl["curve"]) == 97
     assert tl["zones"]
@@ -80,13 +78,6 @@ async def test_day_view_other_days(alice: AsyncClient) -> None:
     assert future["score"] is None
     assert future["habits"] == []
     assert future["sleep_planned"] == {"bed": "23:30", "need_h": 8.0}
-
-
-async def test_critical_overload_warning(alice: AsyncClient) -> None:
-    for i in range(4):
-        await alice.post("/tasks", json={"title": f"C{i}", "date": TODAY, "importance": "critical"})
-    v = (await alice.get("/views/day")).json()
-    assert v["critical_overload"] is True
 
 
 async def test_new_user_day_view_is_empty_but_valid(alice: AsyncClient) -> None:

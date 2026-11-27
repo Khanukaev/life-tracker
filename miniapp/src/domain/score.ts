@@ -2,35 +2,31 @@
  * Lightweight client copy of the score formulas, used ONLY for optimistic recalculation
  * right after a tap (the server stays the source of truth and refreshes quietly).
  *
- * Mirrors backend/lifetracker/domain/{habits,score}.py and is checked against the same
- * golden expectations produced by the original JavaScript (see score.test.ts). Unlike the
- * original, every habit weighs ×1: importance is a task notion.
+ * Mirrors backend/lifetracker/domain/{habits,score}.py: every habit weighs ×1, a task ×2,
+ * an important task ×3; a count habit counts partially toward its daily norm; habits
+ * resting by schedule are not counted. Checked against the golden expectations of the
+ * original JavaScript (see score.test.ts).
  */
 
-import type { HabitRow, HabitType, Importance, Score, ScoreItem, Status } from "../lib/types";
+import type { HabitRow, HabitType, Score, ScoreItem, Status } from "../lib/types";
 
 export const HABIT_WEIGHT = 1;
-export const CRITICAL_TASK_WEIGHT = 3;
 export const TASK_WEIGHT = 2;
+export const IMPORTANT_TASK_WEIGHT = 3;
 
-export function glassesNeed(config: Record<string, any>): number {
-  return Math.max(1, Math.ceil(Number(config.target_l) / Number(config.glass_l) - 1e-9));
+export function countNorm(config: Record<string, any>): number {
+  return Math.max(1, Math.trunc(Number(config.norm) || 1));
+}
+
+export function countStep(config: Record<string, any>): number {
+  return Math.max(1, Math.trunc(Number(config.step) || 1));
 }
 
 /** Whether a habit value fulfils the habit (bedtime is derived from sleep: unknown here). */
 export function isDone(type: HabitType, config: Record<string, any>, value: any): boolean | null {
-  switch (type) {
-    case "bedtime":
-      return null;
-    case "water":
-      return (value ?? 0) >= glassesNeed(config);
-    case "minutes":
-      return value != null && value >= Number(config.target_min);
-    case "dual":
-      return !!(value && value.a && value.b);
-    default:
-      return !!value;
-  }
+  if (type === "bedtime") return null;
+  if (type === "count") return (Number(value) || 0) >= countNorm(config);
+  return !!value;
 }
 
 /** Status of a non-bedtime habit after a local change. */
@@ -41,19 +37,16 @@ export function statusAfter(row: HabitRow, value: any, isToday: boolean): Status
   return isToday ? "pending" : "missed";
 }
 
-/** Partial credit of an item (`dayScore`): water, minutes and dual count partially. */
+/** Credit of an item, 0..1: a count habit counts partially toward its norm. */
 export function itemValue(type: HabitType, config: Record<string, any>, value: any, status: Status): number {
-  let v = status === "done" ? 1 : 0;
-  if (type === "water") v = Math.min(1, (value ?? 0) / glassesNeed(config));
-  else if (type === "dual") v = (value?.a ? 0.5 : 0) + (value?.b ? 0.5 : 0);
-  else if (type === "minutes" && value != null) v = Math.min(1, value / Number(config.target_min));
-  return v;
+  if (type === "count") return Math.min(1, (Number(value) || 0) / countNorm(config));
+  return status === "done" ? 1 : 0;
 }
 
 export interface TaskLike {
   id: string;
   title: string;
-  importance: Importance;
+  important: boolean;
   done: boolean;
 }
 
@@ -83,7 +76,7 @@ export function computeScore(
       kind: "task",
       ref: t.id,
       label: t.title,
-      w: t.importance === "critical" ? CRITICAL_TASK_WEIGHT : TASK_WEIGHT,
+      w: t.important ? IMPORTANT_TASK_WEIGHT : TASK_WEIGHT,
       v: t.done ? 1 : 0,
       points: 0,
       max_points: 0,
@@ -93,7 +86,7 @@ export function computeScore(
   const W = items.reduce((a, x) => a + x.w, 0);
   const got = items.reduce((a, x) => a + x.w * x.v, 0);
   for (const x of items) {
-    x.points = W ? Math.round((x.w * x.v) / W * 100) : 0;
+    x.points = W ? Math.round(((x.w * x.v) / W) * 100) : 0;
     x.max_points = W ? Math.round((x.w / W) * 100) : 0;
   }
   return { pct: W ? Math.round((got / W) * 100) : 0, W, items };
@@ -103,7 +96,7 @@ export function computeScore(
 export function computeGains(items: ScoreItem[], W: number, limit = 4) {
   return items
     .filter((x) => x.kind !== "sleep" && x.v < 1)
-    .map((x) => ({ kind: x.kind, ref: x.ref, label: x.label, points: Math.round((x.w * (1 - x.v)) / W * 100) }))
+    .map((x) => ({ kind: x.kind, ref: x.ref, label: x.label, points: Math.round(((x.w * (1 - x.v)) / W) * 100) }))
     .filter((g) => g.points >= 1)
     .sort((a, b) => b.points - a.points)
     .slice(0, limit);

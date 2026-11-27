@@ -7,7 +7,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
 from lifetracker.domain.dates import fmt_date
-from lifetracker.services.reminders import Evening
+from lifetracker.services.reminders import Evening, HabitReminder, Morning, TaskReminder
 
 MAX_HABIT_BUTTONS = 12  # a longer list is better marked in the app itself
 
@@ -20,6 +20,19 @@ class Mark(CallbackData, prefix="m"):
     done: int
 
 
+class TaskDone(CallbackData, prefix="t"):
+    """«Сделано» under a task reminder: t:<32 hex>."""
+
+    task: str
+
+
+class HabitDone(CallbackData, prefix="h"):
+    """«Сделано» under a habit reminder: h:<32 hex>:<yyyymmdd> (fills a count's norm)."""
+
+    habit: str
+    day: str
+
+
 def day_key(d: date) -> str:
     return d.strftime("%Y%m%d")
 
@@ -28,7 +41,7 @@ def parse_day(s: str) -> date:
     return date(int(s[:4]), int(s[4:6]), int(s[6:]))
 
 
-def open_app_kb(url: str, label: str = "Открыть трекер") -> InlineKeyboardMarkup:
+def open_app_kb(url: str, label: str = "Открыть Keel") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=label, web_app=WebAppInfo(url=url))]]
     )
@@ -37,11 +50,12 @@ def open_app_kb(url: str, label: str = "Открыть трекер") -> InlineK
 def start_text(first_name: str) -> str:
     return (
         f"Привет, {escape(first_name)}! 👋\n\n"
-        "Это твой личный трекер: привычки, сон, энергия, задачи и цели. "
+        "Keel — твой день в одном месте: привычки, дела и сон. "
+        "Отмечай одним касанием, смотри энергию и итоги недели. "
         "Данные видишь только ты.\n\n"
-        "Открой приложение кнопкой ниже — настройка займёт минуту. "
-        "Вечером пришлю итог дня, а отмечать привычки можно прямо здесь.\n\n"
-        "/connect — подключить своего Claude к трекеру"
+        "Открой приложение кнопкой ниже — первая отметка займёт минуту. "
+        "Напоминания приходят сюда, отмечать можно прямо из них.\n\n"
+        "/connect — подключить своего Claude"
     )
 
 
@@ -62,9 +76,9 @@ def evening_text(e: Evening) -> str:
         parts.append("\nНе отмечено — отметь кнопками:")
     elif e.total_habits:
         parts.append("\nВсе привычки отмечены 👌")
-    if e.critical:
-        tasks = "\n".join(f"• {escape(t)}" for t in e.critical)
-        parts.append(f"\n🔴 Критичные задачи не закрыты:\n{tasks}")
+    if e.important:
+        tasks = "\n".join(f"• {escape(t)}" for t in e.important)
+        parts.append(f"\nВажное, что ещё не сделано:\n{tasks}")
     return "\n".join(parts)
 
 
@@ -91,15 +105,73 @@ def evening_kb(e: Evening, app_url: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def morning_text(first_name: str) -> str:
+def morning_text(m: Morning) -> str:
+    parts = [f"☀️ Доброе утро, {escape(m.first_name)}!"]
+    if m.plan:
+        lines = "\n".join(f"• {escape(x)}" for x in m.plan)
+        parts.append(f"\n<b>План на сегодня</b> от Claude:\n{lines}")
+    if m.tasks:
+        word = "дело" if m.tasks % 10 == 1 and m.tasks % 100 != 11 else "дел"
+        if 2 <= m.tasks % 10 <= 4 and not 12 <= m.tasks % 100 <= 14:
+            word = "дела"
+        parts.append(f"\nНа сегодня {m.tasks} {word}.")
+    if m.important:
+        parts.append("Важное: " + ", ".join(f"«{escape(t)}»" for t in m.important[:3]) + ".")
+    if not m.sleep_logged:
+        parts.append("\nКак спал? Отметь сон — от него считается энергия на день.")
+    return "\n".join(parts)
+
+
+def morning_kb(m: Morning, app_url: str) -> InlineKeyboardMarkup:
+    if not m.sleep_logged:
+        return open_app_kb(app_url + "?open=sleep", "Отметить сон")
+    return open_app_kb(app_url, "Открыть день")
+
+
+def week_note_text(first_name: str) -> str:
     return (
-        f"☀️ Доброе утро, {escape(first_name)}! Как спал?\n"
-        "Запиши сон — от него считается энергия на день."
+        f"🗓 {escape(first_name)}, неделя почти закончилась.\n"
+        "Как она прошла? Пара фраз своими словами — Claude учтёт их в разборе недели."
     )
 
 
-def morning_kb(app_url: str) -> InlineKeyboardMarkup:
-    return open_app_kb(app_url + "?open=sleep", "Записать сон")
+def week_note_kb(app_url: str) -> InlineKeyboardMarkup:
+    return open_app_kb(app_url + "?open=note", "Написать о неделе")
+
+
+def task_text(t: TaskReminder) -> str:
+    at = f" · {t.start}" if t.start else ""
+    return f"⏰ <b>{escape(t.title)}</b>{at}"
+
+
+def task_kb(t: TaskReminder, app_url: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ Сделано", callback_data=TaskDone(task=t.id.hex).pack()
+                ),
+                InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=app_url)),
+            ]
+        ]
+    )
+
+
+def habit_text(h: HabitReminder) -> str:
+    progress = f" — {h.value} из {h.norm}" if h.norm is not None else ""
+    return f"⏰ <b>{escape(h.name)}</b>{progress}"
+
+
+def habit_kb(h: HabitReminder, day: date, app_url: str) -> InlineKeyboardMarkup:
+    done = HabitDone(habit=h.id.hex, day=day_key(day)).pack()
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Сделано", callback_data=done),
+                InlineKeyboardButton(text="Открыть", web_app=WebAppInfo(url=app_url)),
+            ]
+        ]
+    )
 
 
 def connect_text(token: str, mcp_url: str, replaced: bool) -> str:
@@ -113,7 +185,7 @@ def connect_text(token: str, mcp_url: str, replaced: bool) -> str:
         "Как подключить:\n"
         "1. Claude → Settings → Connectors → Add custom connector.\n"
         "2. Вставь адрес сервера и токен.\n"
-        "3. Попроси: «посмотри мой трекер и разбери день».\n\n"
-        "Подробная инструкция — в приложении: Профиль → Подключить Claude. "
+        "3. Попроси: «посмотри мой Keel и разбери неделю».\n\n"
+        "Подробная инструкция — в приложении: Итоги → Claude. "
         "Потерял токен или отдал кому-то — просто снова вызови /connect."
     )
