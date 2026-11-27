@@ -15,7 +15,7 @@ async def setup_user(c: AsyncClient) -> dict[str, str]:
     read = (
         await c.post(
             "/habits",
-            json={"name": "Read", "type": "minutes", "config": {"target_min": 30}},
+            json={"name": "Read", "type": "count", "config": {"norm": 30, "step": 10}},
         )
     ).json()["id"]
     vit = (await c.post("/habits", json={"name": "Vitamins", "type": "check"})).json()["id"]

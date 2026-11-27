@@ -54,8 +54,8 @@ async def task_counts(session: AsyncSession, user_id: uuid.UUID, today: date) ->
 
 
 def _schedule_label(h: m.Habit) -> str:
-    if h.sched_kind == ScheduleKind.EVERY:
-        return "Через день" if h.sched_n == 2 else f"Раз в {h.sched_n} дн."
+    if h.sched_kind == ScheduleKind.WEEKDAYS:
+        return "По будням"
     if h.sched_kind == ScheduleKind.CYCLE:
         return f"По графику {h.sched_pattern}"
     return "Каждый день"

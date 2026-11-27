@@ -4,16 +4,14 @@ from enum import StrEnum
 
 
 class HabitType(StrEnum):
-    CHECK = "check"  # plain checkbox
+    CHECK = "check"  # one tap: done / not done
+    COUNT = "count"  # a daily norm, each tap adds `step` (water glasses, minutes, pages…)
     BEDTIME = "bedtime"  # derived from the next night's sleep, never logged directly
-    WATER = "water"  # glasses of water against a daily volume
-    MINUTES = "minutes"  # minutes counter against a daily target (reading, practice…)
-    DUAL = "dual"  # two flags that must both be set (e.g. "calories + protein")
 
 
 class ScheduleKind(StrEnum):
     DAILY = "daily"
-    EVERY = "every"  # once every N days, counted from the last time it was done
+    WEEKDAYS = "weekdays"  # Monday to Friday
     CYCLE = "cycle"  # repeating pattern such as "11010" starting from an anchor date
 
 

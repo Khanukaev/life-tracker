@@ -56,8 +56,18 @@ async def test_import_reproduces_the_old_apps_scores(alice: AsyncClient) -> None
     assert me["start_date"] == exp["meta"]["startDate"]  # history starts where it did
 
     habits = {h["name"]: h for h in (await alice.get("/habits")).json()}
-    types = {h["type"] for h in habits.values()}
-    assert {"bedtime", "water", "dual", "minutes", "check"} <= types
+    assert {h["type"] for h in habits.values()} == {"bedtime", "count", "check"}
+    assert habits["Вода 2 л"]["config"] == {"norm": 8, "step": 1}  # 2 l in 0.25 l glasses
+
+    # "Every N days" has no exact equivalent here (it became a cycle): pause those habits
+    # so the remaining ones can be compared with the original exactly.
+    approx = {
+        h["key"]: h["name"]
+        for h in fixture("regular")["settings"]["habits"]
+        if (h.get("sched") or {}).get("t") == "every"
+    }
+    for name in approx.values():
+        await alice.patch(f"/habits/{habits[name]['id']}", json={"active": False})
 
     # Same comparison rule as the golden tests: our score has one item per task (critical
     # ×3), the old app had one "tasks" item, so the two coincide on days with ≤ 1 task;
@@ -72,7 +82,7 @@ async def test_import_reproduces_the_old_apps_scores(alice: AsyncClient) -> None
             continue  # today depends on the minute of the day
         got = (await alice.get(f"/views/day?date={day}")).json()["score"]
         assert got is not None, day
-        assert got["pct"] == equal_weights(want["items"])[1], day
+        assert got["pct"] == equal_weights(want["items"], set(approx))[1], day
         checked += 1
     assert checked >= 5
 
@@ -142,13 +152,13 @@ async def _rich_account(c: AsyncClient) -> None:
     await c.post("/import", json=fixture("regular"))
     read = (
         await c.post(
-            "/habits", json={"name": "Чтение", "type": "minutes", "config": {"target_min": 25}}
+            "/habits", json={"name": "Чтение", "type": "count", "config": {"norm": 25, "step": 5}}
         )
     ).json()["id"]
     vit = (
         await c.post(
             "/habits",
-            json={"name": "Витамины", "type": "check", "schedule": {"kind": "every", "n": 3}},
+            json={"name": "Витамины", "type": "check", "schedule": {"kind": "weekdays"}},
         )
     ).json()["id"]
     await c.put(f"/days/2026-11-21/habits/{read}", json={"value": 40})
@@ -168,7 +178,7 @@ async def test_export_has_everything(alice: AsyncClient) -> None:
     ex = r.json()
     assert ex["format"] == "life-tracker/1"
     types = {h["type"] for h in ex["settings"]["habits"]}
-    assert {"bedtime", "water", "dual", "minutes", "check"} <= types
+    assert types == {"bedtime", "count", "check"}
     assert ex["days"]["2026-11-21"]["sleep"]["bed"]
     assert len(ex["tasks"]) == 24
     assert "goals" not in ex

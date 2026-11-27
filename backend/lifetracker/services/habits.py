@@ -11,7 +11,6 @@ from lifetracker.db.models import Habit
 from lifetracker.domain.enums import HabitType, ScheduleKind
 from lifetracker.schemas.habits import (
     CycleSchedule,
-    EverySchedule,
     HabitCreate,
     HabitUpdate,
     Schedule,
@@ -38,7 +37,6 @@ async def _apply_schedule(
     session: AsyncSession, user_id: uuid.UUID, habit: Habit, sched: Schedule, now: datetime
 ) -> None:
     habit.sched_kind = sched.kind
-    habit.sched_n = sched.n if isinstance(sched, EverySchedule) else None
     if isinstance(sched, CycleSchedule):
         habit.sched_pattern = sched.pattern
         habit.sched_anchor = sched.anchor or (await user_now(session, user_id, now)).day

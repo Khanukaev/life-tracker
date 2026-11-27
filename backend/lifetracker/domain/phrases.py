@@ -34,7 +34,7 @@ LATE = (
     "Завтрашний подъём решается сегодня: в кровать до {bed}.",
     "Лёг поздно — весь день платишь энергией. Сегодня отбой до {bed}.",
 )
-MINUTES = ("«{name}» ещё не добрано. 15 минут сейчас лучше, чем ноль.",)
+UNFINISHED = ("«{name}» ещё не добрано. Немного сейчас лучше, чем ноль.",)
 CRITICAL = (
     "Главное ещё не закрыто. Начни с той задачи, что страшнее.",
     "Критичные задачи ждут. Всё остальное подождёт.",
@@ -59,8 +59,8 @@ def phrase_pool(
     if ctx.now_min >= 16 * 60:
         for item in score.items:
             h = ctx.habit(item.ref) if item.kind == "habit" else None
-            if h and h.type == HabitType.MINUTES and item.v < 1:
-                pool += [p.format(name=h.name) for p in MINUTES]
+            if h and h.type == HabitType.COUNT and 0 < item.v < 1:
+                pool += [p.format(name=h.name) for p in UNFINISHED]
                 break
     if any(
         t.date == ctx.today and t.importance == Importance.CRITICAL and not t.done for t in tasks

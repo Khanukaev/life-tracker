@@ -27,16 +27,16 @@ DEMO_USERS: list[dict[str, Any]] = [
         "settings": {"bed_target": "23:30", "usual_bed": "23:45", "usual_wake": "07:30"},
         "habits": [
             {"name": "Отбой вовремя", "type": "bedtime"},
-            {"name": "Вода", "type": "water", "config": {"target_l": 2}},
+            {"name": "Вода", "type": "count", "config": {"norm": 8}},
             {
                 "name": "Чтение",
-                "type": "minutes",
-                "config": {"target_min": 30},
+                "type": "count",
+                "config": {"norm": 30, "step": 10},
             },
             {
                 "name": "Зарядка",
                 "type": "check",
-                "schedule": {"kind": "every", "n": 2},
+                "schedule": {"kind": "weekdays"},
             },
         ],
         "tasks": [
@@ -63,12 +63,8 @@ DEMO_USERS: list[dict[str, Any]] = [
                 "type": "check",
                 "schedule": {"kind": "cycle", "pattern": "11010"},
             },
-            {
-                "name": "Питание",
-                "type": "dual",
-                "config": {"labels": ["Калории", "Белок"]},
-            },
-            {"name": "Медитация", "type": "minutes", "config": {"target_min": 10, "step_min": 5}},
+            {"name": "Питание по плану", "type": "check"},
+            {"name": "Медитация", "type": "count", "config": {"norm": 10, "step": 5}},
         ],
         "tasks": [
             {
@@ -110,9 +106,7 @@ async def seed_user(session: AsyncSession, spec: dict[str, Any], now: datetime) 
         for habit in habit_ids.values():
             value = {
                 "check": back % 2 == 1,
-                "water": 6 + back % 3,
-                "minutes": 10 * back,
-                "dual": {"a": True, "b": back % 2 == 0},
+                "count": habit.config.get("norm", 1) * back // 4,
             }.get(habit.type)
             if value is not None:
                 await days.set_habit_value(session, uid, d, habit.id, value, now)

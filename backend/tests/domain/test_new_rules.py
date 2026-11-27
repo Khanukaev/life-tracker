@@ -5,8 +5,10 @@ from functools import cache
 
 import pytest
 
+from lifetracker.domain.dates import add_days
 from lifetracker.domain.energy import EnergyDay, energy_day
-from lifetracker.domain.enums import HabitType, Importance
+from lifetracker.domain.enums import HabitType, Importance, ScheduleKind
+from lifetracker.domain.habits import habit_status
 from lifetracker.domain.model import Ctx, DayRec, Habit, Settings, SleepRec, Task
 from lifetracker.domain.phrases import CRITICAL, pick_phrase
 from lifetracker.domain.score import bed_gain, day_score, gains
@@ -87,14 +89,23 @@ def test_bedtime_item_scales_with_lateness() -> None:
 
 def test_partial_credit_for_counters() -> None:
     habits = [
-        Habit(id="w", type=HabitType.WATER, config={"target_l": 2, "glass_l": 0.25}),
-        Habit(id="m", type=HabitType.MINUTES, config={"target_min": 40, "step_min": 10}),
-        Habit(id="d", type=HabitType.DUAL, config={"labels": ["a", "b"]}),
+        Habit(id="w", type=HabitType.COUNT, config={"norm": 8}),
+        Habit(id="m", type=HabitType.COUNT, config={"norm": 40, "step": 10}),
+        Habit(id="x", type=HabitType.COUNT, config={"norm": 2}),
     ]
-    ctx = make_ctx(habits, {TODAY: DayRec(values={"w": 4, "m": 10, "d": {"a": True, "b": False}})})
+    ctx = make_ctx(habits, {TODAY: DayRec(values={"w": 4, "m": 10, "x": 5})})
     sc = day_score(TODAY, ctx, [])
     assert sc is not None
-    assert [x.v for x in sc.items] == [0.5, 0.25, 0.5]
+    assert [x.v for x in sc.items] == [0.5, 0.25, 1]  # over the norm still counts as 1
+    assert sc.items[0].note == "4/8"
+
+
+def test_weekdays_rest_on_the_weekend() -> None:
+    gym = Habit(id="g", type=HabitType.CHECK, sched=ScheduleKind.WEEKDAYS)
+    ctx = make_ctx([gym])
+    saturday = date(2026, 11, 21)
+    assert habit_status(gym, saturday, ctx) == "rest"
+    assert habit_status(gym, add_days(saturday, -1), ctx) == "missed"  # Friday
 
 
 def test_slot_falls_back_to_next_day_when_today_fits_poorly() -> None:

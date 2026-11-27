@@ -115,12 +115,11 @@ class Habit(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(user_fk())
     name: Mapped[str] = mapped_column(String(80))
     type: Mapped[HabitType] = mapped_column(str_enum(HabitType, "habit_type"))
-    # water: {target_l, glass_l}; minutes: {target_min, step_min}; dual: {labels: [a, b]}
+    # count: {norm, step}; check and bedtime: {}
     config: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     sched_kind: Mapped[ScheduleKind] = mapped_column(
         str_enum(ScheduleKind, "schedule_kind"), default=ScheduleKind.DAILY
     )
-    sched_n: Mapped[int | None] = mapped_column(SmallInteger)
     sched_pattern: Mapped[str | None] = mapped_column(String(31))
     sched_anchor: Mapped[date | None] = mapped_column(Date)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -131,9 +130,9 @@ class Habit(Base):
     __table_args__ = (
         UniqueConstraint("id", "user_id", name="uq_habits_id_user"),
         CheckConstraint(
-            "(sched_kind = 'daily')"
-            " OR (sched_kind = 'every' AND sched_n BETWEEN 2 AND 365)"
-            " OR (sched_kind = 'cycle' AND sched_pattern ~ '^[01]+$' AND sched_anchor IS NOT NULL)",
+            "(sched_kind IN ('daily', 'weekdays') AND sched_pattern IS NULL)"
+            " OR (sched_kind = 'cycle' AND sched_pattern ~ '^[01]*1[01]*$'"
+            " AND sched_anchor IS NOT NULL)",
             name="schedule_valid",
         ),
         # Bedtime is derived from sleep, so one per user is enough.
@@ -174,7 +173,7 @@ class Day(Base):
 
 
 class HabitLog(Base):
-    """Value of a habit on a logical day: true | number | {"a": bool, "b": bool}."""
+    """Value of a habit on a logical day: true/false (check) or a count."""
 
     __tablename__ = "habit_logs"
 

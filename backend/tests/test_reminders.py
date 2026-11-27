@@ -104,9 +104,9 @@ async def setup_habits(c: AsyncClient) -> dict[str, str]:
     ids = {}
     for name, body in {
         "vit": {"name": "Vitamins", "type": "check"},
-        "read": {"name": "Read", "type": "minutes", "config": {"target_min": 30}},
-        "water": {"name": "Water", "type": "water", "config": {"target_l": 2, "glass_l": 0.25}},
-        "food": {"name": "Food", "type": "dual", "config": {"labels": ["Kcal", "Protein"]}},
+        "read": {"name": "Read", "type": "count", "config": {"norm": 30, "step": 10}},
+        "water": {"name": "Water", "type": "count", "config": {"norm": 8}},
+        "food": {"name": "Food", "type": "check"},
         "bed": {"name": "Bed", "type": "bedtime"},
     }.items():
         r = await c.post("/habits", json=body)
@@ -134,7 +134,7 @@ async def test_mark_buttons_per_habit_type(alice: AsyncClient, session: AsyncSes
         await reminders.mark_habit(session, a, uuid.UUID(ids[key]), day, True, at(21))
     habits = {h["id"]: h for h in (await alice.get("/views/day")).json()["habits"]}
     assert all(habits[ids[k]]["status"] == "done" for k in ("vit", "read", "water", "food"))
-    assert habits[ids["water"]]["value"] == 8  # 2 l / 0.25 l glasses
+    assert habits[ids["water"]]["value"] == 8  # ✅ fills the norm
 
     await reminders.mark_habit(session, a, uuid.UUID(ids["vit"]), day, False, at(21))
     e = await reminders.evening_content(session, a, day, at(21))

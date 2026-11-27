@@ -120,15 +120,7 @@ def validate_value(habit: Habit, value: Any) -> Any:
             raise DomainValidationError("Bedtime is derived from sleep and cannot be logged")
         case HabitType.CHECK if isinstance(value, bool):
             return value
-        case HabitType.WATER if _is_int(value) and 0 <= value <= 100:
-            return value
-        case HabitType.MINUTES if _is_int(value) and 0 <= value <= 1440:
-            return value
-        case HabitType.DUAL if (
-            isinstance(value, dict)
-            and set(value) == {"a", "b"}
-            and all(isinstance(v, bool) for v in value.values())
-        ):
+        case HabitType.COUNT if _is_int(value) and 0 <= value <= 10_000:
             return value
     raise DomainValidationError(f"Invalid value for a {habit.type} habit")
 

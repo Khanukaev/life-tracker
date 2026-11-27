@@ -61,10 +61,10 @@ All data belongs to the user who connected this server; you only ever see their 
 
 Model:
 - A *logical day* runs 05:00–05:00 in the user's time zone: 01:30 belongs to the previous date.
-- Habits have a type: check (done/not), water (glasses toward a daily volume), minutes
-  (minutes toward a target), dual (two flags that must both be set), bedtime (derived
-  from sleep: met when they went to bed by the target time; never logged directly).
-  Schedules: daily, every N days, or a cycle pattern like "1101100" (1 = do, 0 = rest).
+- Habits have a type: check (done / not done), count (a daily norm such as 8 glasses of
+  water or 20 minutes of reading; each tap in the app adds `step`), bedtime (derived from
+  sleep: met when they went to bed by the target time; never logged directly).
+  Schedules: daily, weekdays (Mon–Fri), or a cycle like "1101100" (1 = do, 0 = rest).
   Every habit weighs the same in the day score; tasks weigh more (critical the most).
 - Sleep of a date = the night that ended on that date's morning (bed, wake, quality).
 - Energy is predicted from sleep with a circadian model and split into zones:
@@ -373,12 +373,11 @@ async def list_tasks(
 async def log_habit(
     habit_id: Annotated[uuid.UUID, Field(description="From list_habits or get_today")],
     value: Annotated[
-        bool | int | dict[str, bool] | None,
+        bool | int | None,
         Field(
             description=(
-                "check: true/false; water: number of glasses; minutes: minutes done; "
-                'dual: {"a": bool, "b": bool}; null = clear the mark. '
-                "Omit together with done=true to simply mark it fully done."
+                "check: true/false; count: the amount done today (glasses, minutes…); "
+                "null = clear the mark. Omit together with done=true to mark it fully done."
             )
         ),
     ] = None,
@@ -394,7 +393,7 @@ async def log_habit(
         if habit.type == HabitType.BEDTIME:
             raise ToolError("Bedtime is derived from sleep: use log_sleep instead")
         if done is not None:
-            value = cast("bool | int | dict[str, bool]", mark_value(habit, done))
+            value = cast("bool | int", mark_value(habit, done))
         if value is None:
             await days.clear_habit_value(s, uid, day, habit_id, now)
         else:
@@ -505,15 +504,15 @@ async def complete_task(
 async def create_habit(
     name: Annotated[str, Field(min_length=1, max_length=80)],
     type: Annotated[
-        Literal["check", "water", "minutes", "dual", "bedtime"],
+        Literal["check", "count", "bedtime"],
         Field(description="See the server instructions for what each type means"),
     ],
     config: Annotated[
         dict[str, Any] | None,
         Field(
             description=(
-                'water: {"target_l": 2, "glass_l": 0.25}; minutes: {"target_min": 20, '
-                '"step_min": 10}; dual: {"labels": ["Калории", "Белок"]}; check/bedtime: {}'
+                'count: {"norm": 8, "step": 1} (water: 8 glasses; reading: {"norm": 20, '
+                '"step": 10} minutes); check/bedtime: {}'
             )
         ),
     ] = None,
@@ -521,7 +520,7 @@ async def create_habit(
         dict[str, Any] | None,
         Field(
             description=(
-                '{"kind": "daily"} (default); {"kind": "every", "n": 2} = every other day; '
+                '{"kind": "daily"} (default); {"kind": "weekdays"} = Monday to Friday; '
                 '{"kind": "cycle", "pattern": "1101100"} = do on 1, rest on 0'
             )
         ),

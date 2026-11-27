@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from lifetracker.core.errors import DomainValidationError
 from lifetracker.db.models import Delivery, Habit, User
 from lifetracker.domain.enums import DeliveryKind, HabitType, Importance
-from lifetracker.domain.habits import glasses_need, minutes_need
+from lifetracker.domain.habits import count_norm
 from lifetracker.services import days as days_service
 from lifetracker.services.common import get_owned
 from lifetracker.services.snapshot import to_domain_habit
@@ -187,12 +187,8 @@ def mark_value(habit: Habit, done: bool) -> object:
     match habit.type:
         case HabitType.CHECK:
             return done
-        case HabitType.DUAL:
-            return {"a": done, "b": done}
-        case HabitType.WATER:
-            return glasses_need(to_domain_habit(habit)) if done else 0
-        case HabitType.MINUTES:
-            return minutes_need(to_domain_habit(habit)) if done else 0
+        case HabitType.COUNT:
+            return count_norm(to_domain_habit(habit)) if done else 0
     raise DomainValidationError("This habit is marked from the sleep log")
 
 

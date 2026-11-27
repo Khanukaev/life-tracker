@@ -122,7 +122,7 @@ async def setup(c: AsyncClient) -> dict[str, str]:
     vit = (await c.post("/habits", json={"name": "Vitamins", "type": "check"})).json()["id"]
     read = (
         await c.post(
-            "/habits", json={"name": "Read", "type": "minutes", "config": {"target_min": 20}}
+            "/habits", json={"name": "Read", "type": "count", "config": {"norm": 20, "step": 10}}
         )
     ).json()["id"]
     await c.post("/habits", json={"name": "Bed", "type": "bedtime"})
@@ -196,14 +196,14 @@ async def test_write_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Ca
     h = await call(
         "create_habit",
         name="Walk",
-        type="minutes",
-        config={"target_min": 30},
-        schedule={"kind": "every", "n": 2},
+        type="count",
+        config={"norm": 30, "step": 10},
+        schedule={"kind": "weekdays"},
     )
-    assert h["schedule"]["kind"] == "every"
+    assert h["schedule"]["kind"] == "weekdays"
     assert (await call("update_habit", habit_id=h["id"], active=False))["active"] is False
     with pytest.raises(ToolError, match="Invalid input"):
-        await call("create_habit", name="Bad", type="water", config={})
+        await call("create_habit", name="Bad", type="count", config={})
 
     r = await call("save_review", kind="day", text="Хороший день: отчёт сдан.")
     assert r["date"] == TODAY

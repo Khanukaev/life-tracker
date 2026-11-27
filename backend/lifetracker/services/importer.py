@@ -157,7 +157,6 @@ async def import_export(
                 type=h.type,
                 config=dict(h.config or {}),
                 sched_kind=h.sched,
-                sched_n=h.sched_n,
                 sched_pattern=h.sched_pattern,
                 sched_anchor=h.sched_anchor,
                 active=h.active,

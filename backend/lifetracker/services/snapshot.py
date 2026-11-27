@@ -52,7 +52,7 @@ class Snapshot:
 def to_domain_habit(h: m.Habit) -> Habit:
     return Habit(
         id=h.id, type=h.type, name=h.name, active=h.active,
-        config=h.config, sched=h.sched_kind, sched_n=h.sched_n, sched_pattern=h.sched_pattern,
+        config=h.config, sched=h.sched_kind, sched_pattern=h.sched_pattern,
         sched_anchor=h.sched_anchor,
     )  # fmt: skip
 

@@ -28,7 +28,7 @@ GOAL_ALERTS = ("Цель «", "Просроченные шаги в целях")
 
 
 def test_habit_statuses_streaks_rates(case: Case) -> None:
-    ctx = case.data.ctx
+    ctx = case.exact_ctx
     for h in ctx.habits:
         exp = case.expected["habits"][h.id]
         for k, s in exp["status"].items():
@@ -48,7 +48,7 @@ def test_day_score_matches_where_rules_coincide(case: Case) -> None:
 
     With ≤1 task a day the items and their values equal the original's; the percentage
     is the original's items re-weighted (see ``equal_weights``)."""
-    ctx, tasks = case.data.ctx, case.data.tasks
+    ctx, tasks = case.exact_ctx, case.data.tasks
     compared = 0
     for k, exp in case.expected["dayScore"].items():
         day = date.fromisoformat(k)
@@ -61,7 +61,7 @@ def test_day_score_matches_where_rules_coincide(case: Case) -> None:
             continue
         legacy_key = {"sleep": "sleep", "task": "tasks"}
         got = [[legacy_key.get(x.kind, x.ref), x.w, r6(x.v)] for x in sc.items]
-        items, pct, total = equal_weights(exp["items"])
+        items, pct, total = equal_weights(exp["items"], case.approx)
         assert got == items, k
         assert (sc.pct, sc.W) == (pct, total), k
         compared += 1
@@ -96,10 +96,12 @@ def test_weak_spots(case: Case) -> None:
     ctx = case.data.ctx
     e = energy_day(ctx.today, ctx)
     for n in (7, 30):
-        got = [a.text for a in weak_spots_last(ctx, case.data.tasks, e, n)]
-        # The original's goal alerts are gone with goals; the rest keep order and text.
-        # Its list was cut at 7, so a freed slot may now hold one more of ours at the end.
-        want = [t for t in case.expected["weakSpots"][str(n)] if not t.startswith(GOAL_ALERTS)]
+        got = [a.text for a in weak_spots_last(case.exact_ctx, case.data.tasks, e, n)]
+        # The original's goal alerts are gone with goals, and alerts about approximated
+        # habits can't match; the rest keep order and text. Its list was cut at 7, so a
+        # freed slot may now hold one more of ours at the end.
+        skip = GOAL_ALERTS + case.approx_names
+        want = [t for t in case.expected["weakSpots"][str(n)] if not t.startswith(skip)]
         assert got[: len(want)] == want, n
 
 

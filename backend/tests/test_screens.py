@@ -18,7 +18,7 @@ async def test_every_template_is_a_valid_habit(alice: AsyncClient) -> None:
 
 
 async def test_profile_view(alice: AsyncClient) -> None:
-    await alice.post("/habits", json={"name": "Water", "type": "water", "config": {"target_l": 2}})
+    await alice.post("/habits", json={"name": "Water", "type": "count", "config": {"norm": 8}})
     off = (await alice.post("/habits", json={"name": "Old", "type": "check"})).json()["id"]
     await alice.patch(f"/habits/{off}", json={"active": False})
     await alice.post("/tasks", json={"title": "T", "date": TODAY})

@@ -13,21 +13,18 @@ async def test_create_with_client_id_is_idempotent(alice: AsyncClient) -> None:
 
 async def test_habit_types_and_configs(alice: AsyncClient) -> None:
     water = await alice.post(
-        "/habits", json={"name": "Water", "type": "water", "config": {"target_l": 2}}
+        "/habits", json={"name": "Water", "type": "count", "config": {"norm": 8}}
     )
     assert water.status_code == 201, water.text
-    assert water.json()["config"] == {"target_l": 2.0, "glass_l": 0.25}  # default glass
+    assert water.json()["config"] == {"norm": 8, "step": 1}  # one tap = +1 by default
 
-    minutes = await alice.post(
-        "/habits", json={"name": "Reading", "type": "minutes", "config": {"target_min": 30}}
+    reading = await alice.post(
+        "/habits", json={"name": "Reading", "type": "count", "config": {"norm": 30, "step": 10}}
     )
-    assert minutes.json()["config"] == {"target_min": 30, "step_min": 10}
+    assert reading.json()["config"] == {"norm": 30, "step": 10}
 
-    dual = await alice.post(
-        "/habits",
-        json={"name": "Nutrition", "type": "dual", "config": {"labels": ["Calories", "Protein"]}},
-    )
-    assert dual.json()["config"]["labels"] == ["Calories", "Protein"]
+    check = await alice.post("/habits", json={"name": "Vitamins", "type": "check"})
+    assert check.json()["config"] == {}
 
     bedtime = await alice.post("/habits", json={"name": "In bed on time", "type": "bedtime"})
     assert "is_key" not in bedtime.json()  # importance is for tasks only
@@ -35,9 +32,10 @@ async def test_habit_types_and_configs(alice: AsyncClient) -> None:
 
 async def test_habit_config_validation(alice: AsyncClient) -> None:
     bad = [
-        {"name": "W", "type": "water", "config": {}},  # target is required
-        {"name": "M", "type": "minutes", "config": {"target_min": 0}},
-        {"name": "D", "type": "dual", "config": {"labels": ["only one"]}},
+        {"name": "W", "type": "count", "config": {}},  # the norm is required
+        {"name": "M", "type": "count", "config": {"norm": 0}},
+        {"name": "S", "type": "count", "config": {"norm": 5, "step": 0}},
+        {"name": "D", "type": "water", "config": {"target_l": 2}},  # old types are gone
         {"name": "C", "type": "check", "config": {"unexpected": 1}},
         {"name": "X", "type": "unknown"},
         {"name": "", "type": "check"},
@@ -54,10 +52,14 @@ async def test_only_one_bedtime_habit(alice: AsyncClient) -> None:
 
 
 async def test_schedules(alice: AsyncClient) -> None:
-    every = await alice.post(
+    weekdays = await alice.post(
+        "/habits", json={"name": "Run", "type": "check", "schedule": {"kind": "weekdays"}}
+    )
+    assert weekdays.json()["schedule"] == {"kind": "weekdays", "pattern": None, "anchor": None}
+    old = await alice.post(
         "/habits", json={"name": "Run", "type": "check", "schedule": {"kind": "every", "n": 2}}
     )
-    assert every.json()["schedule"] == {"kind": "every", "n": 2, "pattern": None, "anchor": None}
+    assert old.status_code == 422
 
     cycle = await alice.post(
         "/habits",
@@ -72,6 +74,11 @@ async def test_schedules(alice: AsyncClient) -> None:
         json={"name": "Gym", "type": "check", "schedule": {"kind": "cycle", "pattern": "12"}},
     )
     assert bad.status_code == 422
+    rest_only = await alice.post(
+        "/habits",
+        json={"name": "Gym", "type": "check", "schedule": {"kind": "cycle", "pattern": "000"}},
+    )
+    assert rest_only.status_code == 422  # a cycle needs at least one working day
 
     hid = cycle.json()["id"]
     r = await alice.patch(f"/habits/{hid}", json={"schedule": {"kind": "daily"}})
@@ -81,13 +88,13 @@ async def test_schedules(alice: AsyncClient) -> None:
 async def test_habit_update_and_delete(alice: AsyncClient) -> None:
     hid = (
         await alice.post(
-            "/habits", json={"name": "Read", "type": "minutes", "config": {"target_min": 20}}
+            "/habits", json={"name": "Read", "type": "count", "config": {"norm": 20, "step": 10}}
         )
     ).json()["id"]
     r = await alice.patch(
-        f"/habits/{hid}", json={"config": {"target_min": 45, "step_min": 15}, "active": False}
+        f"/habits/{hid}", json={"config": {"norm": 45, "step": 15}, "active": False}
     )
-    assert r.json()["config"] == {"target_min": 45, "step_min": 15}
+    assert r.json()["config"] == {"norm": 45, "step": 15}
     assert r.json()["active"] is False
     assert (await alice.patch(f"/habits/{hid}", json={"config": {"x": 1}})).status_code == 422
     # The type is immutable: unknown field is rejected.

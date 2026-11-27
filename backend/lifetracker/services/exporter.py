@@ -30,8 +30,8 @@ def _iso(dt: datetime | None) -> str | None:
 
 def _sched(h: m.Habit) -> dict[str, Any]:
     match h.sched_kind:
-        case ScheduleKind.EVERY:
-            return {"t": "every", "n": h.sched_n}
+        case ScheduleKind.WEEKDAYS:
+            return {"t": "weekdays"}
         case ScheduleKind.CYCLE:
             anchor = h.sched_anchor.isoformat() if h.sched_anchor else None
             return {"t": "cycle", "p": h.sched_pattern, "a": anchor}

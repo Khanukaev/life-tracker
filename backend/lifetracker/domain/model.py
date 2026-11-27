@@ -56,7 +56,6 @@ class Habit:
     active: bool = True
     config: dict[str, Any] = field(default_factory=dict)
     sched: ScheduleKind = ScheduleKind.DAILY
-    sched_n: int | None = None
     sched_pattern: str | None = None
     sched_anchor: date | None = None
 
