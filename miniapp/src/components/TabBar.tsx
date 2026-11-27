@@ -2,7 +2,6 @@
 
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { addedOnce } from "../lib/actions";
-import { haptic } from "../lib/haptic";
 import { canEdit } from "../lib/net";
 import { goTab, openSheet, tab, type Tab } from "../lib/router";
 
@@ -93,7 +92,6 @@ export function TabBar({ hint }: { hint?: boolean }) {
           aria-label="Добавить привычку или задачу"
           onClick={() => {
             if (!canEdit()) return;
-            haptic.light();
             openSheet("add", {});
           }}
         >

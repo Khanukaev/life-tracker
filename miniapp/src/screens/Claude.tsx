@@ -11,7 +11,7 @@ import { haptic } from "../lib/haptic";
 import { canEdit } from "../lib/net";
 import { pop, push } from "../lib/router";
 import { invalidate, resource } from "../lib/store";
-import { openLink } from "../lib/telegram";
+import { openLink as tgOpenLink } from "../lib/telegram";
 import { toast } from "../lib/toast";
 import type { McpIssued, McpStatus, Review } from "../lib/types";
 import { claudeAt } from "./Results";
@@ -25,6 +25,12 @@ export const SCHEDULE_PROMPT =
   "Каждое воскресенье вечером посмотри мой Keel: итоги недели, сон, привычки, задачи и мою заметку о неделе. " +
   "Напиши разбор: что получилось, что мешает и что сделать на следующей неделе — коротко и по делу. " +
   "Сохрани его в Keel через save_review (kind: week).";
+
+/** Leaving for claude.ai: a light tap first (respects the vibration setting). */
+function openLink(url: string): void {
+  haptic.light();
+  tgOpenLink(url);
+}
 
 /** The token exists in plain text only in the issue response: kept in memory, never cached. */
 const issued = signal<McpIssued | null>(null);
@@ -211,6 +217,7 @@ export function ClaudeTokenScreen() {
         <button
           class="k-btn ghost"
           onClick={() => {
+            haptic.light();
             issued.value = null;
             pop();
           }}

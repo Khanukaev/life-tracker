@@ -55,7 +55,11 @@ export function OfflineBanner({ text }: { text: string }) {
   );
 }
 
-export function ResultsError({ retry, what = "итоги" }: { retry: () => void; what?: string }) {
+export function ResultsError({ retry: run, what = "итоги" }: { retry: () => void; what?: string }) {
+  const retry = () => {
+    haptic.light();
+    run();
+  };
   return (
     <section class="k-card" role="alert" style={{ marginTop: "40px", padding: "28px 22px 22px", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "10px" }}>
       <svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 28, height: 28, color: "#aeaeb2" }}>

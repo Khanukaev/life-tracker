@@ -56,7 +56,14 @@ export function TodayScreen() {
           {e.error && !e.loading && online.value ? (
             <section class="k-card" style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
               <span style={{ fontSize: "16px" }}>Не получилось загрузить день</span>
-              <button class="k-pillbtn" style={{ alignSelf: "flex-start" }} onClick={() => void refresh(key)}>
+              <button
+                class="k-pillbtn"
+                style={{ alignSelf: "flex-start" }}
+                onClick={() => {
+                  haptic.light();
+                  void refresh(key);
+                }}
+              >
                 Повторить
               </button>
             </section>
@@ -192,7 +199,13 @@ function Header({ d, me, empty }: { d: DayView | undefined; me: Me | undefined; 
             ))}
           </div>
         ) : (
-          <button class="k-btnreset k-totoday" onClick={() => openDay(null)}>
+          <button
+            class="k-btnreset k-totoday"
+            onClick={() => {
+              haptic.selection();
+              openDay(null);
+            }}
+          >
             К сегодня
           </button>
         )}

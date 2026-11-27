@@ -13,6 +13,7 @@ import { claudeAt } from "./Results";
 const MON = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 
 function saveMe(fields: Partial<Me>) {
+  haptic.selection();
   return mutate({
     apply: () => setData<Me>("/me", (m) => ({ ...m, ...fields })),
     request: () => patch("/me", fields),
@@ -20,6 +21,7 @@ function saveMe(fields: Partial<Me>) {
 }
 
 function saveSettings(fields: Partial<Settings>) {
+  haptic.selection();
   return mutate({
     apply: () => setData<Settings>("/settings", (s) => ({ ...s, ...fields })),
     request: () => patch("/settings", fields),
@@ -54,8 +56,7 @@ function Reminder({ title, label, value, fallback, what, onChange }: { title: st
         aria-checked={on}
         aria-label={label}
         onClick={() => {
-          haptic.selection();
-          onChange(on ? null : fallback);
+          onChange(on ? null : fallback); // saveMe gives the tap
         }}
       >
         <i />

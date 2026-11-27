@@ -5,7 +5,6 @@ import { useEffect, useState } from "preact/hooks";
 import { CHECK, Chevron } from "../components/icons";
 import { PLAN_KEY, toggleTask } from "../lib/actions";
 import { addDays, parseDate, plural } from "../lib/format";
-import { haptic } from "../lib/haptic";
 import { canEdit } from "../lib/net";
 import { openSheet, push } from "../lib/router";
 import { refresh, resource } from "../lib/store";
@@ -98,7 +97,6 @@ export function PlanRow({ t, sub, action, sep }: { t: Task; sub?: string; action
           class="k-btnreset k-pchip"
           onClick={() => {
             if (!canEdit()) return;
-            haptic.light();
             openSheet("assign", { id: t.id });
           }}
         >

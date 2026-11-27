@@ -58,7 +58,9 @@ export function pop(): void {
   stack.value = stack.value.slice(0, -1);
 }
 
-export function openSheet(kind: SheetKind, props: Record<string, any> = {}): void {
+/** Opening a sheet gives a light tap; links from the bot open quietly at launch. */
+export function openSheet(kind: SheetKind, props: Record<string, any> = {}, quiet = false): void {
+  if (!quiet) haptic.light();
   sheet.value = { kind, props };
 }
 

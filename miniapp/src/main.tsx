@@ -50,7 +50,7 @@ void (async () => {
       await refresh("/views/day"); // the sheets need the user's logical "today"
       const today = (entry("/views/day").value.data as DayView | undefined)?.today;
       // «Как спал?» from the morning message; «Неделя словами» from the Sunday one.
-      if (today) openSheet(link, link === "note" ? { kind: "week", anchor: today } : { date: today });
+      if (today) openSheet(link, link === "note" ? { kind: "week", anchor: today } : { date: today }, true);
     }
   } catch {
     /* App shows its own error state */
