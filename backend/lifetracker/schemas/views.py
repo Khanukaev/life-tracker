@@ -10,6 +10,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from lifetracker.schemas.claude import ReviewOut
 from lifetracker.schemas.days import SleepOut
 from lifetracker.schemas.habits import ScheduleOut
 from lifetracker.schemas.tasks import TaskOut
@@ -114,6 +115,7 @@ class DayView(BaseModel):
     habits: list[HabitRow]
     tasks: list[DayTask]
     timeline: TimelineOut
+    plan: ReviewOut | None = None  # Claude's latest plan for this day, until it is added
 
 
 class FactorOut(BaseModel):
