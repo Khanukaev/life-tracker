@@ -1,28 +1,45 @@
-/** «Подключить Claude» and «Разборы»: the user's own Claude works with the tracker
- * through the MCP server; its reviews come back here. */
+/** Claude (ClaudeConnect / ClaudeToken / Claude / ClaudeReview): the user's own Claude
+ * connects to Keel as a connector, writes reviews and plans; everything it changed is listed. */
 
-import type { CSSProperties } from "preact";
+import { signal } from "@preact/signals";
 import { useState } from "preact/hooks";
-import { Markdown } from "../components/Markdown";
-import { Icon, Sec, StackHead } from "../components/ui";
+import { Chevron, ClaudeLogo } from "../components/icons";
+import { Markdown, splitSummary as split } from "../components/Markdown";
 import { ApiError, del, post } from "../lib/api";
-import { relDay } from "../lib/format";
+import { addDays, parseDate, plural } from "../lib/format";
 import { haptic } from "../lib/haptic";
+import { canEdit } from "../lib/net";
+import { pop, push } from "../lib/router";
 import { invalidate, resource } from "../lib/store";
+import { openLink as tgOpenLink } from "../lib/telegram";
 import { toast } from "../lib/toast";
-import type { DayView, McpIssued, McpStatus, Review } from "../lib/types";
+import type { McpIssued, McpStatus, Review } from "../lib/types";
+import { claudeAt } from "./Results";
+
+const CLAUDE_URL = "https://claude.ai";
+const CONNECTORS_URL = "https://claude.ai/settings/connectors";
+const MON = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const MON_NOM = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
 export const SCHEDULE_PROMPT =
-  "Каждый день в 21:00 посмотри мой «Трекер жизни» и разбери день: рейтинг, сон и энергию, " +
-  "привычки и задачи. Отметь, что получилось, где просел и почему, и дай 1–2 конкретных " +
-  "совета на завтра. Сохрани разбор в трекер через save_review (kind: day).";
+  "Каждое воскресенье вечером посмотри мой Keel: итоги недели, сон, привычки, задачи и мою заметку о неделе. " +
+  "Напиши разбор: что получилось, что мешает и что сделать на следующей неделе — коротко и по делу. " +
+  "Сохрани его в Keel через save_review (kind: week).";
+
+/** Leaving for claude.ai: a light tap first (respects the vibration setting). */
+function openLink(url: string): void {
+  haptic.light();
+  tgOpenLink(url);
+}
+
+/** The token exists in plain text only in the issue response: kept in memory, never cached. */
+const issued = signal<McpIssued | null>(null);
 
 export async function copy(text: string, what: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
   } catch {
-    // Old webviews: fall back to a hidden textarea + execCommand.
-    const ta = document.createElement("textarea");
+    const ta = document.createElement("textarea"); // old webviews
     ta.value = text;
     ta.style.position = "fixed";
     ta.style.opacity = "0";
@@ -32,196 +49,349 @@ export async function copy(text: string, what: string): Promise<void> {
     ta.remove();
   }
   haptic.success();
-  toast(`${what} скопирован`);
+  toast(`${what} скопирован`, { icon: "check" });
 }
 
-function when(iso: string | null): string {
-  if (!iso) return "ещё не использовался";
-  const d = new Date(iso);
-  return d.toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+async function issue(replace: boolean): Promise<void> {
+  if (!canEdit()) return;
+  if (replace && !confirm("Старый ключ перестанет работать, и коннектор в Claude нужно будет обновить. Выдать новый?")) return;
+  try {
+    issued.value = await post<McpIssued>("/mcp/token");
+    haptic.success();
+    invalidate("/mcp/token");
+    push("claude-token");
+  } catch (e) {
+    toast(e instanceof ApiError ? e.message : "Не получилось. Проверь связь");
+  }
 }
 
-function CopyRow({ label, value, what }: { label: string; value: string; what: string }) {
+function Step({ n, title, text, sep }: { n: number; title: string; text: string; sep?: boolean }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <span class="s">{label}</span>
-      <div style={{ display: "flex", gap: "8px", alignItems: "stretch" }}>
-        <div class="secret" style={{ flex: 1 }}>{value}</div>
-        <button class="btn" aria-label={`Скопировать: ${what}`} onClick={() => void copy(value, what)}>
-          Копировать
+    <div style={{ display: "flex", gap: "14px", padding: "14px 18px", borderTop: sep ? "1px solid rgba(255,255,255,0.09)" : undefined }}>
+      <span class="k-n" style={{ width: 28, height: 28, flex: "none", borderRadius: "50%", background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 600 }}>
+        {n}
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+        <span style={{ fontSize: "16px", fontWeight: 500 }}>{title}</span>
+        <span class="k-cap" style={{ fontSize: "14px", lineHeight: "19px" }}>
+          {text}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function Head({ sub, small, title = "Claude" }: { sub: string; small?: boolean; title?: string }) {
+  return (
+    <header class="k-head">
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {!small && <ClaudeLogo size={34} />}
+        <h1 class={`k-h1${small ? " detail" : ""}`}>{title}</h1>
+      </div>
+      <p class="k-sub">{sub}</p>
+    </header>
+  );
+}
+
+function Page({ children }: { children: preact.ComponentChildren }) {
+  return (
+    <div class="k-page">
+      <div class="k-bg" aria-hidden="true" />
+      {children}
+    </div>
+  );
+}
+
+export function reviewTitle(r: Review): string {
+  const d = parseDate(r.date);
+  if (r.kind === "month") return MON_NOM[d.getUTCMonth()]!;
+  if (r.kind === "day") return `День, ${d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+  const start = addDays(r.date, -((d.getUTCDay() + 6) % 7));
+  const s = parseDate(start);
+  const e = parseDate(addDays(start, 6));
+  return s.getUTCMonth() === e.getUTCMonth()
+    ? `Неделя ${s.getUTCDate()}–${e.getUTCDate()} ${MON[e.getUTCMonth()]}`
+    : `Неделя ${s.getUTCDate()} ${MON[s.getUTCMonth()]} – ${e.getUTCDate()} ${MON[e.getUTCMonth()]}`;
+}
+
+function Pill({ children, coral }: { children: preact.ComponentChildren; coral?: boolean }) {
+  return (
+    <span class="k-pill" style={coral ? { background: "rgba(255,138,92,0.22)", color: "#ffc2a8" } : { background: "rgba(255,255,255,0.10)", color: "#d1d1d6" }}>
+      {children}
+    </span>
+  );
+}
+
+function Connect() {
+  return (
+    <Page>
+      <Head sub="Не подключён" />
+      <main class="k-main">
+        <p class="k-lead" style={{ padding: "0 4px", marginTop: "-4px" }}>
+          Claude смотрит твои дела, сон и заметки и пишет личные советы: разбор недели, план дня под энергию, ответы на вопросы.
+        </p>
+        <section class="k-sum claude" style={{ gap: "8px" }}>
+          <span class="k-cap">Пример разбора</span>
+          <p class="k-sumtext" style={{ color: "#f5f5f7" }}>
+            «Ты писал, что пятница самая тяжёлая: пары до вечера. Давай в этот день английский утром, 10 минут — серия не оборвётся. Воду я поставил на 15:00.»
+          </p>
+        </section>
+        <section class="k-card clip">
+          <div class="k-cardhead">
+            <h2 class="k-h2">Как подключить</h2>
+          </div>
+          <Step n={1} title="Получи ключ доступа" text="Нажми кнопку ниже — появятся адрес и ключ" />
+          <Step n={2} title="Открой claude.ai" text="Настройки → Коннекторы → Добавить свой коннектор" sep />
+          <Step n={3} title="Вставь адрес и ключ" text="Готово: в любом чате Claude увидит твой Keel" sep />
+        </section>
+        <button class="k-btn" onClick={() => void issue(false)}>
+          Получить ключ доступа
+        </button>
+        <p class="k-cap" style={{ margin: "-2px 4px 0", textAlign: "center" }}>
+          Ключ можно отозвать в любой момент
+        </p>
+      </main>
+    </Page>
+  );
+}
+
+function CopyField({ label, value, what }: { label: string; value: string; what: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+      <span class="k-cap" style={{ margin: "0 4px" }}>
+        {label}
+      </span>
+      <div class="k-copy">
+        <code>{value}</code>
+        <button
+          style={done ? { background: "rgba(105,255,121,0.18)", color: "#69ff79" } : undefined}
+          onClick={() => void copy(value, what).then(() => setDone(true))}
+        >
+          {done ? "Скопировано" : "Копировать"}
         </button>
       </div>
     </div>
   );
 }
 
+/** ClaudeToken: the key is shown once. Losing it means issuing a new one. */
+export function ClaudeTokenScreen() {
+  const t = issued.value;
+  if (!t) {
+    return (
+      <Page>
+        <Head small title="Ключ для Claude" sub="Ключ уже скрыт" />
+        <main class="k-main">
+          <p class="k-lead" style={{ padding: "0 4px" }}>Ключ показывается только один раз. Если не успел скопировать — выдай новый, старый перестанет работать.</p>
+          <button class="k-btn" onClick={() => void issue(true)}>Выдать новый ключ</button>
+        </main>
+      </Page>
+    );
+  }
+  return (
+    <Page>
+      <Head small title="Ключ для Claude" sub="Шаг 1 из 3 готов" />
+      <main class="k-main">
+        <section class="k-card" style={{ padding: "16px 18px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+          <svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 22, height: 22, color: "#69ff79", marginTop: 1 }}>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M8 12.5l3 3 5-6" />
+          </svg>
+          <span style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <span style={{ fontSize: "16px", fontWeight: 600 }}>Ключ готов</span>
+            <span class="k-cap" style={{ fontSize: "14px", lineHeight: "19px" }}>
+              Покажем его только сейчас. Скопируй и вставь в claude.ai, пока не закрыл экран.
+            </span>
+          </span>
+        </section>
+        <CopyField label="Адрес коннектора" value={t.url} what="Адрес" />
+        <CopyField label="Ключ доступа" value={t.token} what="Ключ" />
+        <section class="k-card clip">
+          <Step n={2} title="Открой claude.ai" text="Настройки → Коннекторы → Добавить свой коннектор" />
+          <Step n={3} title="Вставь адрес и ключ" text="И включи коннектор «Keel» в чате" sep />
+        </section>
+        <button class="k-btn" onClick={() => openLink(CONNECTORS_URL)}>
+          Открыть claude.ai
+        </button>
+        <button
+          class="k-btn ghost"
+          onClick={() => {
+            haptic.light();
+            issued.value = null;
+            pop();
+          }}
+        >
+          Я всё вставил
+        </button>
+        <p class="k-cap" style={{ margin: "-2px 4px 0", textAlign: "center" }}>
+          Подключение появится, когда Claude первый раз зайдёт в Keel
+        </p>
+      </main>
+    </Page>
+  );
+}
+
 export function ClaudeScreen() {
   const status = resource<McpStatus>("/mcp/token").value.data;
-  // The token exists in plain text only in this response; it is kept in memory, never cached.
-  const [issued, setIssued] = useState<McpIssued | null>(null);
-  const [shown, setShown] = useState(true);
-  const [busy, setBusy] = useState(false);
-
-  const issue = async () => {
-    if (status?.active && !confirm("Старый токен перестанет работать. Перевыпустить?")) return;
-    setBusy(true);
-    try {
-      const t = await post<McpIssued>("/mcp/token");
-      setIssued(t);
-      setShown(true);
-      haptic.success();
-      invalidate("/mcp/token");
-    } catch (e) {
-      toast(e instanceof ApiError ? e.message : "Не получилось. Проверь связь");
-    } finally {
-      setBusy(false);
-    }
+  const list = resource<Review[]>("/reviews").value.data ?? [];
+  const [q, setQ] = useState("");
+  if (!status) return <Page>{null}</Page>;
+  if (!status.active) return <Connect />;
+  const reviews = list.filter((r) => r.kind !== "plan");
+  const latest = reviews.find((r) => r.kind === "week" || r.kind === "month") ?? reviews[0];
+  const past = reviews.filter((r) => r !== latest).slice(0, 8);
+  const sub = status.last_used_at ? `Подключён. Заходил ${claudeAt(status.last_used_at)}` : "Подключён. Claude ещё не заходил";
+  const ask = () => {
+    const text = q.trim();
+    if (!text) return;
+    void copy(text, "Вопрос");
+    openLink(`${CLAUDE_URL}/new?q=${encodeURIComponent(text)}`);
   };
-
-  const revoke = async () => {
-    if (!confirm("Отключить Claude? Токен перестанет работать сразу.")) return;
+  const off = async () => {
+    if (!canEdit() || !confirm("Claude больше не сможет заходить в Keel. Отключить?")) return;
     try {
       await del("/mcp/token");
-      setIssued(null);
-      haptic.warning();
-      toast("Claude отключён");
+      haptic.success();
       invalidate("/mcp/token");
+      toast("Claude отключён", { icon: "check" });
     } catch {
       toast("Не получилось. Проверь связь");
     }
   };
-
-  const url = issued?.url ?? status?.url ?? "";
-  const connected = !!(issued || status?.active);
+  const [head, ...rest] = latest ? split(latest.text) : ["", ""];
   return (
-    <div class="page">
-      <StackHead back="Профиль" title="Подключить Claude" />
-      <main class="main" style={{ paddingTop: "12px" }}>
-        <div class="note" data-motion="enter" style={{ alignItems: "center" }}>
-          <Icon name="spark" size={22} style={{ color: "var(--accent)" }} />
-          <span class="s" style={{ fontSize: "15px", lineHeight: "21px", color: "var(--soft)" }}>
-            Твой Claude сможет смотреть отметки, сон, энергию и задачи, отмечать привычки, ставить задачи и присылать сюда разборы.
-            Видит он только твои данные.
-          </span>
-        </div>
-
-        <section>
-          <Sec title="Адрес и токен" end={connected ? <span style={{ color: "var(--green, #30d158)" }}>подключено</span> : undefined} />
-          <div class="card" style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px" }}>
-            {url && <CopyRow label="Адрес MCP-сервера" value={url} what="Адрес" />}
-
-            {issued ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <span class="s">Токен — сохрани сейчас, второй раз его не показать</span>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <div class={`secret${shown ? "" : " masked"}`} style={{ flex: 1 }}>
-                    {shown ? issued.token : `${issued.prefix}••••••••••••••••`}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button class="btn" style={{ flex: 1 }} onClick={() => setShown(!shown)}>
-                    {shown ? "Скрыть" : "Показать"}
-                  </button>
-                  <button class="btn acc" style={{ flex: 1 }} onClick={() => void copy(issued.token, "Токен")}>
-                    Копировать
-                  </button>
-                </div>
-              </div>
-            ) : status?.active ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <span class="s">Токен</span>
-                <div class="secret masked">{status.prefix}••••••••••••••••</div>
-                <span class="s">
-                  Использовался: {when(status.last_used_at)}. Сам токен хранится только в виде хеша — показать его снова нельзя. Потерял — перевыпусти.
-                </span>
-              </div>
-            ) : (
-              <span class="s" style={{ fontSize: "15px" }}>Токена пока нет. Выпусти его — он понадобится в Claude.</span>
-            )}
-
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button class="btn acc lg" style={{ flex: 1 }} disabled={busy || !status} onClick={() => void issue()}>
-                {connected ? "Перевыпустить токен" : "Выпустить токен"}
-              </button>
-              {connected && (
-                <button class="btn lg" onClick={() => void revoke()}>
-                  Отключить
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <Sec title="Как подключить" />
-          <div class="card" style={{ padding: "16px" }}>
-            <ol class="steps-list">
-              <li>Открой Claude → <b>Настройки → Коннекторы</b> → <b>Добавить свой коннектор</b> (Add custom connector).</li>
-              <li>Название — «Трекер жизни», адрес — <b>адрес MCP-сервера</b> выше.</li>
-              <li>
-                В разделе <b>Request headers</b> добавь заголовок <b>Authorization</b> со значением <b>Bearer</b> и токеном через пробел.
-              </li>
-              <li>Сохрани и включи коннектор в чате. Попроси: «посмотри мой трекер и разбери день».</li>
-              <li>Разборы появятся здесь, в «Разборах», и по кнопке ✦ на экране «День».</li>
-            </ol>
-            <p class="s" style={{ margin: "12px 0 0" }}>Токен можно выпустить и в боте командой /connect.</p>
-          </div>
-        </section>
-
-        <section>
-          <Sec title="Разбор каждый вечер" />
-          <div class="card" style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "16px" }}>
-            <span class="s" style={{ fontSize: "15px", lineHeight: "21px" }}>
-              Создай в Claude запланированную задачу с этим текстом — и разбор будет приходить сам:
+    <Page>
+      <Head sub={sub} />
+      <main class="k-main">
+        {latest && (
+          <button class="k-btnreset k-sum claude" style={{ gap: "10px" }} onClick={() => push("review", { id: latest.id })}>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+              <span class="k-lab">{latest.kind === "week" ? "Разбор недели" : latest.kind === "month" ? "Разбор месяца" : "Разбор дня"}</span>
+              <span class="k-cap">{claudeAt(latest.at)}</span>
             </span>
-            <div class="secret" style={{ fontFamily: "inherit", fontSize: "15px", lineHeight: "21px", userSelect: "text" }}>
-              {SCHEDULE_PROMPT}
-            </div>
-            <button class="btn lg" onClick={() => void copy(SCHEDULE_PROMPT, "Текст")}>
-              Скопировать текст задачи
+            <p style={{ margin: 0, fontSize: "16px", lineHeight: "23px", color: "#f5f5f7" }}>{head}</p>
+            {rest[0] && <p style={{ margin: 0, fontSize: "16px", lineHeight: "22px", color: "#d1d1d6" }}>{split(rest[0])[0]}</p>}
+            {(latest.used_note || latest.changes.length > 0) && (
+              <span style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {latest.used_note && <span class="k-pill">Учёл твою заметку</span>}
+                {latest.changes.length > 0 && (
+                  <span class="k-pill" style={{ background: "rgba(255,255,255,0.10)", color: "#d1d1d6" }}>
+                    {`Изменил ${latest.changes.length} ${plural(latest.changes.length, "вещь", "вещи", "вещей")}`}
+                  </span>
+                )}
+              </span>
+            )}
+          </button>
+        )}
+        <section class="k-card" style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          <h2 class="k-h2" style={{ fontSize: "20px", lineHeight: "26px" }}>
+            Спроси Claude о своих делах
+          </h2>
+          <label for="k-ask" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+            Вопрос для Claude
+          </label>
+          <div class="k-askbox">
+            <textarea id="k-ask" rows={2} placeholder="Например: как мне успеть всё в пятницу?" value={q} onInput={(e) => setQ((e.target as HTMLTextAreaElement).value)} />
+            <button aria-label="Спросить в Claude" style={q.trim() ? { background: "#f5f5f7", color: "#000" } : undefined} onClick={ask}>
+              <svg class="k-ic" viewBox="0 0 24 24" aria-hidden="true" style={{ width: 20, height: 20, strokeWidth: 2 }}>
+                <path d="M12 19V5M6 11l6-6 6 6" />
+              </svg>
             </button>
           </div>
+          <p class="k-cap" style={{ margin: 0 }}>
+            Откроется Claude с этим вопросом (он же скопируется). Claude сам посмотрит твои дела, сон и заметки.
+          </p>
+        </section>
+        {past.length > 0 && (
+          <section class="k-card clip">
+            <div style={{ padding: "16px 18px 6px" }}>
+              <h2 class="k-h2">Прошлые разборы</h2>
+            </div>
+            {past.map((r) => (
+              <button key={r.id} class="k-btnreset k-lr" onClick={() => push("review", { id: r.id })}>
+                <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px", minWidth: 0 }}>
+                  <span style={{ fontSize: "16px" }}>{reviewTitle(r)}</span>
+                  <span class="k-cap" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {split(r.text)[0]}
+                  </span>
+                </span>
+                <Chevron color="#636366" />
+              </button>
+            ))}
+          </section>
+        )}
+        <section class="k-card clip">
+          <div style={{ padding: "16px 18px 6px" }}>
+            <h2 class="k-h2">Настройки</h2>
+          </div>
+          <button class="k-btnreset k-lr" onClick={() => void copy(SCHEDULE_PROMPT, "Текст задания")}>
+            <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span style={{ fontSize: "16px" }}>Обновлять разбор</span>
+              <span class="k-cap">Скопировать задание для Claude: разбор каждое воскресенье</span>
+            </span>
+            <Chevron color="#636366" />
+          </button>
+          <button class="k-btnreset k-lr" onClick={() => void issue(true)}>
+            <span style={{ flex: 1, fontSize: "16px" }}>Выдать новый токен</span>
+            <Chevron color="#636366" />
+          </button>
+          <button class="k-btnreset k-lr" onClick={() => void off()}>
+            <span style={{ flex: 1, fontSize: "16px" }}>Отключить Claude</span>
+          </button>
         </section>
       </main>
-    </div>
+    </Page>
   );
 }
 
-export function ReviewCard({ r, today }: { r: Review; today?: string }) {
-  const label = r.kind === "week" ? "Неделя" : today ? relDay(r.date, today) : r.date;
-  return (
-    <article class="card" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "10px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span class="t" style={{ fontWeight: 600 }}>{label}</span>
-        <span class="tag">{r.by === "me" ? "Ты" : "Claude"}</span>
-      </div>
-      <Markdown text={r.text} />
-    </article>
-  );
-}
+const KIND_TITLE = { week: "Разбор недели", month: "Разбор месяца", day: "Разбор дня", plan: "План дня" } as const;
 
-export function ReviewsScreen() {
-  const reviews = resource<Review[]>("/reviews").value;
-  const today = resource<DayView>("/views/day").value.data?.today;
-  const list = reviews.data;
+export function ClaudeReviewScreen({ id }: { id: string }) {
+  const r = resource<Review>(`/reviews/${id}`).value.data;
+  if (!r) return <Page>{null}</Page>;
+  const [head, rest] = split(r.text);
+  const sub = r.kind === "week" ? reviewTitle(r).replace(/^Неделя /, "") : r.kind === "month" ? reviewTitle(r) : reviewTitle(r).replace(/^День, /, "");
   return (
-    <div class="page">
-      <StackHead back="Профиль" title="Разборы" />
-      <main class="main" style={{ paddingTop: "12px" }}>
-        {list && list.length === 0 && (
-          <div class="note" style={{ alignItems: "center" }}>
-            <Icon name="spark" size={22} style={{ color: "var(--accent)" }} />
-            <span class="s" style={{ fontSize: "15px", lineHeight: "21px", color: "var(--soft)" }}>
-              Пока пусто. Подключи Claude и попроси разобрать день — разбор сохранится здесь.
+    <Page>
+      <Head small title={KIND_TITLE[r.kind]} sub={sub} />
+      <main class="k-main">
+        <section class="k-sum claude" style={{ gap: "10px" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ClaudeLogo />
+            <span class="k-cap">Claude, {claudeAt(r.at)}</span>
+          </span>
+          <p class="k-sumtext" style={{ color: "#f5f5f7", fontSize: "17px", lineHeight: "24px" }}>
+            {head}
+          </p>
+          {r.used_note && (
+            <span>
+              <Pill coral>Учёл твою заметку</Pill>
             </span>
-          </div>
+          )}
+        </section>
+        {rest && (
+          <section class="k-card k-review" style={{ padding: "16px 18px" }}>
+            <Markdown text={rest} />
+          </section>
         )}
-        {list?.map((r, i) => (
-          <div key={r.id} data-motion={i < 4 ? "enter" : "reveal"} style={{ "--i": i } as CSSProperties}>
-            <ReviewCard r={r} today={today} />
-          </div>
-        ))}
+        {r.changes.length > 0 && (
+          <section class="k-card clip">
+            <div class="k-cardhead">
+              <h2 class="k-h2">Что Claude изменил</h2>
+            </div>
+            {r.changes.map((c, i) => (
+              <div key={i} class="k-lr">
+                <ClaudeLogo size={16} />
+                <span style={{ flex: 1, fontSize: "15px" }}>{c}</span>
+              </div>
+            ))}
+          </section>
+        )}
+        <button class="k-btn ghost" onClick={() => openLink(`${CLAUDE_URL}/new?q=${encodeURIComponent(`Расскажи подробнее про ${KIND_TITLE[r.kind].toLowerCase()} (${sub}) в Keel.`)}`)}>
+          Спросить Claude об этом
+        </button>
       </main>
-    </div>
+    </Page>
   );
 }

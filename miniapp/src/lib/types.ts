@@ -221,3 +221,98 @@ export interface McpIssued {
   token: string;
   prefix: string;
 }
+
+export interface Note {
+  kind: "week" | "month";
+  start: string;
+  text: string;
+  updated_at: string;
+}
+
+export interface PlanDay {
+  date: string;
+  tasks: Task[];
+  habits: number;
+}
+
+export interface PlanView {
+  today: string;
+  overdue: Task[];
+  days: PlanDay[];
+  inbox: Task[];
+}
+
+export interface HabitLine {
+  id: Uuid;
+  name: string;
+  type: HabitType;
+  cells: Status[];
+  done: number;
+  of: number;
+  streak: number;
+  best: number;
+  remind_at: string | null;
+}
+
+export interface NightOut {
+  date: string;
+  bed: number;
+  wake: number;
+  dur: number;
+}
+
+export interface ResultsView {
+  period: "week" | "month";
+  start: string;
+  end: string;
+  upto: string;
+  today: string;
+  label: string;
+  prev_name: string;
+  empty: boolean;
+  avg: number | null;
+  prev_avg: number | null;
+  trend: (number | null)[];
+  review: Review | null;
+  claude_connected: boolean;
+  lead: string;
+  motto: string;
+  note: Note | null;
+  habits: {
+    pct: number | null;
+    prev_pct: number | null;
+    days: { date: string; ok: boolean | null }[];
+    lines: HabitLine[];
+    marks_done: number;
+    marks_total: number;
+    record: number;
+    record_name: string | null;
+    weak_id: Uuid | null;
+    lead: string;
+    motto: string;
+    weak_text: string;
+  };
+  tasks: {
+    done: number;
+    total: number;
+    prev_done: number | null;
+    important: [number, number];
+    normal: [number, number];
+    overdue: Task[];
+    inbox: Task[];
+    lead: string;
+    motto: string;
+  };
+  sleep: {
+    nights: (NightOut | null)[];
+    n: number;
+    late: number;
+    avg_bed: number | null;
+    avg_wake: number | null;
+    avg_dur: number | null;
+    prev_avg_bed: number | null;
+    goal_bed: number;
+    lead: string;
+    motto: string;
+  };
+}

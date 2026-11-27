@@ -139,6 +139,7 @@ export function AddSheet({ taskId, habitId }: { taskId?: string; habitId?: strin
   const editing = !!(task || habit);
 
   const [type, setType] = useState<"task" | "habit">(habit ? "habit" : "task");
+  const [switched, setSwitched] = useState(false); // animate the fields only on a switch, not on open
   const [name, setName] = useState(task?.title ?? habit?.name ?? "");
   // task
   const [date, setDate] = useState<string | null>(task ? task.date : t0);
@@ -218,12 +219,15 @@ export function AddSheet({ taskId, habitId }: { taskId?: string; habitId?: strin
       </div>
       {!editing && (
         <div role="group" aria-label="Что это" class="k-type">
+          <i class="k-type-ind" aria-hidden="true" style={{ transform: type === "habit" ? "translate3d(calc(100% + 2px), 0, 0)" : "none" }} />
           {(["task", "habit"] as const).map((v) => (
             <button
               key={v}
               aria-pressed={type === v}
               onClick={() => {
+                if (v === type) return;
                 haptic.selection();
+                setSwitched(true);
                 setType(v);
               }}
             >
@@ -246,6 +250,8 @@ export function AddSheet({ taskId, habitId }: { taskId?: string; habitId?: strin
         onInput={(e) => setName((e.target as HTMLInputElement).value)}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
       />
+      {/* The fields change with the type: a new block appears smoothly (keyed remount). */}
+      <div key={type} class={`k-swap${switched ? " anim" : ""}`}>
       {type === "task" ? (
         <>
           <div class="k-field">
@@ -430,6 +436,7 @@ export function AddSheet({ taskId, habitId }: { taskId?: string; habitId?: strin
           )}
         </>
       )}
+      </div>
     </Sheet>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseExport } from "./Import";
+import { parseExport } from "./Data";
 
 describe("import: pasted text", () => {
   it("accepts the old app's export", () => {

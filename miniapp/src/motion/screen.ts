@@ -1,8 +1,8 @@
 /**
- * Screen entrance: cards visible on open appear one after another (stagger);
- * blocks below the fold reveal once when they scroll into view (IntersectionObserver),
- * never again on scrolling back. Content is final and clickable from the first frame —
- * only opacity/transform are animated on top.
+ * Screen entrance: cards visible on open appear one after another (stagger). Blocks below
+ * the fold are left alone: animating them while the page scrolls gave every card its own
+ * compositor layer and made scrolling stutter in Chrome. Content is final and clickable
+ * from the first frame — only opacity/transform are animated on top.
  */
 
 import { motionOk } from "./tokens";
@@ -10,7 +10,6 @@ import { motionOk } from "./tokens";
 const MAX_STAGGER = 8;
 const WATCH_MS = 1500; // cached first paint → fresh data: animate what arrives right after open
 
-let io: IntersectionObserver | null = null;
 let mo: MutationObserver | null = null;
 let stopTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -26,13 +25,8 @@ function prepare(els: HTMLElement[], startIndex: number): number {
   for (const el of els) {
     if (el.dataset.motion) continue;
     const top = el.getBoundingClientRect().top;
-    if (top < vh) {
-      el.dataset.motion = "enter";
-      el.style.setProperty("--i", String(Math.min(i++, MAX_STAGGER)));
-    } else {
-      el.dataset.motion = "reveal";
-      io?.observe(el);
-    }
+    el.dataset.motion = top < vh ? "enter" : "still";
+    if (top < vh) el.style.setProperty("--i", String(Math.min(i++, MAX_STAGGER)));
   }
   return i;
 }
@@ -43,34 +37,34 @@ export function animateScreen(): void {
   if (!motionOk.value) return;
   const root = document.querySelector(".page, .k-page");
   if (!root) return;
-  io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          (e.target as HTMLElement).classList.add("in");
-          io?.unobserve(e.target);
-        }
-      }
-    },
-    { rootMargin: "0px 0px -8% 0px" },
-  );
   let next = prepare(blocks(root), 0);
   settleSoon();
-  const main = root.querySelector(".main, .k-main");
-  if (main) {
-    mo = new MutationObserver(() => {
-      next = prepare(blocks(root), next);
-    });
-    mo.observe(main, { childList: true });
-    stopTimer = setTimeout(() => mo?.disconnect(), WATCH_MS);
-  }
+  // Fresh data may arrive right after open, or the whole page may be swapped (a cached
+  // screen → the loaded one, another day): new blocks get the same entrance.
+  let page: Element = root;
+  let main = root.querySelector(".main, .k-main");
+  mo = new MutationObserver(() => {
+    const r = document.querySelector(".page, .k-page");
+    if (!r) return;
+    if (r !== page) {
+      page = r;
+      next = 0;
+    }
+    const m = r.querySelector(".main, .k-main");
+    if (m && m !== main) mo?.observe(m, { childList: true });
+    main = m;
+    next = prepare(blocks(r), next);
+  });
+  const app = document.getElementById("app");
+  if (app) mo.observe(app, { childList: true });
+  if (main) mo.observe(main, { childList: true });
+  stopTimer = setTimeout(() => mo?.disconnect(), WATCH_MS);
 }
 
 function cleanup() {
-  io?.disconnect();
   mo?.disconnect();
   if (stopTimer) clearTimeout(stopTimer);
-  io = mo = null;
+  mo = null;
 }
 
 /** Screen changes update the DOM immediately. (View Transitions were tried and dropped:
@@ -82,7 +76,7 @@ export function withTransition(update: () => void): void {
 
 /** Safety net: finish every finite animation still running shortly after a screen opens,
  * so slow or throttled frames can never leave content half-faded or half-drawn. */
-export function settleSoon(ms = 600): void {
+export function settleSoon(ms = 1200): void {
   setTimeout(() => {
     for (const a of document.getAnimations()) {
       const t = a.effect?.getTiming();

@@ -2,7 +2,9 @@
 
 import { sheet } from "../lib/router";
 import { AddSheet } from "./AddSheet";
+import { AssignSheet } from "./AssignSheet";
 import { EnergySheet } from "./EnergySheet";
+import { NoteSheet } from "./NoteSheet";
 import { SleepSheet } from "./SleepSheet";
 
 export default function Sheets() {
@@ -16,5 +18,9 @@ export default function Sheets() {
       return <EnergySheet key={key} />;
     case "sleep":
       return <SleepSheet key={key} date={s.props.date} />;
+    case "note":
+      return <NoteSheet key={key} kind={s.props.kind} anchor={s.props.anchor} />;
+    case "assign":
+      return <AssignSheet key={key} id={s.props.id} task={s.props.task} />;
   }
 }

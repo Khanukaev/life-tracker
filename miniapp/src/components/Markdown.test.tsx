@@ -21,3 +21,13 @@ describe("review markdown", () => {
     expect(el.textContent).toContain("<img src=x");
   });
 });
+
+describe("review summary", () => {
+  it("takes the first plain paragraph and leaves lists and headings as blocks", async () => {
+    const { splitSummary } = await import("./Markdown");
+    const [head, rest] = splitSummary("Итог дня. **Сон** в норме.\n- Отчёт: не начат\n- Вода: 8\n\n## Что сделать\nЛечь до 00:30");
+    expect(head).toBe("Итог дня. Сон в норме.");
+    expect(rest).toContain("- Отчёт: не начат");
+    expect(rest).toContain("## Что сделать");
+  });
+});

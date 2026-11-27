@@ -6,14 +6,25 @@ import { haptic } from "./haptic";
 import { setBackButton } from "./telegram";
 
 export type Tab = "today" | "plan" | "results";
-export type ScreenName = "task" | "habit" | "profile" | "settings" | "norms" | "claude" | "reviews" | "import";
+export type ScreenName =
+  | "task"
+  | "habit"
+  | "profile"
+  | "data"
+  | "about"
+  | "claude"
+  | "claude-token"
+  | "review"
+  | "res-habits"
+  | "res-tasks"
+  | "res-sleep";
 
 export interface Screen {
   name: ScreenName;
   params?: Record<string, string>;
 }
 
-export type SheetKind = "add" | "energy" | "sleep";
+export type SheetKind = "add" | "energy" | "sleep" | "note" | "assign";
 
 export interface SheetState {
   kind: SheetKind;
@@ -25,6 +36,8 @@ export const stack = signal<Screen[]>([]);
 export const sheet = signal<SheetState | null>(null);
 export const dayDate = signal<string | null>(null); // null = today
 export const dayMode = signal<"list" | "hours">("list");
+/** «Итоги»: the period is chosen once; details open in the same period. */
+export const period = signal<"week" | "month">("week");
 
 export const current = computed<Screen | null>(() => stack.value[stack.value.length - 1] ?? null);
 
@@ -45,7 +58,9 @@ export function pop(): void {
   stack.value = stack.value.slice(0, -1);
 }
 
-export function openSheet(kind: SheetKind, props: Record<string, any> = {}): void {
+/** Opening a sheet gives a light tap; links from the bot open quietly at launch. */
+export function openSheet(kind: SheetKind, props: Record<string, any> = {}, quiet = false): void {
+  if (!quiet) haptic.light();
   sheet.value = { kind, props };
 }
 
@@ -81,5 +96,5 @@ export function syncBackButton(): void {
 /** Links from the bot open a sheet right away, e.g. "Записать сон" → `?open=sleep`. */
 export function deepLinkSheet(): SheetKind | null {
   const v = new URLSearchParams(location.search).get("open");
-  return v === "sleep" ? v : null;
+  return v === "sleep" || v === "note" ? v : null;
 }

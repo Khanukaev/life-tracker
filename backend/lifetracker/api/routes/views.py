@@ -9,6 +9,7 @@ from fastapi import APIRouter, Query
 from lifetracker.api.deps import Now, SessionDep, UserId
 from lifetracker.domain.enums import EnergyZone
 from lifetracker.domain.templates import HABIT_TEMPLATES
+from lifetracker.schemas.outlook import PlanView, ResultsView
 from lifetracker.schemas.views import (
     DayView,
     FeelIn,
@@ -20,7 +21,7 @@ from lifetracker.schemas.views import (
     SlotView,
     TasksView,
 )
-from lifetracker.services import feel, screens, views
+from lifetracker.services import feel, outlook, screens, views
 
 router = APIRouter(tags=["views"])
 
@@ -103,3 +104,21 @@ async def tasks_view(
 async def habit_templates(_: UserId) -> list[dict[str, object]]:
     """Optional starter habits for onboarding (neutral, editable after creation)."""
     return HABIT_TEMPLATES
+
+
+@router.get("/views/plan", response_model=PlanView)
+async def plan_view(session: SessionDep, user_id: UserId, now: Now) -> PlanView:
+    """«План»: overdue, the next days with their habit counts, tasks without a date."""
+    return await outlook.plan_view(session, user_id, now)
+
+
+@router.get("/views/results", response_model=ResultsView)
+async def results_view(
+    session: SessionDep,
+    user_id: UserId,
+    now: Now,
+    period: Literal["week", "month"] = "week",
+    anchor: date | None = None,
+) -> ResultsView:
+    """«Итоги» and their details: score, trend, habits, tasks, sleep, review, note."""
+    return await outlook.results_view(session, user_id, now, period, anchor)

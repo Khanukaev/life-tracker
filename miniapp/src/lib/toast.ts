@@ -1,6 +1,7 @@
 /** Bottom message: a short status, optionally with an icon and «Отменить». */
 
 import { signal } from "@preact/signals";
+import { haptic } from "./haptic";
 
 export type ToastIcon = "check" | "trash" | "offline" | null;
 
@@ -36,6 +37,7 @@ export function flushToast(): void {
 /** «Отменить»: drop the pending action and run the undo. */
 export function undoToast(): void {
   const undo = toastUndo.value;
+  haptic.light();
   onExpire = null;
   if (timer) clearTimeout(timer);
   timer = null;
