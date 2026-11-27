@@ -148,12 +148,15 @@ function useResults() {
   return { p, e: resource<ResultsView>(resultsKey(p)).value };
 }
 
-function Shell({ title, sub, end, children }: { title: string; sub?: string; end?: ComponentChildren; children: ComponentChildren }) {
+/** `animKey` remounts the content (e.g. week ↔ month), so it appears like any new screen. */
+function Shell({ title, sub, end, animKey, children }: { title: string; sub?: string; end?: ComponentChildren; animKey?: string; children: ComponentChildren }) {
   return (
     <div class="k-page">
       <div class="k-bg" aria-hidden="true" />
       <PageHead title={title} sub={sub} end={end} />
-      <main class="k-main">{children}</main>
+      <main class="k-main" key={animKey}>
+        {children}
+      </main>
     </div>
   );
 }
@@ -193,7 +196,7 @@ export function ResultsScreen() {
   else if (r.empty) body = <EmptyResults r={r} />;
   else body = <ResultsBody r={r} />;
   return (
-    <Shell title="Итоги" end={seg}>
+    <Shell title="Итоги" end={seg} animKey={p}>
       {!online.value && r && <OfflineBanner text={`Нет связи. Показываю итоги, сохранённые ${savedAt(e.at)}`} />}
       {body}
     </Shell>

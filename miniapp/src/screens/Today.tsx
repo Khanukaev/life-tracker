@@ -469,6 +469,7 @@ function TasksCard({ tasks }: { tasks: DayTask[] }) {
 // ---------- «По часам» ----------
 
 const PX = 46 / 60; // 46 px per hour, as in TodayHoursGlass
+const REVEAL_MS = 520; // the day unrolls from the top: delay grows with the position
 
 interface HourItem {
   id: string;
@@ -581,7 +582,17 @@ function DayHours({ d, habits, remindOf, settings }: { d: DayView; habits: Habit
       <div style={{ position: "absolute", left: 0, right: 0, top: `${top}px`, bottom: 0 }}>
         <svg aria-hidden="true" width="80" height={height - top} style={{ position: "absolute", left: 0, top: 0, overflow: "visible" }}>
           {zones.map((z, i) => (
-            <path key={i} d={wave(y(z.s), y(z.e))} stroke={ZONE_COLOR[z.zone] ?? "#7c7c8a"} stroke-width="2" fill="none" stroke-linecap="round" />
+            <path
+              key={i}
+              class="k-wave"
+              pathLength={1}
+              style={{ "--d": `${Math.round((y(z.s) / Math.max(1, height)) * REVEAL_MS)}ms`, "--len": `${Math.round(((y(z.e) - y(z.s)) / Math.max(1, height)) * REVEAL_MS)}ms` }}
+              d={wave(y(z.s), y(z.e))}
+              stroke={ZONE_COLOR[z.zone] ?? "#7c7c8a"}
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+            />
           ))}
           {d.relation === "today" && d.now_min != null && d.now_min >= startH * 60 && d.now_min <= endH * 60 && (
             <circle cx="58" cy={y(d.now_min).toFixed(1)} r="4.5" fill="#f5f5f7" />
@@ -590,7 +601,7 @@ function DayHours({ d, habits, remindOf, settings }: { d: DayView; habits: Habit
         {Array.from({ length: endH - startH + 1 }, (_, i) => {
           const h = startH + i;
           return (
-            <span key={h} class="lbl k-n" style={{ top: `${i * 46 - 7}px` }}>
+            <span key={h} class="lbl k-n k-reveal" style={{ top: `${i * 46 - 7}px`, "--d": `${Math.round(((i * 46) / Math.max(1, height)) * REVEAL_MS)}ms` }}>
               {h === 24 ? "24:00" : hhmm(h * 60)}
             </span>
           );
@@ -598,12 +609,12 @@ function DayHours({ d, habits, remindOf, settings }: { d: DayView; habits: Habit
         {zones
           .filter((z) => y(z.e) - y(z.s) > 70)
           .map((z, i) => (
-            <span key={i} class="zone" style={{ top: `${((y(z.s) + y(z.e)) / 2).toFixed(1)}px`, color: ZONE_COLOR[z.zone] }}>
+            <span key={i} class="zone k-reveal-fade" style={{ top: `${((y(z.s) + y(z.e)) / 2).toFixed(1)}px`, color: ZONE_COLOR[z.zone], "--d": `${Math.round((((y(z.s) + y(z.e)) / 2) / Math.max(1, height)) * REVEAL_MS)}ms` }}>
               {ZONE_LABEL[z.zone]}
             </span>
           ))}
         {groups.map((g, gi) => (
-          <div key={gi} class="k-hblock" style={{ top: `${g.top}px` }}>
+          <div key={gi} class="k-hblock k-reveal" style={{ top: `${g.top}px`, "--d": `${Math.round((g.top / Math.max(1, height)) * REVEAL_MS) + 60}ms` }}>
             {g.items.map((it) => (
               <div key={it.id} class="k-hitem">
                 {it.moon ? (

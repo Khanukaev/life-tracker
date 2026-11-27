@@ -914,6 +914,9 @@ a {
 .sheet {
   position: relative;
   width: 100%;
+  /* Stays on its own layer for the whole life of the sheet: a drag then moves a ready
+     texture instead of re-rasterising the full-height form on the first frames. */
+  will-change: transform;
   max-height: calc(100vh - var(--safe-top) - var(--content-top) - 30px);
   overflow-y: auto;
   overscroll-behavior: contain;

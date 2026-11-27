@@ -64,7 +64,7 @@ export function withTransition(update: () => void): void {
 
 /** Safety net: finish every finite animation still running shortly after a screen opens,
  * so slow or throttled frames can never leave content half-faded or half-drawn. */
-export function settleSoon(ms = 600): void {
+export function settleSoon(ms = 1200): void {
   setTimeout(() => {
     for (const a of document.getAnimations()) {
       const t = a.effect?.getTiming();

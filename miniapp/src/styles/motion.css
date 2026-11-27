@@ -61,6 +61,37 @@
   animation-delay: calc(var(--i, 0) * var(--stagger));
 }
 
+/* ---- «По часам»: the day unrolls top-down (delays come from each item's position) ---- */
+@keyframes k-drop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+}
+@keyframes k-fadein {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes k-wave {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.motion-ok .k-reveal {
+  animation: k-drop 0.34s var(--ease-out) var(--d, 0ms) backwards;
+}
+.motion-ok .k-hours .zone.k-reveal-fade {
+  animation: k-fadein 0.4s var(--ease-out) var(--d, 0ms) backwards;
+}
+.motion-ok .k-wave {
+  stroke-dasharray: 1 1;
+  animation: k-wave var(--len, 300ms) linear var(--d, 0ms) backwards;
+}
+
 /* ---- charts draw themselves ---- */
 .motion-ok .draw {
   stroke-dasharray: 1 1.02;

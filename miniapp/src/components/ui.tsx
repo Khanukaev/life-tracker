@@ -47,6 +47,15 @@ export function Sheet({ children, label, cls = "k-sheet" }: { children: Componen
     let velocity = 0;
     let dy = 0;
     let tracking = false;
+    let frame = 0;
+    // The finger is followed once per frame (not once per touch event): touch events come
+    // unevenly, and writing the transform on each of them made the drag look jerky.
+    const paint = () => {
+      frame = 0;
+      const d = Math.max(0, dy);
+      el.style.transform = `translate3d(0, ${d.toFixed(1)}px, 0)`;
+      if (scrim.current) scrim.current.style.opacity = String(1 - Math.min(0.6, d / height()));
+    };
     const down = (e: TouchEvent) => {
       // Controls with their own drag (the sleep dial) mark themselves; a swipe that starts
       // on them is theirs, not a request to close the sheet.
@@ -62,18 +71,22 @@ export function Sheet({ children, label, cls = "k-sheet" }: { children: Componen
       if (!tracking) return;
       const y = e.touches[0]!.clientY;
       const now = performance.now();
-      velocity = ((y - lastY) / Math.max(1, now - lastT)) * 1000; // px/s
+      // px/s, smoothed: single touch events are noisy and made the release feel random.
+      velocity = 0.6 * (((y - lastY) / Math.max(1, now - lastT)) * 1000) + 0.4 * velocity;
       lastY = y;
       lastT = now;
       dy = y - startY;
       if (dy > 0) {
-        el.style.transform = `translate3d(0, ${dy}px, 0)`;
         e.preventDefault();
+        frame ||= requestAnimationFrame(paint);
       }
     };
     const up = () => {
       if (!tracking) return;
       tracking = false;
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      if (scrim.current) scrim.current.style.opacity = "";
       if (dy > 110 || velocity > 900) {
         haptic.light();
         return close(Math.max(0, velocity));
@@ -84,7 +97,10 @@ export function Sheet({ children, label, cls = "k-sheet" }: { children: Componen
     el.addEventListener("touchstart", down, { passive: true });
     el.addEventListener("touchmove", move, { passive: false });
     el.addEventListener("touchend", up);
+    el.addEventListener("touchcancel", up);
     return () => {
+      if (frame) cancelAnimationFrame(frame);
+      el.removeEventListener("touchcancel", up);
       spring?.stop();
       registerSheetClose(null);
       el.removeEventListener("touchstart", down);
