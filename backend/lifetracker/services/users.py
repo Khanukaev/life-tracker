@@ -76,7 +76,7 @@ async def update_me(session: AsyncSession, user_id: uuid.UUID, data: MeUpdate) -
     apply_patch(
         user,
         data.model_dump(exclude_unset=True),
-        nullable={"reminder_time", "morning_time", "week_note_time", "theme", "motto"},
+        nullable={"reminder_time", "morning_time", "week_note_time", "motto"},
     )
     await session.commit()
     return user

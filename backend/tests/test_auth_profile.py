@@ -16,7 +16,7 @@ async def test_first_login_creates_account_with_defaults(anon: AsyncClient) -> N
     assert me["timezone"] == "Europe/Moscow"
     assert me["language"] == "ru"
     assert me["onboarded"] is False
-    assert me["theme"] is None  # auto: Glass if the device can handle it
+    assert "theme" not in me  # one dark theme: nothing to choose
     assert me["start_date"] == "2026-11-22"
 
 
@@ -53,7 +53,8 @@ async def test_update_profile(alice: AsyncClient) -> None:
         json={
             "timezone": "Asia/Yekaterinburg",
             "reminder_time": "21:30",
-            "theme": "base",
+            "morning_time": "08:30",
+            "week_note_time": "20:00",
             "haptics": False,
             "onboarded": True,
             "motto": "Steady wins",
@@ -61,18 +62,23 @@ async def test_update_profile(alice: AsyncClient) -> None:
     )
     assert r.status_code == 200, r.text
     me = r.json()
-    assert me["reminder_time"] == "21:30"
-    assert me["theme"] == "base"
-    # explicit null switches back to auto theme / disables the reminder
-    me = (await alice.patch("/me", json={"theme": None, "reminder_time": None})).json()
-    assert me["theme"] is None
+    assert (me["reminder_time"], me["morning_time"], me["week_note_time"]) == (
+        "21:30",
+        "08:30",
+        "20:00",
+    )
+    # explicit null turns a reminder off
+    me = (await alice.patch("/me", json={"morning_time": None, "reminder_time": None})).json()
     assert me["reminder_time"] is None
+    assert me["morning_time"] is None
+    assert me["week_note_time"] == "20:00"
     assert me["motto"] == "Steady wins"
 
 
 async def test_profile_validation(alice: AsyncClient) -> None:
     assert (await alice.patch("/me", json={"timezone": "Mars/Base"})).status_code == 422
     assert (await alice.patch("/me", json={"first_name": None})).status_code == 422
+    assert (await alice.patch("/me", json={"theme": "base"})).status_code == 422  # gone
     assert (await alice.patch("/me", json={"reminder_time": "25:00"})).status_code == 422
     assert (await alice.patch("/me", json={"telegram_id": 1})).status_code == 422  # not editable
 

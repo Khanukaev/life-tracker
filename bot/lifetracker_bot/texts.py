@@ -41,7 +41,7 @@ def parse_day(s: str) -> date:
     return date(int(s[:4]), int(s[4:6]), int(s[6:]))
 
 
-def open_app_kb(url: str, label: str = "Открыть трекер") -> InlineKeyboardMarkup:
+def open_app_kb(url: str, label: str = "Открыть Keel") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text=label, web_app=WebAppInfo(url=url))]]
     )
@@ -50,11 +50,12 @@ def open_app_kb(url: str, label: str = "Открыть трекер") -> InlineK
 def start_text(first_name: str) -> str:
     return (
         f"Привет, {escape(first_name)}! 👋\n\n"
-        "Это твой личный трекер: привычки, сон, энергия, задачи и цели. "
+        "Keel — твой день в одном месте: привычки, дела и сон. "
+        "Отмечай одним касанием, смотри энергию и итоги недели. "
         "Данные видишь только ты.\n\n"
-        "Открой приложение кнопкой ниже — настройка займёт минуту. "
-        "Вечером пришлю итог дня, а отмечать привычки можно прямо здесь.\n\n"
-        "/connect — подключить своего Claude к трекеру"
+        "Открой приложение кнопкой ниже — первая отметка займёт минуту. "
+        "Напоминания приходят сюда, отмечать можно прямо из них.\n\n"
+        "/connect — подключить своего Claude"
     )
 
 
@@ -184,7 +185,7 @@ def connect_text(token: str, mcp_url: str, replaced: bool) -> str:
         "Как подключить:\n"
         "1. Claude → Settings → Connectors → Add custom connector.\n"
         "2. Вставь адрес сервера и токен.\n"
-        "3. Попроси: «посмотри мой трекер и разбери день».\n\n"
-        "Подробная инструкция — в приложении: Профиль → Подключить Claude. "
+        "3. Попроси: «посмотри мой Keel и разбери неделю».\n\n"
+        "Подробная инструкция — в приложении: Итоги → Claude. "
         "Потерял токен или отдал кому-то — просто снова вызови /connect."
     )

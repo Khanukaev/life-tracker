@@ -58,7 +58,7 @@ def utc_now() -> datetime:
 clock: Callable[[], datetime] = utc_now  # tests freeze it
 
 INSTRUCTIONS = """\
-Life Tracker: the user's personal tracker of habits, sleep, energy and tasks.
+Keel: the user's personal tracker of habits, tasks, sleep and energy.
 All data belongs to the user who connected this server; you only ever see their data.
 
 Model:
@@ -82,8 +82,8 @@ plans with save_plan so the user sees them in the app.
 """
 
 server: MCPServer[Any] = MCPServer(
-    name="life-tracker",
-    title="Трекер жизни",
+    name="keel",
+    title="Keel",
     instructions=INSTRUCTIONS,
     version="0.1.0",
 )

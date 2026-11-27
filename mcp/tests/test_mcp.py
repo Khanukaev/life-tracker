@@ -80,7 +80,7 @@ async def test_http_requires_a_valid_token(mcp_app: Any, alice: AsyncClient) -> 
             token,
         )
         assert init.status_code == 200, init.text
-        assert init.json()["result"]["serverInfo"]["name"] == "life-tracker"
+        assert init.json()["result"]["serverInfo"]["name"] == "keel"
 
         listed = await rpc(c, "tools/list", {}, token)
         names = {t["name"] for t in listed.json()["result"]["tools"]}

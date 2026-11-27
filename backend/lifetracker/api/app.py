@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.log_level, json=settings.app_env == "prod")
     app = FastAPI(
-        title="Life Tracker API",
+        title="Keel API",
         version="0.1.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",

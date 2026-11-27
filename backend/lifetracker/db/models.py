@@ -44,7 +44,6 @@ from lifetracker.domain.enums import (
     ReviewKind,
     ScheduleKind,
     SleepQuality,
-    Theme,
 )
 
 
@@ -64,7 +63,6 @@ class User(Base):
     reminder_time: Mapped[time | None] = mapped_column(Time)  # evening; NULL = off
     morning_time: Mapped[time | None] = mapped_column(Time)  # NULL = off
     week_note_time: Mapped[time | None] = mapped_column(Time)  # on Sundays; NULL = off
-    theme: Mapped[Theme | None] = mapped_column(str_enum(Theme, "theme"))  # NULL = auto
     haptics: Mapped[bool] = mapped_column(Boolean, default=True)
     onboarded: Mapped[bool] = mapped_column(Boolean, default=False)
     bot_blocked: Mapped[bool] = mapped_column(Boolean, default=False)

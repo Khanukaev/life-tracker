@@ -85,7 +85,7 @@ def build_router(
         async with sessions() as session:
             user_id = await reminders.user_id_by_telegram(session, cb.from_user.id)
             if user_id is None:
-                await cb.answer("Сначала открой трекер: /start")
+                await cb.answer("Сначала открой Keel: /start")
                 return
             try:
                 name = await reminders.mark_habit(
@@ -122,7 +122,7 @@ def build_router(
         async with sessions() as session:
             user_id = await reminders.user_id_by_telegram(session, cb.from_user.id)
             if user_id is None:
-                await cb.answer("Сначала открой трекер: /start")
+                await cb.answer("Сначала открой Keel: /start")
                 return
             try:
                 title = await reminders.complete_task(session, user_id, task_id, now())
@@ -142,7 +142,7 @@ def build_router(
         async with sessions() as session:
             user_id = await reminders.user_id_by_telegram(session, cb.from_user.id)
             if user_id is None:
-                await cb.answer("Сначала открой трекер: /start")
+                await cb.answer("Сначала открой Keel: /start")
                 return
             try:
                 name = await reminders.mark_habit(session, user_id, habit_id, day, True, now())

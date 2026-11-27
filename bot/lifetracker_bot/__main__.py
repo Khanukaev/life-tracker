@@ -34,11 +34,11 @@ async def main() -> None:
 
     # The menu button next to the input field opens the Mini App from any chat state.
     await bot.set_chat_menu_button(
-        menu_button=MenuButtonWebApp(text="Трекер", web_app=WebAppInfo(url=settings.webapp_url))
+        menu_button=MenuButtonWebApp(text="Keel", web_app=WebAppInfo(url=settings.webapp_url))
     )
     await bot.set_my_commands(
         [
-            BotCommand(command="start", description="Открыть трекер"),
+            BotCommand(command="start", description="Открыть Keel"),
             BotCommand(command="connect", description="Токен для подключения Claude"),
         ]
     )

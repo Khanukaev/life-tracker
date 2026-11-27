@@ -54,11 +54,6 @@ class ReviewAuthor(StrEnum):
     ME = "me"
 
 
-class Theme(StrEnum):
-    BASE = "base"
-    GLASS = "glass"
-
-
 class DeliveryKind(StrEnum):
     EVENING = "evening"  # «что осталось на сегодня»
     MORNING = "morning"  # the plan for the day (and «как спал?» if sleep isn't logged)
