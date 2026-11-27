@@ -69,23 +69,36 @@ class Reminders:
         self.limiter = RateLimiter(settings.bot_send_rate)
 
     async def tick(self) -> int:
-        """One pass over both reminder kinds. Returns how many messages were sent."""
+        """One pass over every reminder kind. Returns how many messages were sent."""
         sent = 0
-        for kind in (DeliveryKind.EVENING, DeliveryKind.MORNING):
+        for kind in (DeliveryKind.EVENING, DeliveryKind.MORNING, DeliveryKind.WEEK_NOTE):
             async with self.sessions() as session:
                 due = await reminders.due_reminders(session, kind, self.now())
             for d in due:
                 sent += await self.deliver(d)
+        async with self.sessions() as session:
+            items = await reminders.due_items(session, self.now())
+        for d in items:
+            sent += await self.deliver(d)
         return sent
 
     async def _content(self, d: Due) -> tuple[str, InlineKeyboardMarkup]:
         url = self.settings.webapp_url
         async with self.sessions() as session:
-            if d.kind == DeliveryKind.EVENING:
-                e = await reminders.evening_content(session, d.user_id, d.day, self.now())
-                return texts.evening_text(e), texts.evening_kb(e, url)
-            name = await session.scalar(select(User.first_name).where(User.id == d.user_id))
-            return texts.morning_text(name or ""), texts.morning_kb(url)
+            match d.kind:
+                case DeliveryKind.EVENING:
+                    e = await reminders.evening_content(session, d.user_id, d.day, self.now())
+                    return texts.evening_text(e), texts.evening_kb(e, url)
+                case DeliveryKind.MORNING:
+                    m = await reminders.morning_content(session, d.user_id, d.day, self.now())
+                    return texts.morning_text(m), texts.morning_kb(m, url)
+                case DeliveryKind.WEEK_NOTE:
+                    name = await session.scalar(select(User.first_name).where(User.id == d.user_id))
+                    return texts.week_note_text(name or ""), texts.week_note_kb(url)
+            item = await reminders.item_content(session, d)
+            if isinstance(item, reminders.TaskReminder):
+                return texts.task_text(item), texts.task_kb(item, url)
+            return texts.habit_text(item), texts.habit_kb(item, d.day, url)
 
     async def deliver(self, d: Due) -> int:
         async with self.sessions() as session:

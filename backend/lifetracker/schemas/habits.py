@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from lifetracker.domain.enums import HabitType, ScheduleKind
-from lifetracker.schemas.common import ApiModel, InputModel
+from lifetracker.schemas.common import HHMM, ApiModel, InputModel
 
 
 class CountConfig(BaseModel):
@@ -66,6 +66,7 @@ class HabitOut(ApiModel):
     config: dict[str, Any]
     schedule: ScheduleOut
     active: bool
+    remind_at: HHMM | None = None
     position: int
 
     @model_validator(mode="before")
@@ -83,6 +84,7 @@ class HabitOut(ApiModel):
                     anchor=obj.sched_anchor,
                 ),
                 "active": obj.active,
+                "remind_at": obj.remind_at,
                 "position": obj.position,
             }
         return obj
@@ -95,6 +97,7 @@ class HabitCreate(InputModel):
     config: dict[str, Any] = Field(default_factory=dict)
     schedule: Schedule = Field(default_factory=DailySchedule)
     active: bool = True
+    remind_at: HHMM | None = Field(default=None, description="Bot message on its days")
     position: int | None = None
 
     @model_validator(mode="after")
@@ -113,4 +116,5 @@ class HabitUpdate(InputModel):
     config: dict[str, Any] | None = None
     schedule: Schedule | None = None
     active: bool | None = None
+    remind_at: HHMM | None = None
     position: int | None = None

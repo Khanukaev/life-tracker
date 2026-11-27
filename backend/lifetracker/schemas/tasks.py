@@ -26,6 +26,7 @@ class TaskOut(ApiModel):
     duration_min: int
     important: bool
     fresh: bool
+    remind_at: HHMM | None
     done: bool
     done_at: datetime | None
     created_by: Actor
@@ -44,6 +45,7 @@ class TaskCreate(InputModel):
     duration_min: int = Field(default=30, ge=5, le=1440)
     important: bool = Field(default=False, description="Top of the list, weighs ×3")
     fresh: bool = Field(default=False, description="Needs a fresh head: goes to the energy peak")
+    remind_at: HHMM | None = Field(default=None, description="Bot message at this time")
 
     @model_validator(mode="after")
     def _time_needs_date(self) -> "TaskCreate":
@@ -60,6 +62,7 @@ class TaskUpdate(InputModel):
     duration_min: int | None = Field(default=None, ge=5, le=1440)
     important: bool | None = None
     fresh: bool | None = None
+    remind_at: HHMM | None = None
     done: bool | None = None
 
 

@@ -61,8 +61,9 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(String(64))
     language: Mapped[str] = mapped_column(String(8), default="ru")
     timezone: Mapped[str] = mapped_column(String(64), default="UTC")
-    reminder_time: Mapped[time | None] = mapped_column(Time)
-    morning_ping: Mapped[bool] = mapped_column(Boolean, default=False)
+    reminder_time: Mapped[time | None] = mapped_column(Time)  # evening; NULL = off
+    morning_time: Mapped[time | None] = mapped_column(Time)  # NULL = off
+    week_note_time: Mapped[time | None] = mapped_column(Time)  # on Sundays; NULL = off
     theme: Mapped[Theme | None] = mapped_column(str_enum(Theme, "theme"))  # NULL = auto
     haptics: Mapped[bool] = mapped_column(Boolean, default=True)
     onboarded: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -123,6 +124,7 @@ class Habit(Base):
     sched_pattern: Mapped[str | None] = mapped_column(String(31))
     sched_anchor: Mapped[date | None] = mapped_column(Date)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    remind_at: Mapped[time | None] = mapped_column(Time)  # a bot message on its days
     position: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = created_at_col()
     updated_at: Mapped[datetime] = updated_at_col()
@@ -206,6 +208,7 @@ class Task(Base):
     duration_min: Mapped[int] = mapped_column(SmallInteger, default=30)
     important: Mapped[bool] = mapped_column(Boolean, default=False)  # top of lists, ×3
     fresh: Mapped[bool] = mapped_column(Boolean, default=False)  # needs a fresh head: peak
+    remind_at: Mapped[time | None] = mapped_column(Time)  # a bot message on its date
     done: Mapped[bool] = mapped_column(Boolean, default=False)
     done_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[Actor] = mapped_column(str_enum(Actor, "actor"), default=Actor.ME)
@@ -309,4 +312,6 @@ class Delivery(Base):
         str_enum(DeliveryKind, "delivery_kind"), primary_key=True
     )
     date: Mapped[date] = mapped_column(Date, primary_key=True)
+    # The task or habit of an item reminder; the nil UUID for evening, morning, week note.
+    ref: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID(int=0))
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

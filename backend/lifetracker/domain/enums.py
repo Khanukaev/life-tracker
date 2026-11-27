@@ -60,5 +60,8 @@ class Theme(StrEnum):
 
 
 class DeliveryKind(StrEnum):
-    EVENING = "evening"
-    MORNING = "morning"
+    EVENING = "evening"  # «что осталось на сегодня»
+    MORNING = "morning"  # the plan for the day (and «как спал?» if sleep isn't logged)
+    WEEK_NOTE = "week_note"  # Sunday: «неделя словами» for Claude's review
+    TASK = "task"  # a task's own reminder
+    HABIT = "habit"  # a habit's own reminder

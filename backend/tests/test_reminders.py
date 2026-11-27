@@ -71,16 +71,22 @@ async def test_no_reminder_when_off_or_blocked(alice: AsyncClient, session: Asyn
     assert await due_ids(session, EVENING, at(21)) == {uuid.UUID(me["id"])}
 
 
-async def test_morning_ping_after_usual_wake_unless_sleep_logged(
+async def test_morning_at_the_chosen_time_and_week_note_on_sundays(
     alice: AsyncClient, session: AsyncSession
 ) -> None:
     a = await uid(alice)
     assert await due_ids(session, MORNING, at(8)) == set()  # opt-in
-    await alice.patch("/me", json={"morning_ping": True})
-    assert await due_ids(session, MORNING, at(7, 59)) == set()  # usual wake 07:30 + 30 min
-    assert await due_ids(session, MORNING, at(8)) == {a}
+    await alice.patch("/me", json={"morning_time": "08:30"})
+    assert await due_ids(session, MORNING, at(8, 29)) == set()
+    assert await due_ids(session, MORNING, at(8, 30)) == {a}
+    # The morning message carries the day's plan, so it goes out even if sleep is logged.
     await alice.put("/days/2026-11-22/sleep", json={"bed": "23:30", "wake": "07:30"})
-    assert await due_ids(session, MORNING, at(8)) == set()
+    assert await due_ids(session, MORNING, at(8, 30)) == {a}
+
+    await alice.patch("/me", json={"week_note_time": "20:00"})
+    assert await due_ids(session, DeliveryKind.WEEK_NOTE, at(20)) == {a}  # 2026-11-22 is a Sunday
+    saturday = datetime(2026, 11, 21, 20, tzinfo=UTC)
+    assert await due_ids(session, DeliveryKind.WEEK_NOTE, saturday) == set()
 
 
 # ---- exactly once ----

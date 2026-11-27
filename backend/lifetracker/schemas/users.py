@@ -41,7 +41,8 @@ class MeOut(ApiModel):
     language: str
     timezone: str
     reminder_time: HHMM | None
-    morning_ping: bool
+    morning_time: HHMM | None
+    week_note_time: HHMM | None
     theme: Theme | None
     haptics: bool
     onboarded: bool
@@ -54,7 +55,8 @@ class MeUpdate(InputModel):
     language: Language | None = None
     timezone: TimeZone | None = None
     reminder_time: HHMM | None = None
-    morning_ping: bool | None = None
+    morning_time: HHMM | None = None
+    week_note_time: HHMM | None = None
     theme: Theme | None = None
     haptics: bool | None = None
     onboarded: bool | None = None

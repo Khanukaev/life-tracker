@@ -82,7 +82,7 @@ async def update_task(
 ) -> Task:
     task = await get_task(session, user_id, task_id)
     fields = data.model_dump(exclude_unset=True)
-    changed = apply_patch(task, fields, nullable={"date", "start_time"})
+    changed = apply_patch(task, fields, nullable={"date", "start_time", "remind_at"})
     if task.start_time is not None and task.date is None:
         if "date" in changed:  # moved to the inbox: the time no longer means anything
             task.start_time = None

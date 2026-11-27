@@ -187,7 +187,10 @@ async def get_profile() -> dict[str, Any]:
             "usual_bed": st.usual_bed.strftime("%H:%M"),
             "usual_wake": st.usual_wake.strftime("%H:%M"),
             "evening_reminder": me.reminder_time.strftime("%H:%M") if me.reminder_time else None,
-            "morning_ping": me.morning_ping,
+            "morning_reminder": me.morning_time.strftime("%H:%M") if me.morning_time else None,
+            "week_note_reminder": (
+                me.week_note_time.strftime("%H:%M") if me.week_note_time else None
+            ),
             "tasks": counts.model_dump(),
         }
 

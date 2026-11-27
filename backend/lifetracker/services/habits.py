@@ -66,6 +66,7 @@ async def create_habit(
         type=data.type,
         config=data.config,
         active=data.active,
+        remind_at=data.remind_at,
         position=data.position
         if data.position is not None
         else await next_position(session, Habit, user_id),
@@ -84,7 +85,7 @@ async def update_habit(
 ) -> Habit:
     habit = await get_habit(session, user_id, habit_id)
     fields = data.model_dump(exclude_unset=True, exclude={"schedule", "config"})
-    apply_patch(habit, fields)
+    apply_patch(habit, fields, nullable={"remind_at"})
     if data.config is not None:
         try:
             habit.config = normalize_config(habit.type, data.config)

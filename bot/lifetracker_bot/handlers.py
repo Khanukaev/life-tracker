@@ -2,8 +2,8 @@
 
 Isolation: the user is always resolved from the Telegram update itself (``from_user.id``,
 signed by Telegram's servers), never from data inside a button. A button carries only a
-habit id, and the habit is looked up together with the owner, so pressing a forged button
-with someone else's habit id just answers "not found".
+habit or task id, and it is looked up together with the owner, so pressing a forged button
+with someone else's id just answers "not found".
 """
 
 import uuid
@@ -104,6 +104,52 @@ def build_router(
                     texts.evening_text(content),
                     reply_markup=texts.evening_kb(content, settings.webapp_url),
                 )
+
+    async def done_reply(cb: CallbackQuery, text: str) -> None:
+        """Turn an item reminder into its result: the buttons go away."""
+        await cb.answer(text)
+        if cb.message is not None and not isinstance(cb.message, InaccessibleMessage):
+            with suppress(TelegramBadRequest):
+                await cb.message.edit_text(text)
+
+    @router.callback_query(texts.TaskDone.filter())
+    async def task_done(cb: CallbackQuery, callback_data: texts.TaskDone) -> None:
+        try:
+            task_id = uuid.UUID(hex=callback_data.task)
+        except ValueError:
+            await cb.answer("Кнопка устарела")
+            return
+        async with sessions() as session:
+            user_id = await reminders.user_id_by_telegram(session, cb.from_user.id)
+            if user_id is None:
+                await cb.answer("Сначала открой трекер: /start")
+                return
+            try:
+                title = await reminders.complete_task(session, user_id, task_id, now())
+            except NotFoundError:
+                await cb.answer("Этой задачи больше нет")
+                return
+        await done_reply(cb, f"✅ {title}")
+
+    @router.callback_query(texts.HabitDone.filter())
+    async def habit_done(cb: CallbackQuery, callback_data: texts.HabitDone) -> None:
+        try:
+            habit_id = uuid.UUID(hex=callback_data.habit)
+            day = texts.parse_day(callback_data.day)
+        except ValueError:
+            await cb.answer("Кнопка устарела")
+            return
+        async with sessions() as session:
+            user_id = await reminders.user_id_by_telegram(session, cb.from_user.id)
+            if user_id is None:
+                await cb.answer("Сначала открой трекер: /start")
+                return
+            try:
+                name = await reminders.mark_habit(session, user_id, habit_id, day, True, now())
+            except (NotFoundError, DomainValidationError):
+                await cb.answer("Эта привычка больше не отмечается здесь")
+                return
+        await done_reply(cb, f"✅ {name}")
 
     @router.my_chat_member(ChatMemberUpdatedFilter(member_status_changed=KICKED))
     async def blocked(event: ChatMemberUpdated) -> None:
