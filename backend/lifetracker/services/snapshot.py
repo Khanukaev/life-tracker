@@ -41,6 +41,7 @@ class Snapshot:
     habit_rows: list[m.Habit]
     task_rows: dict[uuid.UUID, m.Task]
     tasks: list[Task]
+    inbox_rows: list[m.Task] = field(default_factory=list)  # undone tasks without a date
     _energy: dict[date, EnergyDay] = field(default_factory=dict)
 
     def energy(self, k: date) -> EnergyDay:
@@ -74,6 +75,7 @@ async def load_snapshot(
     *,
     until: date | None = None,
     tasks_from: date | None = None,
+    inbox: bool = False,
 ) -> Snapshot:
     """Data from the start of history (capped at ~400 days) up to `until` + 1 day."""
     row = (
@@ -120,18 +122,23 @@ async def load_snapshot(
         rec.values[habit_id] = value
 
     t_from = tasks_from or (today - timedelta(days=31))
-    task_rows = {
-        t.id: t
-        for t in await session.scalars(
-            select(m.Task).where(
-                m.Task.user_id == user_id,
-                or_(
-                    m.Task.date.between(min(t_from, today), last),
-                    (m.Task.date < today) & ~m.Task.done,  # overdue, for alerts
-                ),
-            )
-        )
-    }
+    conds = [
+        m.Task.date.between(min(t_from, today), last),
+        (m.Task.date < today) & ~m.Task.done,  # overdue, for alerts
+    ]
+    if inbox:
+        conds.append(m.Task.date.is_(None) & ~m.Task.done)
+    task_rows: dict[uuid.UUID, m.Task] = {}
+    inbox_rows: list[m.Task] = []
+    for t in await session.scalars(
+        select(m.Task)
+        .where(m.Task.user_id == user_id, or_(*conds))
+        .order_by(m.Task.created_at, m.Task.id)
+    ):
+        if t.date is None:
+            inbox_rows.append(t)
+        else:
+            task_rows[t.id] = t
     ctx = Ctx(
         today=today,
         start_date=user.start_date,
@@ -146,5 +153,5 @@ async def load_snapshot(
     )  # fmt: skip
     return Snapshot(
         user=user, settings_row=st, ctx=ctx, habit_rows=habit_rows, task_rows=task_rows,
-        tasks=[to_domain_task(t) for t in task_rows.values()],
+        tasks=[to_domain_task(t) for t in task_rows.values()], inbox_rows=inbox_rows,
     )  # fmt: skip
