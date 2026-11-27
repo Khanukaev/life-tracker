@@ -678,16 +678,24 @@ a {
 .blk {
   position: absolute;
   border-radius: var(--r-blk);
-  padding: 7px 12px;
+  padding: 9px 12px;
   overflow: hidden;
   background: var(--block);
   border: 1px solid var(--block-border);
   text-decoration: none;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
+}
+/* Short blocks (≤ 30 min) hold one line: no room for the vertical padding. */
+.blk.short {
+  padding-top: 0;
+  padding-bottom: 0;
+  justify-content: center;
 }
 .blk b {
   display: block;

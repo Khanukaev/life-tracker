@@ -78,7 +78,6 @@ class HabitOut(ApiModel):
     name: str
     type: HabitType
     sphere_id: uuid.UUID | None
-    is_key: bool
     config: dict[str, Any]
     schedule: ScheduleOut
     active: bool
@@ -93,7 +92,6 @@ class HabitOut(ApiModel):
                 "name": obj.name,
                 "type": obj.type,
                 "sphere_id": obj.sphere_id,
-                "is_key": obj.is_key,
                 "config": obj.config,
                 "schedule": ScheduleOut(
                     kind=obj.sched_kind,
@@ -112,7 +110,6 @@ class HabitCreate(InputModel):
     name: str = Field(min_length=1, max_length=80)
     type: HabitType
     sphere_id: uuid.UUID | None = None
-    is_key: bool | None = None  # default: true for bedtime, false otherwise
     config: dict[str, Any] = Field(default_factory=dict)
     schedule: Schedule = Field(default_factory=DailySchedule)
     active: bool = True
@@ -132,7 +129,6 @@ class HabitUpdate(InputModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=80)
     sphere_id: uuid.UUID | None = None
-    is_key: bool | None = None
     config: dict[str, Any] | None = None
     schedule: Schedule | None = None
     active: bool | None = None

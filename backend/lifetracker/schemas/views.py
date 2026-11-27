@@ -53,7 +53,6 @@ class HabitRow(BaseModel):
     id: uuid.UUID
     name: str
     type: str
-    is_key: bool
     sphere_id: uuid.UUID | None
     config: dict[str, Any]
     schedule: ScheduleOut

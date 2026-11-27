@@ -21,13 +21,20 @@ interface LegacyHabit {
   active?: boolean;
 }
 
-function convert(h: LegacyHabit, targets: Record<string, number>): { type: HabitType; config: Record<string, any>; key: boolean } {
-  if (h.type === "water") return { type: "water", config: { target_l: targets.waterL, glass_l: targets.glassL }, key: false };
-  if (h.type === "protein") return { type: "dual", config: { labels: ["a", "b"] }, key: false };
-  if (h.key === "study") {
-    return { type: "minutes", config: { target_min: Math.max(15, Math.round((targets.studyH || 2) * 60)) }, key: true };
-  }
-  return { type: "check", config: {}, key: h.key === "orders" };
+function convert(h: LegacyHabit, targets: Record<string, number>): { type: HabitType; config: Record<string, any> } {
+  if (h.type === "water") return { type: "water", config: { target_l: targets.waterL, glass_l: targets.glassL } };
+  if (h.type === "protein") return { type: "dual", config: { labels: ["a", "b"] } };
+  if (h.key === "study") return { type: "minutes", config: { target_min: Math.max(15, Math.round((targets.studyH || 2) * 60)) } };
+  return { type: "check", config: {} };
+}
+
+/** The original weighted sleep/study/orders ×3; here every habit is ×1 (tasks unchanged).
+ * Item order and values stay the original's, so they are still compared exactly. */
+function equalWeights(items: [string, number, number][]) {
+  const out = items.map(([k, w, v]) => [k, k === "tasks" ? w : 1, v] as [string, number, number]);
+  const W = out.reduce((a, x) => a + x[1], 0);
+  const got = out.reduce((a, x) => a + x[1] * x[2], 0);
+  return { items: out, W, pct: W ? Math.round((got / W) * 100) : 0 };
 }
 
 function valueOf(h: LegacyHabit, type: HabitType, config: Record<string, any>, raw: Record<string, any>): any {
@@ -43,7 +50,7 @@ describe.each(names)("golden %s", (file) => {
   const targets = { bed: "01:00", waterL: 2.5, glassL: 0.25, proteinG: 140, sleepNeed: 8, studyH: 2, ...(fx.settings.targets ?? {}) };
   const habits: LegacyHabit[] = fx.settings.habits;
 
-  it("computes the day score exactly like the original", () => {
+  it("computes the day score like the original, habits at ×1", () => {
     let compared = 0;
     for (const [day, sc] of Object.entries<any>(exp.dayScore)) {
       if (!sc) continue;
@@ -55,7 +62,7 @@ describe.each(names)("golden %s", (file) => {
         .map((h) => {
           const c = convert(h, targets);
           return {
-            id: h.key, name: h.key, type: c.type, is_key: c.key, sphere_id: null, config: c.config,
+            id: h.key, name: h.key, type: c.type, sphere_id: null, config: c.config,
             schedule: { kind: "daily" }, status: exp.habits[h.key].status[day] as Status,
             due: exp.habits[h.key].due[day], value: valueOf(h, c.type, c.config, raw),
             streak: 0, streak_base: 0,
@@ -63,7 +70,7 @@ describe.each(names)("golden %s", (file) => {
         });
       const sleepExp = sc.items.find((x: any[]) => x[0] === "sleep");
       const sleep: ScoreItem | null = sleepExp
-        ? { kind: "sleep", ref: "bedtime", label: "", w: sleepExp[1], v: sleepExp[2], points: 0, max_points: 0, note: "" }
+        ? { kind: "sleep", ref: "bedtime", label: "", w: 1, v: sleepExp[2], points: 0, max_points: 0, note: "" }
         : null;
       const got = computeScore(
         rows,
@@ -71,9 +78,10 @@ describe.each(names)("golden %s", (file) => {
         sleep,
       );
       const legacy = got.items.map((x) => [x.kind === "sleep" ? "sleep" : x.kind === "task" ? "tasks" : x.ref, x.w, r6(x.v)]);
-      expect(legacy, day).toEqual(sc.items);
-      expect(got.pct, day).toBe(sc.pct);
-      expect(got.W, day).toBe(sc.W);
+      const want = equalWeights(sc.items);
+      expect(legacy, day).toEqual(want.items);
+      expect(got.pct, day).toBe(want.pct);
+      expect(got.W, day).toBe(want.W);
       compared++;
     }
     expect(compared).toBeGreaterThan(0);

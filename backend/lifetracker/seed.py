@@ -35,7 +35,6 @@ DEMO_USERS: list[dict[str, Any]] = [
                 "name": "Чтение",
                 "type": "minutes",
                 "config": {"target_min": 30},
-                "is_key": True,
                 "sphere": "Развитие",
             },
             {
@@ -77,7 +76,6 @@ DEMO_USERS: list[dict[str, Any]] = [
                 "name": "Тренировка",
                 "type": "check",
                 "schedule": {"kind": "cycle", "pattern": "11010"},
-                "is_key": True,
                 "sphere": "Спорт",
             },
             {

@@ -60,9 +60,7 @@ async def test_habit_types_and_configs(alice: AsyncClient) -> None:
     assert dual.json()["config"]["labels"] == ["Calories", "Protein"]
 
     bedtime = await alice.post("/habits", json={"name": "In bed on time", "type": "bedtime"})
-    assert bedtime.json()["is_key"] is True  # bedtime is a key habit by default
-    check = await alice.post("/habits", json={"name": "Vitamins", "type": "check"})
-    assert check.json()["is_key"] is False
+    assert "is_key" not in bedtime.json()  # importance is for tasks only
 
 
 async def test_habit_config_validation(alice: AsyncClient) -> None:

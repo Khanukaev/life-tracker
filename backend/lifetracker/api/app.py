@@ -13,7 +13,18 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from lifetracker.api.deps import SessionDep
-from lifetracker.api.routes import auth, claude, days, goals, habits, me, spheres, tasks, views
+from lifetracker.api.routes import (
+    auth,
+    claude,
+    days,
+    goals,
+    habits,
+    imports,
+    me,
+    spheres,
+    tasks,
+    views,
+)
 from lifetracker.core.config import get_settings
 from lifetracker.core.errors import AppError
 from lifetracker.core.logging import configure_logging
@@ -97,7 +108,7 @@ def create_app() -> FastAPI:
     )
 
     api = APIRouter(prefix="/api/v1")
-    for module in (auth, me, spheres, habits, days, tasks, goals, views, claude):
+    for module in (auth, me, spheres, habits, days, tasks, goals, views, claude, imports):
         api.include_router(module.router)
     app.include_router(api)
     return app

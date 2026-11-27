@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
-import { Icon, Seg, Sheet, SheetHead } from "../components/ui";
+import { Icon, NumberInput, Seg, Sheet, SheetHead } from "../components/ui";
 import { del, get, patch, post, uuid7 } from "../lib/api";
 import { shortDate } from "../lib/format";
 import { haptic } from "../lib/haptic";
@@ -164,12 +164,12 @@ export function GoalSheet({ id }: { id?: string }) {
               <div class="grp" style={{ marginTop: "12px" }}>
                 <div class="row">
                   <span class="t" style={{ flex: 1 }}>{kind === "streak" ? "Дней подряд" : "Нужно дней"}</span>
-                  <input type="number" class="pill-input" style={{ width: "80px" }} min={1} value={target} onChange={(e) => setTarget(Math.max(1, Number((e.target as HTMLInputElement).value) || 1))} />
+                  <NumberInput label={kind === "streak" ? "Дней подряд" : "Нужно дней"} style={{ width: "80px" }} min={1} max={3650} value={target} onChange={setTarget} />
                 </div>
                 {kind === "count" && (
                   <div class="row">
                     <span class="t" style={{ flex: 1 }}>Из последних, дней</span>
-                    <input type="number" class="pill-input" style={{ width: "80px" }} min={1} value={win} onChange={(e) => setWin(Math.max(1, Number((e.target as HTMLInputElement).value) || 7))} />
+                    <NumberInput label="Из последних, дней" style={{ width: "80px" }} min={1} max={3650} value={win} onChange={setWin} />
                   </div>
                 )}
               </div>

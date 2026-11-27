@@ -6,7 +6,7 @@ update their own data.
 
 > Work in progress. Done so far: backend (data model, Telegram auth, API,
 > per-user isolation, domain logic proven 1:1 by golden tests), the Mini App, the
-> bot and the MCP server. Full docs, architecture and screenshots will land with v0.1.0.
+> bot, the MCP server and the import from the old app. Full docs, architecture and screenshots will land with v0.1.0.
 
 ## Stack
 
@@ -75,6 +75,20 @@ same Docker image.
 ```bash
 make mcp     # locally on :8001
 ```
+
+## Data: export and import
+
+Профиль → «Данные: копия и перенос». **Export** (`GET /api/v1/export`, «Скопировать JSON»
+or «Сохранить файл») writes the whole account in the layout the import reads, so the same
+file is a backup and a way to move to another account. **Import**: paste the JSON from «Скопировать данные (JSON)»
+or pick the file. `POST /api/v1/import?dry_run=true` shows exactly what will happen;
+the real import is one transaction.
+
+- Merge, not replace: existing habits are reused by name and type, your own logs win.
+- Idempotent: ids already yours are reused, others become `uuid5(user, old id)`, so
+  re-importing never duplicates and your own export round-trips unchanged.
+- Same legacy adapter as the golden tests; `backend/tests/test_import.py` checks that
+  imported days get the same score as in the old app.
 
 ## Rate limiting
 

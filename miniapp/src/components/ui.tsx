@@ -1,7 +1,7 @@
 /** Small shared components (markup and classes follow reference/design). */
 
 import type { ComponentChildren, CSSProperties } from "preact";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { haptic } from "../lib/haptic";
 import { closeSheet, closeSheetNow, pop, registerSheetClose } from "../lib/router";
 import { springY, type SpringHandle } from "../motion/spring";
@@ -108,6 +108,49 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
         haptic.selection();
         onChange(!on);
       }}
+    />
+  );
+}
+
+/** A number field that can be erased and retyped. A controlled `type="number"` input snaps
+ * back to its value on every re-render, so an emptied field refilled itself; here the text
+ * is a local draft and the clamped number is applied on blur or Enter. */
+export function NumberInput({
+  value,
+  onChange,
+  min,
+  max,
+  decimal,
+  label,
+  style,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  decimal?: boolean;
+  label: string;
+  style?: CSSProperties;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft === null) return;
+    const n = Number(draft.replace(",", "."));
+    const v = draft.trim() === "" || !Number.isFinite(n) ? value : Math.min(max, Math.max(min, decimal ? n : Math.round(n)));
+    setDraft(null);
+    if (v !== value) onChange(v);
+  };
+  return (
+    <input
+      class="pill-input"
+      style={style}
+      inputMode={decimal ? "decimal" : "numeric"}
+      aria-label={label}
+      value={draft ?? String(value)}
+      onFocus={(e) => (e.target as HTMLInputElement).select()}
+      onInput={(e) => setDraft((e.target as HTMLInputElement).value.replace(decimal ? /[^\d.,]/g : /\D/g, ""))}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
     />
   );
 }

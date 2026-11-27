@@ -9,6 +9,7 @@ import type { Me } from "./lib/types";
 import { DayScreen } from "./screens/Day";
 import { NowScreen } from "./screens/Now";
 import { ClaudeScreen, ReviewsScreen } from "./screens/Claude";
+import { ImportScreen } from "./screens/Import";
 import { Onboarding } from "./screens/Onboarding";
 import { ProfileScreen } from "./screens/Profile";
 import { ReviewScreen } from "./screens/Review";
@@ -50,6 +51,7 @@ export function App() {
       scr.name === "norms" ? <NormsScreen /> :
       scr.name === "claude" ? <ClaudeScreen /> :
       scr.name === "reviews" ? <ReviewsScreen /> :
+      scr.name === "import" ? <ImportScreen /> :
       <PastDayScreen />;
   } else {
     body =

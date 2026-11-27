@@ -69,7 +69,7 @@ Model:
   (minutes toward a target), dual (two flags that must both be set), bedtime (derived
   from sleep: met when they went to bed by the target time; never logged directly).
   Schedules: daily, every N days, or a cycle pattern like "1101100" (1 = do, 0 = rest).
-  Key habits weigh more in the day score.
+  Every habit weighs the same in the day score; tasks weigh more (critical the most).
 - Sleep of a date = the night that ended on that date's morning (bed, wake, quality).
 - Energy is predicted from sleep with a circadian model and split into zones:
   focus (best for hard thinking), steady (routine work), recharge (rest, admin).
@@ -153,7 +153,7 @@ def _task(t: Any) -> dict[str, Any]:
 
 def _habit(h: Any) -> dict[str, Any]:
     d = HabitOut.model_validate(h).model_dump(mode="json")
-    keep = ("id", "name", "type", "is_key", "config", "schedule", "active", "sphere_id")
+    keep = ("id", "name", "type", "config", "schedule", "active", "sphere_id")
     return {k: d[k] for k in keep}
 
 
@@ -225,7 +225,6 @@ async def _day(k: date | None) -> dict[str, Any]:
                 "status": h.status,
                 "value": h.value,
                 "streak": h.streak,
-                "is_key": h.is_key,
             }
             for h in v.habits
         ],
@@ -571,7 +570,6 @@ async def create_habit(
             )
         ),
     ] = None,
-    is_key: Annotated[bool | None, Field(description="Key habits weigh ×3 in the score")] = None,
     sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Create a habit. Suggest only a few at a time: new habits stick better one by one."""
@@ -579,7 +577,6 @@ async def create_habit(
         "name": name,
         "type": type,
         "config": config or {},
-        "is_key": is_key,
         "sphere_id": sphere_id,
     }
     if schedule:
@@ -596,18 +593,16 @@ async def update_habit(
         dict[str, Any] | None, Field(description="Same shape as create_habit")
     ] = None,
     schedule: Annotated[dict[str, Any] | None, Field(description="Same as create_habit")] = None,
-    is_key: bool | None = None,
     active: Annotated[bool | None, Field(description="false pauses the habit")] = None,
     sphere_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
-    """Change a habit's name, norm, schedule, weight or pause it. The type can't change."""
+    """Change a habit's name, norm, schedule or pause it. The type can't change."""
     patch = {
         k: v
         for k, v in {
             "name": name,
             "config": config,
             "schedule": schedule,
-            "is_key": is_key,
             "active": active,
             "sphere_id": sphere_id,
         }.items()

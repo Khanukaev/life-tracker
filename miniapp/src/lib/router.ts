@@ -15,7 +15,8 @@ export type ScreenName =
   | "norms"
   | "past"
   | "claude"
-  | "reviews";
+  | "reviews"
+  | "import";
 
 export interface Screen {
   name: ScreenName;

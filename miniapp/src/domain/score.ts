@@ -3,12 +3,12 @@
  * right after a tap (the server stays the source of truth and refreshes quietly).
  *
  * Mirrors backend/lifetracker/domain/{habits,score}.py and is checked against the same
- * golden expectations produced by the original JavaScript (see score.test.ts).
+ * golden expectations produced by the original JavaScript (see score.test.ts). Unlike the
+ * original, every habit weighs ×1: importance is a task notion.
  */
 
 import type { HabitRow, HabitType, Importance, Score, ScoreItem, Status } from "../lib/types";
 
-export const KEY_WEIGHT = 3;
 export const HABIT_WEIGHT = 1;
 export const CRITICAL_TASK_WEIGHT = 3;
 export const TASK_WEIGHT = 2;
@@ -71,7 +71,7 @@ export function computeScore(
       kind: "habit",
       ref: h.id,
       label: h.name,
-      w: h.is_key ? KEY_WEIGHT : HABIT_WEIGHT,
+      w: HABIT_WEIGHT,
       v: itemValue(h.type, h.config, h.value, h.status),
       points: 0,
       max_points: 0,

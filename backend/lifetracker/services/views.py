@@ -131,7 +131,6 @@ def _habit_rows(snap: Snapshot, k: date) -> list[HabitRow]:
                 id=hid,
                 name=h.name,
                 type=h.type,
-                is_key=h.is_key,
                 sphere_id=h.sphere,
                 config=h.config,
                 schedule=HabitOut.model_validate(by_id[cast(uuid.UUID, hid)]).schedule,

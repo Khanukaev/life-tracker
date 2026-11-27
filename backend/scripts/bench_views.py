@@ -70,7 +70,6 @@ async def build_user() -> str:
                     user_id=uid,
                     name=f"Habit {i}",
                     type=t,
-                    is_key=i < 2,
                     config=cfg.get(t, {}),
                     active=True,
                     position=i,

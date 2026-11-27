@@ -54,7 +54,6 @@ class Habit:
     type: HabitType
     name: str = ""
     sphere: Hashable | None = None
-    is_key: bool = False
     active: bool = True
     config: dict[str, Any] = field(default_factory=dict)
     sched: ScheduleKind = ScheduleKind.DAILY
