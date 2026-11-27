@@ -205,15 +205,31 @@ async def test_write_tools(alice: AsyncClient, as_user: Callable[[uuid.UUID], Ca
     with pytest.raises(ToolError, match="Invalid input"):
         await call("create_habit", name="Bad", type="count", config={})
 
-    r = await call("save_review", kind="day", text="Хороший день: отчёт сдан.")
+    await alice.put("/notes/week", json={"text": "Пятница самая тяжёлая"})
+    assert (await call("get_week_summary"))["user_note"] == "Пятница самая тяжёлая"
+    r = await call("save_review", kind="week", text="Хорошая неделя.", used_note=True)
     assert r["date"] == TODAY
-    reviews = (await alice.get("/reviews")).json()
-    assert reviews[0]["text"] == "Хороший день: отчёт сдан."
-    assert reviews[0]["by"] == "claude"
+    review = (await alice.get("/reviews")).json()[0]
+    assert (review["text"], review["by"], review["used_note"]) == (
+        "Хорошая неделя.",
+        "claude",
+        True,
+    )
+    # Every change made above is listed under the review, in plain words.
+    assert "Добавил задачу «Plan week» на 23 ноя в 10:00" in review["changes"]
+    assert "Записал сон за 21 ноя: 00:15–08:00" in review["changes"]
+    assert "Поставил на паузу привычку «Walk»" in review["changes"]
+
+    plan = await call(
+        "save_plan", items=[{"title": "Отчёт", "start": "10:00", "dur": 90, "note": "пик"}]
+    )
+    assert plan["items"] == 1
+    added = await alice.post(f"/reviews/{plan['id']}/apply")
+    assert [t["title"] for t in added.json()] == ["Отчёт"]
 
     async with get_sessionmaker()() as session:
         mine = (await session.scalars(select(Task).where(Task.user_id == a))).all()
-        assert {t.title for t in mine} == {"Report", "Plan week"}
+        assert {t.title for t in mine} == {"Report", "Plan week", "Отчёт"}
         assert {t.created_by.value for t in mine if t.title == "Plan week"} == {"claude"}
 
 

@@ -21,6 +21,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     ForeignKeyConstraint,
+    Identity,
     Index,
     Integer,
     SmallInteger,
@@ -38,6 +39,7 @@ from lifetracker.domain.enums import (
     Actor,
     DeliveryKind,
     HabitType,
+    NoteKind,
     ReviewAuthor,
     ReviewKind,
     ScheduleKind,
@@ -239,8 +241,39 @@ class Review(Base):
     body: Mapped[str] = mapped_column(Text)
     by: Mapped[ReviewAuthor] = mapped_column(str_enum(ReviewAuthor, "review_author"))
     at: Mapped[datetime] = created_at_col()
+    used_note: Mapped[bool] = mapped_column(Boolean, default=False)  # «Учёл твою заметку»
+    # What Claude changed since its previous review: ["Поставил напоминание о воде на 15:00"]
+    changes: Mapped[list[str]] = mapped_column(JSONB, default=list)
+    # Plans only: [{"title", "start": "HH:MM" | null, "dur": int, "note": str}]
+    items: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (Index("ix_reviews_user_at", "user_id", text("at DESC")),)
+
+
+class Note(Base):
+    """One text per week or month (keyed by the period's first day)."""
+
+    __tablename__ = "notes"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(user_fk(), primary_key=True)
+    kind: Mapped[NoteKind] = mapped_column(str_enum(NoteKind, "note_kind"), primary_key=True)
+    start: Mapped[date] = mapped_column(Date, primary_key=True)
+    body: Mapped[str] = mapped_column(Text, default="")
+    updated_at: Mapped[datetime] = updated_at_col()
+
+
+class ClaudeAction(Base):
+    """Journal of what Claude changed through MCP, shown with its next review."""
+
+    __tablename__ = "claude_actions"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(user_fk())
+    at: Mapped[datetime] = created_at_col()
+    what: Mapped[str] = mapped_column(Text)
+
+    __table_args__ = (Index("ix_claude_actions_user_at", "user_id", text("at DESC")),)
 
 
 class McpToken(Base):

@@ -24,6 +24,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import lifetracker.services.days as days
 import lifetracker.services.habits as habits
+import lifetracker.services.journal as journal
+import lifetracker.services.notes as notes
 import lifetracker.services.reviews as reviews
 import lifetracker.services.screens as screens
 import lifetracker.services.tasks as tasks
@@ -31,13 +33,15 @@ import lifetracker.services.users as users
 import lifetracker.services.views as screen_views
 from lifetracker.core.errors import AppError
 from lifetracker.db.session import get_sessionmaker
+from lifetracker.domain.dates import fmt_date_short
 from lifetracker.domain.enums import (
     Actor,
     HabitType,
+    NoteKind,
     ReviewKind,
     SleepQuality,
 )
-from lifetracker.schemas.claude import REVIEW_MAX
+from lifetracker.schemas.claude import REVIEW_MAX, PlanItem
 from lifetracker.schemas.days import SleepIn
 from lifetracker.schemas.habits import HabitCreate, HabitOut, HabitUpdate
 from lifetracker.schemas.tasks import TaskCreate, TaskOut, TaskUpdate, TaskView
@@ -72,8 +76,9 @@ Model:
 - Day score ("рейтинг", 0–100 %) = weighted share of what was done: sleep, habits, tasks.
 
 Etiquette: answer in the user's language (usually Russian). Prefer reading before
-writing. When you change something, say what you changed. Save written analyses with
-save_review so the user sees them in the app.
+writing. When you change something, say what you changed: every change is also listed
+in the app under your next review. Save written analyses with save_review and day
+plans with save_plan so the user sees them in the app.
 """
 
 server: MCPServer[Any] = MCPServer(
@@ -116,6 +121,16 @@ class _Call:
         if isinstance(exc, ValidationError):
             msgs = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
             raise ToolError(f"Invalid input: {msgs}") from exc
+
+
+async def _log(s: AsyncSession, uid: uuid.UUID, what: str, now: datetime) -> None:
+    """One line in «Что Claude изменил» (shown with Claude's next review)."""
+    journal.record(s, uid, what, now)
+    await s.commit()
+
+
+def _on(d: date | None) -> str:
+    return f"на {fmt_date_short(d)}" if d else "во входящие"
 
 
 def _hhmm(minutes: float | None) -> str | None:
@@ -255,11 +270,14 @@ async def get_progress(
 ) -> dict[str, Any]:
     """Results of a calendar week or month: daily scores, average, days ≥ 70 %, best run,
     habit completion per habit, task completion, bedtime regularity and
-    alerts (weak spots worth attention)."""
+    alerts (weak spots worth attention), and the user's own note about the period
+    («Неделя словами»): take it into account and say so with save_review(used_note=true)."""
     async with _Call() as (s, uid, now):
         v = await screen_views.review_view(s, uid, now, period, anchor)
+        note = await notes.get_note(s, uid, NoteKind(period), v.start)
     return {
         "period": v.label,
+        "user_note": note.body if note else None,
         "from": v.start.isoformat(),
         "to": v.end.isoformat(),
         "scores": {b.date.isoformat(): b.pct for b in v.scores},
@@ -394,8 +412,13 @@ async def log_habit(
             value = cast("bool | int", mark_value(habit, done))
         if value is None:
             await days.clear_habit_value(s, uid, day, habit_id, now)
+            what = f"Снял отметку «{habit.name}» за {fmt_date_short(day)}"
         else:
             await days.set_habit_value(s, uid, day, habit_id, value, now)
+            amount = "" if isinstance(value, bool) else f": {value}"
+            mark = "не сделано" if value is False or value == 0 else "отметил"
+            what = f"«{habit.name}» за {fmt_date_short(day)} — {mark}{amount}"
+        await _log(s, uid, what, now)
     return {"ok": True, "habit": habit.name, "date": day.isoformat(), "value": value}
 
 
@@ -414,6 +437,7 @@ async def log_sleep(
         out = await days.set_sleep(
             s, uid, day, SleepIn.model_validate({"bed": bed, "wake": wake, "quality": quality}), now
         )
+        await _log(s, uid, f"Записал сон за {fmt_date_short(day)}: {bed}–{wake}", now)
     return {"ok": True, "date": day.isoformat(), "sleep": out.model_dump(mode="json")["sleep"]}
 
 
@@ -436,7 +460,7 @@ async def create_task(
     """Create a task. It is marked as created by Claude in the app. Keep important tasks
     rare: when everything is important, nothing is. Place fresh-head tasks into focus
     zones (see get_energy) when you pick a time."""
-    async with _Call() as (s, uid, _):
+    async with _Call() as (s, uid, now):
         data = TaskCreate.model_validate(
             {
                 "title": title,
@@ -448,7 +472,10 @@ async def create_task(
                 "description": description,
             }
         )
-        return _task(await tasks.create_task(s, uid, data, by=Actor.CLAUDE))
+        t = await tasks.create_task(s, uid, data, by=Actor.CLAUDE)
+        at = f" в {start_time}" if start_time else ""
+        await _log(s, uid, f"Добавил задачу «{t.title}» {_on(t.date)}{at}", now)
+        return _task(t)
 
 
 @server.tool(annotations=UPDATE)
@@ -485,9 +512,15 @@ async def update_task(
     if clear_time:
         patch["start_time"] = None
     async with _Call() as (s, uid, now):
-        return _task(
-            await tasks.update_task(s, uid, task_id, TaskUpdate.model_validate(patch), now)
-        )
+        t = await tasks.update_task(s, uid, task_id, TaskUpdate.model_validate(patch), now)
+        if "date" in patch:
+            what = f"Перенёс «{t.title}» {_on(t.date)}"
+        elif patch.get("done") is not None:
+            what = f"Отметил «{t.title}» {'сделанной' if t.done else 'несделанной'}"
+        else:
+            what = f"Изменил задачу «{t.title}»"
+        await _log(s, uid, what, now)
+        return _task(t)
 
 
 @server.tool(annotations=UPDATE)
@@ -497,7 +530,9 @@ async def complete_task(
 ) -> dict[str, Any]:
     """Mark a task done (or not done)."""
     async with _Call() as (s, uid, now):
-        return _task(await tasks.update_task(s, uid, task_id, TaskUpdate(done=done), now))
+        t = await tasks.update_task(s, uid, task_id, TaskUpdate(done=done), now)
+        await _log(s, uid, f"Отметил «{t.title}» {'сделанной' if done else 'несделанной'}", now)
+        return _task(t)
 
 
 @server.tool(annotations=WRITE)
@@ -535,7 +570,9 @@ async def create_habit(
     if schedule:
         body["schedule"] = schedule
     async with _Call() as (s, uid, now):
-        return _habit(await habits.create_habit(s, uid, HabitCreate.model_validate(body), now))
+        h = await habits.create_habit(s, uid, HabitCreate.model_validate(body), now)
+        await _log(s, uid, f"Добавил привычку «{h.name}»", now)
+        return _habit(h)
 
 
 @server.tool(annotations=UPDATE)
@@ -561,12 +598,14 @@ async def update_habit(
     }
     async with _Call() as (s, uid, now):
         h = await habits.update_habit(s, uid, habit_id, HabitUpdate.model_validate(patch), now)
+        paused = "Поставил на паузу" if active is False else "Изменил"
+        await _log(s, uid, f"{paused} привычку «{h.name}»", now)
         return _habit(h)
 
 
 @server.tool(annotations=WRITE)
 async def save_review(
-    kind: Annotated[ReviewKind, Field(description="day | week")],
+    kind: Annotated[Literal["day", "week", "month"], Field(description="day | week | month")],
     text: Annotated[
         str,
         Field(
@@ -576,12 +615,46 @@ async def save_review(
         ),
     ],
     date: Annotated[
-        date | None, Field(description="Day reviewed (or any day of the week); default today")
+        date | None, Field(description="Day reviewed (or any day of the period); default today")
     ] = None,
+    used_note: Annotated[
+        bool,
+        Field(description="true if you took the user's note for the period into account"),
+    ] = False,
 ) -> dict[str, Any]:
-    """Save a review so the user can read it in the app (Day screen → «Разбор от Claude»).
-    Write it as a short, kind and concrete note: what went well, what slipped and why
-    (sleep, energy, overload), and one or two specific suggestions for tomorrow."""
+    """Save a review so the user reads it in the app (Results → «Разбор недели»). Read the
+    period first (get_progress, which includes the user's own note about it). Write it
+    short, kind and concrete: what went well, what gets in the way and why (sleep, energy,
+    overload), and one or two specific things to do. Everything you changed in the tracker
+    since your previous review is listed under it automatically."""
     async with _Call() as (s, uid, now):
-        r = await reviews.save_review(s, uid, kind, text, now, on=date)
-    return {"ok": True, "id": str(r.id), "date": r.date.isoformat(), "kind": r.kind.value}
+        r = await reviews.save_review(
+            s, uid, ReviewKind(kind), text, now, on=date, used_note=used_note
+        )
+    return {
+        "ok": True, "id": str(r.id), "date": r.date.isoformat(), "kind": r.kind.value,
+        "changes_listed": len(r.changes),
+    }  # fmt: skip
+
+
+@server.tool(annotations=WRITE)
+async def save_plan(
+    items: Annotated[
+        list[PlanItem],
+        Field(
+            min_length=1,
+            max_length=8,
+            description="2–4 items usually. title; start HH:MM (optional); dur minutes; "
+            "note = why now, e.g. «это твой пик энергии»",
+        ),
+    ],
+    date: Annotated[date | None, Field(description="The day planned; default today")] = None,
+) -> dict[str, Any]:
+    """Suggest a plan for a day. It appears on the Today screen as «План на сегодня» with
+    «Добавить в день», which turns the items into tasks. Fit hard items into the focus
+    zones (get_energy), don't duplicate tasks the day already has (get_day)."""
+    async with _Call() as (s, uid, now):
+        plan = await reviews.save_plan(
+            s, uid, [i.model_dump(mode="json") for i in items], now, on=date
+        )
+    return {"ok": True, "id": str(plan.id), "date": plan.date.isoformat(), "items": len(items)}

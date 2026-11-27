@@ -28,12 +28,14 @@ from lifetracker.domain.enums import (
     Actor,
     EnergyZone,
     HabitType,
+    NoteKind,
     ReviewAuthor,
     ReviewKind,
     SleepQuality,
 )
 from lifetracker.domain.legacy import convert
 from lifetracker.services.clock import user_now
+from lifetracker.services.notes import period_start
 
 MAX_DAYS = 3660
 MAX_TASKS = 20_000
@@ -287,7 +289,14 @@ async def import_export(
                 rid = nid("review", str(rv.get("id")), known_reviews)
                 if rid in known_reviews:
                     continue
-                kind = ReviewKind.WEEK if rv.get("kind") == "week" else ReviewKind.DAY
+                kind = (
+                    ReviewKind(rv["kind"])
+                    if rv.get("kind") in {k.value for k in ReviewKind}
+                    else ReviewKind.DAY
+                )
+                items = rv.get("items") if isinstance(rv.get("items"), list) else None
+                if kind == ReviewKind.PLAN and not items:
+                    continue
                 by = (
                     ReviewAuthor(rv["by"])
                     if rv.get("by") in ("claude", "me", "schedule")
@@ -302,10 +311,30 @@ async def import_export(
                         date=date.fromisoformat(str(rv["date"])),
                         body=str(rv["text"])[:20_000],
                         at=_ts(rv.get("at")) or now,
+                        used_note=bool(rv.get("used_note")),
+                        changes=[str(c)[:300] for c in rv.get("changes") or [] if c][:30],
+                        items=items[:8] if items else None,
                     )
                 )
                 known_reviews.add(rid)
                 report.reviews += 1
+
+        # ---- notes about a week or a month (this app's export only) ----
+        raw_notes = export.get("notes")
+        if isinstance(raw_notes, list):
+            for nt in raw_notes[:500]:
+                if not isinstance(nt, dict) or nt.get("kind") not in ("week", "month"):
+                    continue
+                if not nt.get("text") or not nt.get("start"):
+                    continue
+                kind_n = NoteKind(nt["kind"])
+                start = period_start(kind_n, date.fromisoformat(str(nt["start"])))
+                if await session.get(m.Note, (user_id, kind_n, start)) is None:
+                    session.add(
+                        m.Note(
+                            user_id=user_id, kind=kind_n, start=start, body=str(nt["text"])[:4000]
+                        )
+                    )
 
         await session.flush()
     except Exception:

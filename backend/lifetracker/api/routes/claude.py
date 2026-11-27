@@ -1,15 +1,18 @@
-"""Everything the "Подключить Claude" screen and the reviews list need."""
+"""The Claude screen: reviews and plans, notes about a week or month, the MCP token."""
 
 import uuid
 from collections.abc import Sequence
+from datetime import date
 
 from fastapi import APIRouter, Response
 
 from lifetracker.api.deps import Now, SessionDep, SettingsDep, UserId
-from lifetracker.db.models import Review
-from lifetracker.domain.enums import ReviewKind
-from lifetracker.schemas.claude import McpIssuedOut, McpStatusOut, ReviewOut
-from lifetracker.services import mcp_tokens, reviews
+from lifetracker.db.models import Review, Task
+from lifetracker.domain.enums import NoteKind, ReviewKind
+from lifetracker.schemas.claude import McpIssuedOut, McpStatusOut, NoteIn, NoteOut, ReviewOut
+from lifetracker.schemas.tasks import TaskOut
+from lifetracker.services import mcp_tokens, notes, reviews
+from lifetracker.services.clock import user_now
 
 router = APIRouter(tags=["claude"])
 
@@ -24,6 +27,36 @@ async def list_reviews(
 @router.get("/reviews/{review_id}", response_model=ReviewOut)
 async def get_review(review_id: uuid.UUID, session: SessionDep, user_id: UserId) -> Review:
     return await reviews.get_review(session, user_id, review_id)
+
+
+@router.post("/reviews/{review_id}/apply", response_model=list[TaskOut], status_code=201)
+async def apply_plan(
+    review_id: uuid.UUID, session: SessionDep, user_id: UserId, now: Now
+) -> list[Task]:
+    """«Добавить в день»: a plan's items become tasks of its day (once)."""
+    return await reviews.apply_plan(session, user_id, review_id, now)
+
+
+@router.get("/notes/{kind}", response_model=NoteOut | None)
+async def get_note(
+    kind: NoteKind, session: SessionDep, user_id: UserId, now: Now, anchor: date | None = None
+) -> object:
+    """The note of the week or month containing `anchor` (default today); null if none."""
+    day = anchor or (await user_now(session, user_id, now)).day
+    return await notes.get_note(session, user_id, kind, day)
+
+
+@router.put("/notes/{kind}", response_model=NoteOut | None)
+async def put_note(
+    kind: NoteKind,
+    body: NoteIn,
+    session: SessionDep,
+    user_id: UserId,
+    now: Now,
+    anchor: date | None = None,
+) -> object:
+    day = anchor or (await user_now(session, user_id, now)).day
+    return await notes.save_note(session, user_id, kind, day, body.text)
 
 
 @router.get("/mcp/token", response_model=McpStatusOut)

@@ -59,6 +59,9 @@ async def export_account(
     reviews = await session.scalars(
         select(m.Review).where(m.Review.user_id == user_id).order_by(m.Review.at)
     )
+    notes = await session.scalars(
+        select(m.Note).where(m.Note.user_id == user_id).order_by(m.Note.start)
+    )
 
     day_map: dict[str, dict[str, Any]] = {}
     for d in days:
@@ -121,7 +124,13 @@ async def export_account(
                 "text": r.body,
                 "by": r.by.value,
                 "at": _iso(r.at),
+                "used_note": r.used_note,
+                "changes": r.changes,
+                "items": r.items,
             }
             for r in reviews
+        ],
+        "notes": [
+            {"kind": n.kind.value, "start": n.start.isoformat(), "text": n.body} for n in notes
         ],
     }
